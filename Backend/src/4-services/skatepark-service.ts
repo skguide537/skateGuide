@@ -1,0 +1,378 @@
+import { fileSaver } from "uploaded-file-saver";
+import { BadRequestError, NotFoundError } from "../3-models/error-models";
+import { ISkateparkModel, SkateparkModel } from "../3-models/skatepark-model";
+import { Coords, ExternalLinks, IReport, Size, SkaterLevel, Tag } from "../3-models/enums";
+import { UploadedFile } from "express-fileupload";
+import path from "path";
+
+class SkateparkService {
+
+    // 1. Helper Functions:
+
+    protected async checkSkatepark(_id: string): Promise<ISkateparkModel> {
+        const skatepark = await SkateparkModel.findById(_id);
+        if (!skatepark) throw new NotFoundError(`Skatepark with _id ${_id} not found.`);
+        return skatepark;
+    }
+
+    protected async getPhotoNames(_id: string): Promise<string[]> {
+        const skatepark = await this.checkSkatepark(_id);
+        if (skatepark.photoNames.length === 0) return [`This skatepark has no photos.`];
+        return skatepark.photoNames;
+    }
+
+    // 2. GETs:
+
+    public async getAllSkateparks(): Promise<ISkateparkModel[]> { return await SkateparkModel.find(); }
+
+    public async getOneSkatepark(_id: string): Promise<ISkateparkModel> {
+        const skatepark = await this.checkSkatepark(_id);
+        return skatepark;
+    }
+
+    public async findSkateparks(partialData: Partial<ISkateparkModel>): Promise<ISkateparkModel[]> {
+        const query = {};
+        for (const key in partialData) {
+            const value = partialData[key as keyof ISkateparkModel];
+
+            if (typeof value === "string") query[key] = { $regex: value, $options: "i" };
+            else query[key] = value;
+        }
+        const skateparks = await SkateparkModel.find(query);
+        if (skateparks.length === 0) throw new NotFoundError(`No skateparks in those search terms.`);
+        return skateparks;
+    }
+
+    // More of a frontend thing
+    public async advancedSearch(filters: {
+        size?: Size;
+        level?: SkaterLevel;
+        tags?: Tag[];
+        isPark?: boolean;
+    }): Promise<ISkateparkModel[]> {
+        const query: any = {};
+        if (filters.size) query.size = filters.size;
+        if (filters.level) query.level = filters.level;
+        if (filters.isPark !== undefined) query.isPark = filters.isPark;
+        if (filters.tags && filters.tags.length > 0) query.tags = { $in: filters.tags };
+
+        const parks = await SkateparkModel.find(query);
+        if (parks.length === 0) throw new NotFoundError("No parks found for the given filters.");
+        return parks;
+    }
+
+    public async getSkateparksBySkater(userId: string): Promise<ISkateparkModel[]> {
+        const skateparks = await SkateparkModel.find({ createdBy: userId });
+        if (skateparks.length === 0) throw new NotFoundError(`No parks found for user with id ${userId}`);
+        return skateparks;
+    }
+
+    public async getSkateparksNearLocation(coords: Coords, radiusKm: number): Promise<ISkateparkModel[]> {
+
+        const radiusInMeters = radiusKm * 1000;
+
+        const skateparks = await SkateparkModel.find({
+            location: {
+                $nearSphere: {
+                    $geometry: {
+                        type: "Point",
+                        coordinates: [coords.longitude, coords.latitude]
+                    },
+                    $maxDistance: radiusInMeters
+                }
+            }
+        });
+        if (skateparks.length === 0) throw new NotFoundError("No skateparks found near this location.");
+        return skateparks;
+    }
+
+    // public async getSkateparkRating(_id: string): Promise<number> {
+    //     const skatepark = await this.getOneSkatepark(_id);
+    //     if (skatepark.rating.length === 0) return 0;
+    //     const sum = skatepark.rating.reduce((acc, r) => acc + r.value, 0);
+    //     return sum / skatepark.rating.length;
+    // }
+
+    public async getTopRatedSkateparks(limit?: number): Promise<ISkateparkModel[]> {
+        const allSkateparks = await SkateparkModel.find();
+        const sorted = allSkateparks
+            .filter(p => p.rating.length > 0)
+            .sort((a, b) => {
+                const avgA = a.rating.reduce((acc, r) => acc + r.value, 0) / a.rating.length;
+                const avgB = b.rating.reduce((acc, r) => acc + r.value, 0) / b.rating.length;
+                return avgB - avgA;
+            });
+
+        return limit ? sorted.slice(0, limit) : sorted;
+    }
+
+    public async getSkateparksByTags(tags: Tag[]): Promise<ISkateparkModel[]> {
+        if (!tags || tags.length === 0) throw new BadRequestError(`Missing tags for search.`);
+
+        const parks = await SkateparkModel.find({ tags: { $in: tags } });
+        if (parks.length === 0) throw new NotFoundError(`No parks found with the given tags.`);
+
+        return parks;
+    }
+
+    // default is 3 unless other number is provided
+    public async getRecentSkateparks(limit: number = 3): Promise<ISkateparkModel[]> {
+        return SkateparkModel.find().sort({ createdAt: -1 }).limit(limit);
+    }
+
+    // 3. CRUDs:
+
+    public async deleteSkatepark(_id: string): Promise<string> {
+        const skatepark = await this.checkSkatepark(_id);
+        const photoNames = skatepark.photoNames;
+        await SkateparkModel.findByIdAndDelete(_id);
+        for (let photoName of photoNames) {
+            await fileSaver.delete(path.basename(photoName));
+        }
+        return `Skatepark ${skatepark.title} has been deleted.`;
+    }
+
+    public async deleteMultipleParks(_idArray: string[]): Promise<string> {
+        for (let _id of _idArray) {
+            const skatepark = await this.checkSkatepark(_id);
+            const photoNames = await this.getPhotoNames(_id);
+            await SkateparkModel.findByIdAndDelete(_id);
+            for (let photoName of photoNames) {
+                await fileSaver.delete(path.basename(photoName));
+            }
+        }
+        return `All skateparks deleted.`;
+    }
+
+    public async addSkatepark(parkData: any, photos: UploadedFile[], userId: string): Promise<ISkateparkModel> {
+
+        const existing = await SkateparkModel.findOne({
+            "location.coordinates": [
+                parkData.location.longitude,
+                parkData.location.latitude
+            ]
+        });
+        if (existing) throw new BadRequestError("A skatepark already exists at this location.");
+
+        const skatepark = new SkateparkModel({
+            title: parkData.title,
+            description: parkData.description,
+            tags: parkData.tags,
+            location: {
+                type: "Point",
+                coordinates: [parkData.location.longitude, parkData.location.latitude]
+            },
+            size: parkData.size,
+            level: parkData.level,
+            isPark: parkData.isPark === true || parkData.isPark === "true",
+            rating: parkData.rating || [],
+            createdBy: userId,
+            externalLinks: parkData.externalLinks || [],
+            reports: []
+        });
+
+        if (!photos || photos.length === 0) throw new BadRequestError("Missing photos.");
+        skatepark.photoNames = [];
+
+        for (const photo of photos) {
+            const fileName = await fileSaver.add(photo, "skateparks");
+            const relativePath = "skateparks/" + fileName;
+            skatepark.photoNames.push(relativePath);
+        }
+
+        await skatepark.save();
+        return await this.getOneSkatepark(skatepark._id.toString());
+    }
+
+    public async addMultipleSkateparks(parksData: any[], photos: UploadedFile[], photoCounts: number[], userId: string): Promise<ISkateparkModel[]> {
+        if (parksData.length !== photoCounts.length) throw new BadRequestError("Mismatch between parks and photo counts.");
+
+        const createdParks: ISkateparkModel[] = [];
+        let photoIndex = 0;
+
+        for (let i = 0; i < parksData.length; i++) {
+            const parkData = parksData[i];
+            console.log(parkData);
+            console.log("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
+            const photoCount = photoCounts[i];
+
+            const lon = Number(parkData.location?.coordinates?.[0]);
+            const lat = Number(parkData.location?.coordinates?.[1]);
+
+
+            if (isNaN(lat) || isNaN(lon)) {
+                throw new BadRequestError(`Invalid coordinates for park "${parkData.title}"`);
+            }
+
+            const existing = await SkateparkModel.findOne({
+                "location.coordinates": [lon, lat]
+            });
+            if (existing) throw new BadRequestError(`A skatepark already exists at location for park ${i + 1}.`);
+
+            const parkPhotos = photos.slice(photoIndex, photoIndex + photoCount);
+            photoIndex += photoCount;
+
+            if (!parkPhotos || parkPhotos.length === 0) {
+                throw new BadRequestError(`Missing photos for park ${i + 1}.`);
+            }
+
+            const skatepark = new SkateparkModel({
+                title: parkData.title,
+                description: parkData.description,
+                tags: parkData.tags,
+                location: {
+                    type: "Point",
+                    coordinates: [lon, lat]
+                },
+                size: parkData.size,
+                level: parkData.level,
+                isPark: parkData.isPark === true || parkData.isPark === "true",
+                rating: parkData.rating || [],
+                createdBy: userId,
+                externalLinks: parkData.externalLinks || [],
+                reports: [],
+                photoNames: []
+            });
+
+            for (const photo of parkPhotos) {
+                const fileName = await fileSaver.add(photo, "skateparks");
+                const relativePath = "skateparks/" + fileName;
+                skatepark.photoNames.push(relativePath);
+            }
+
+            console.log("----------------------------");
+            console.log(skatepark);
+            console.log("----------------------------");
+
+            await skatepark.save();
+            createdParks.push(await this.checkSkatepark(skatepark._id.toString()));
+        }
+
+        return createdParks;
+    }
+
+    public async rateSkatepark(parkId: string, userId: string, rating: number): Promise<string> {
+        if (rating < 1 || rating > 5) throw new BadRequestError("Rating must be between 1 and 5.");
+
+        const skatepark = await this.checkSkatepark(parkId);
+
+        const existingRating = skatepark.rating.find(r => r.userId.toString() === userId);
+        if (existingRating) throw new BadRequestError("You have already rated this skatepark.");
+
+        skatepark.rating.push({ userId, value: rating });
+        const total = skatepark.rating.reduce((sum, r) => sum + r.value, 0);
+        skatepark.avgRating = total / skatepark.rating.length;
+        await skatepark.save();
+
+        return "Skatepark rated successfully.";
+    }
+
+    public async reportSkatepark(parkId: string, userId: string, reason: string): Promise<string> {
+        const skatepark = await this.checkSkatepark(parkId);
+
+        const alreadyReported = skatepark.reports.some(r => r.reportedBy.toString() === userId);
+        if (alreadyReported) throw new BadRequestError("User already reported this park.");
+
+        const now = new Date();
+        const createdAt = new Date(`${now.toLocaleDateString()} ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+
+        const report: IReport = {
+            reportedBy: userId,
+            reason: reason,
+            createdAt: createdAt
+        };
+
+        skatepark.reports.push(report);
+        await skatepark.save();
+
+        return "Report submitted successfully.";
+    }
+
+    public async updateSkatepark(
+        parkId: string,
+        newSkateparkData: Partial<ISkateparkModel> & { keepPhotoNames?: string[] },
+        photos?: UploadedFile[]
+    ): Promise<ISkateparkModel> {
+
+        const skatepark = await this.checkSkatepark(parkId);
+        const keep = newSkateparkData.keepPhotoNames ?? [];
+
+        const toDelete = skatepark.photoNames.filter(name => !keep.includes(name));
+        for (const photoName of toDelete) {
+            await fileSaver.delete(path.basename(photoName));
+        }
+
+        skatepark.photoNames = keep;
+
+        if (photos && photos.length > 0) {
+            for (const photo of photos) {
+                const fileName = await fileSaver.add(photo, "skateparks");
+                const relativePath = "skateparks/" + fileName;
+                skatepark.photoNames.push(relativePath);
+            }
+        }
+
+        for (const key in newSkateparkData) {
+            if (key !== "keepPhotoNames") {
+                (skatepark as any)[key] = (newSkateparkData as any)[key];
+            }
+        }
+
+        if (skatepark.rating.length > 0) {
+            const total = skatepark.rating.reduce((sum, r) => sum + r.value, 0);
+            skatepark.avgRating = total / skatepark.rating.length;
+        } else {
+            skatepark.avgRating = 0;
+        }
+
+        await skatepark.save();
+        return skatepark;
+    }
+
+
+    public async patchTagsOrLinks(parkId: string, tags?: string[], links?: ExternalLinks[]): Promise<ISkateparkModel> {
+        const skatepark = await this.checkSkatepark(parkId);
+
+        if (tags && tags.length > 0) {
+            const newTags = tags
+                .filter(tag => Object.values(Tag).includes(tag as Tag)) // only keep valid enum values
+                .filter(tag => !skatepark.tags.includes(tag as Tag));   // and exclude existing tags
+            skatepark.tags.push(...newTags as Tag[]);
+        }
+
+        if (links && links.length > 0) {
+            for (const link of links) {
+                const alreadyExists = skatepark.externalLinks.some(linkItem => linkItem.url === link.url);
+                if (!alreadyExists) {
+                    const now = new Date();
+                    skatepark.externalLinks.push({
+                        url: link.url,
+                        sentBy: link.sentBy,
+                        sentAt: new Date(`${now.toLocaleDateString()} ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`)
+                    })
+                }
+            }
+        }
+        await skatepark.save();
+        return skatepark;
+    }
+
+    // 4. Admin Panel
+
+    public async approveSkatepark(_id: string): Promise<string> {
+        const skatepark = await this.checkSkatepark(_id);
+        if (skatepark.isApproved) return "This skatepark is already approved.";
+
+        skatepark.isApproved = true;
+        await skatepark.save();
+        return `Skatepark ${skatepark.title} has been approved.`;
+    }
+
+    public async getUnapprovedSkateparks(): Promise<ISkateparkModel[]> {
+        return await SkateparkModel.find({ isApproved: { $ne: true } });
+    }
+
+
+}
+
+export const skateparkService = new SkateparkService();
