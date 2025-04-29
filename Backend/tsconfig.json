@@ -1,9 +1,0 @@
-{
-    "compilerOptions": {
-        "target": "ESNext",
-        "moduleResolution": "Node",
-        "esModuleInterop": true,
-        "removeComments": true,
-        "typeRoots": ["./node_modules/@types","./src/@types"]
-    }
-}
