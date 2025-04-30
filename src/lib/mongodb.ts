@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/skateguide';
+const MONGODB_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/skateguide';
 
 if (!MONGODB_URI) {
   throw new Error('Please define the MONGODB_URI environment variable inside .env');
@@ -21,26 +21,25 @@ if (!cached) {
   cached = global.mongoose = { conn: null, promise: null };
 }
 
-export async function connectToDatabase() {
-  if (cached.conn) {
-    return { db: cached.conn.connection.db };
+export async function connectToDatabase(uri: string = MONGODB_URI) {
+    if (cached.conn) {
+      return { db: cached.conn.connection.db };
+    }
+  
+    if (!cached.promise) {
+      const opts = {
+        bufferCommands: false,
+      };
+  
+      cached.promise = mongoose.connect(uri, opts).then((mongoose) => mongoose);
+    }
+  
+    try {
+      cached.conn = await cached.promise;
+      return { db: cached.conn.connection.db };
+    } catch (e) {
+      cached.promise = null;
+      throw e;
+    }
   }
-
-  if (!cached.promise) {
-    const opts = {
-      bufferCommands: false,
-    };
-
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-      return mongoose;
-    });
-  }
-
-  try {
-    cached.conn = await cached.promise;
-    return { db: cached.conn.connection.db };
-  } catch (e) {
-    cached.promise = null;
-    throw e;
-  }
-} 
+  
