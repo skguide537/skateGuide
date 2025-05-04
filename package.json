@@ -7,7 +7,7 @@
         "build": "next build",
         "start": "next start",
         "lint": "npx next lint",
-        "test": "jest --detectOpenHandles",
+        "test": "jest --detectOpenHandles --forceExit",
         "test:watch": "jest --watch",
         "test:coverage": "jest --coverage"
     },
