@@ -83,5 +83,6 @@ export enum Tag {
     Kicker = "Kicker",
     Spine = "Spine",
     Funbox = "Funbox",
-    DIY = "DIY"
+    DIY = "DIY",
+    Miniramp = "Mini Ramp",
 } 

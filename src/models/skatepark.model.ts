@@ -119,4 +119,4 @@ const SkateparkSchema = new mongoose.Schema({
 
 SkateparkSchema.index({ location: "2dsphere" });
 
-export const SkateparkModel = mongoose.model<ISkateparkModel>("Skatepark", SkateparkSchema); 
+export const SkateparkModel = mongoose.models.Skatepark || mongoose.model<ISkateparkModel>("Skatepark", SkateparkSchema);
