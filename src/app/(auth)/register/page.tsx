@@ -2,117 +2,116 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { Box, Button, Container, TextField, Typography, Alert, Link } from '@mui/material';
 
 export default function RegisterPage() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const router = useRouter();
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [photo, setPhoto] = useState<File | null>(null);
+    const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, password }),
-      });
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password }),
+            });
 
-      if (res.ok) {
-        router.push('/map');
-      } else {
-        const data = await res.json();
-        setError(data.error);
-      }
-    } catch (err) {
-      setError('An error occurred. Please try again.');
-    }
-  };
+            if (res.ok) {
+                router.push('/map');
+            } else {
+                const data = await res.json();
+                setError(data.error);
+            }
+        } catch {
+            setError('An error occurred. Please try again.');
+        }
+    };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-              {error}
-            </div>
-          )}
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="name" className="sr-only">
-                Name
-              </label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-          </div>
+    return (
+        <Container maxWidth="sm" sx={{ mt: 12 }}>
+            <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <Typography variant="h4" textAlign="center" fontWeight="bold" color="#2F2F2F">
+                    Create your account
+                </Typography>
 
-          <div>
-            <button
-              type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Sign up
-            </button>
-          </div>
-        </form>
-        <div className="text-sm text-center">
-          <Link
-            href="/login"
-            className="font-medium text-indigo-600 hover:text-indigo-500"
-          >
-            Already have an account? Sign in
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-} 
+                {error && <Alert severity="error">{error}</Alert>}
+
+                <TextField
+                    label="Name"
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                />
+
+                <TextField
+                    label="Email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                />
+
+                <TextField
+                    label="Password"
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                />
+
+                <div className="mt-4">
+                    
+                    <div className="flex items-center space-x-4">
+                        <label
+                            htmlFor="photo-upload"
+                            className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                        >
+                        </label>
+                        <span className="text-sm text-gray-500">
+                            {photo ? photo.name : 'No file chosen'}
+                        </span>
+                    </div>
+                    <input
+                        id="photo-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setPhoto(e.target.files?.[0] || null)}
+                        className="hidden"
+                    />
+                </div>
+
+                <Button
+                    type="submit"
+                    variant="contained"
+                    sx={{
+                        backgroundColor: '#A7A9AC',
+                        color: '#fff',
+                        fontWeight: 'bold',
+                        '&:hover': { backgroundColor: '#8A8A8A' }
+                    }}
+                >
+                    Sign up
+                </Button>
+
+                <Typography variant="body2" textAlign="center">
+                    Already have an account?{' '}
+                    <Link href="/login" sx={{ color: '#6E7763', fontWeight: 'bold' }}>
+                        Sign in
+                    </Link>
+                </Typography>
+            </Box>
+        </Container>
+    );
+}

@@ -1,3 +1,4 @@
+import NavBar from "@/components/navbar/NavBar";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -16,8 +17,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <main className="min-h-screen bg-gray-50">
+      <body className={`${inter.className} bg-canvas text-grip`}>
+        <NavBar />
+        <main className="min-h-screen flex flex-col items-center justify-start text-center px-4">
           {children}
         </main>
       </body>

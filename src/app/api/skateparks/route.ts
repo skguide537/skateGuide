@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { skateparkService } from "@/services/skatepark.service";
 import { convertToUploadedFile } from "@/lib/file-utils";
 import { Tag } from "@/types/enums";
+import { connectToDatabase } from "@/lib/mongodb";
 
 // GET all skateparks
 export async function GET(request: NextRequest) {
     try {
+        await connectToDatabase();
         const { searchParams } = new URL(request.url);
         
         // Handle different query parameters
@@ -58,6 +60,7 @@ export async function GET(request: NextRequest) {
 // POST new skatepark
 export async function POST(request: NextRequest) {
     try {
+        await connectToDatabase();
         const userId = request.headers.get("x-user-id");
         if (!userId) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -66,7 +69,6 @@ export async function POST(request: NextRequest) {
         const formData = await request.formData();
         const parkData = JSON.parse(formData.get("data") as string);
         const files = formData.getAll("photos") as File[];
-        
         const photos = await Promise.all(files.map(convertToUploadedFile));
         const skatepark = await skateparkService.addSkatepark(parkData, photos, userId);
         return NextResponse.json(skatepark, { status: 201 });
