@@ -114,33 +114,33 @@ class SkateparkService {
     public async deleteSkatepark(_id: string): Promise<string> {
         const skatepark = await this.checkSkatepark(_id);
         const photoNames = skatepark.photoNames;
-    
+
         await SkateparkModel.findByIdAndDelete(_id);
-    
+
         for (let photoName of photoNames) {
             const filePath = path.join(process.cwd(), "public", photoName);
             if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
         }
-    
+
         return `Skatepark ${skatepark.title} has been deleted.`;
     }
-    
+
     public async deleteMultipleParks(_idArray: string[]): Promise<string> {
         for (let _id of _idArray) {
             const skatepark = await this.checkSkatepark(_id);
             const photoNames = await this.getPhotoNames(_id);
-    
+
             await SkateparkModel.findByIdAndDelete(_id);
-    
+
             for (let photoName of photoNames) {
                 const filePath = path.join(process.cwd(), "public", photoName);
                 if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
             }
         }
-    
+
         return `All skateparks deleted.`;
     }
-    
+
 
     public async addSkatepark(parkData: any, photos: UploadedFile[], userId: string): Promise<ISkateparkModel> {
         // Normalize and validate location
@@ -180,21 +180,17 @@ class SkateparkService {
 
         // Handle photos
         if (!photos || photos.length === 0) {
-            throw new BadRequestError("Missing photos.");
-        }
+            skatepark.photoNames.push("skateparks/default-skatepark.jpg");
+        } else {
+            for (const photo of photos) {
+                const fileName = uuid() + path.extname(photo.name);
+                const fullPath = path.join(process.cwd(), "public", "skateparks", fileName);
 
+                fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+                fs.writeFileSync(fullPath, photo.data);
 
-        for (const photo of photos) {
-            
-
-            const fileName = uuid() + path.extname(photo.name);
-            const fullPath = path.join(process.cwd(), "public", "skateparks", fileName);
-
-            fs.mkdirSync(path.dirname(fullPath), { recursive: true });
-            fs.writeFileSync(fullPath, photo.data);
-
-
-            skatepark.photoNames.push("skateparks/" + fileName);
+                skatepark.photoNames.push("skateparks/" + fileName);
+            }
         }
 
         await skatepark.save();
@@ -210,35 +206,35 @@ class SkateparkService {
         if (parksData.length !== photoCounts.length) {
             throw new BadRequestError("Mismatch between parks and photo counts.");
         }
-    
+
         const createdParks: ISkateparkModel[] = [];
         let photoIndex = 0;
-    
+
         for (let i = 0; i < parksData.length; i++) {
             const parkData = parksData[i];
             const photoCount = photoCounts[i];
-    
+
             const lon = Number(parkData.location?.coordinates?.[0]);
             const lat = Number(parkData.location?.coordinates?.[1]);
-    
+
             if (isNaN(lat) || isNaN(lon)) {
                 throw new BadRequestError(`Invalid coordinates for park "${parkData.title}"`);
             }
-    
+
             const existing = await SkateparkModel.findOne({
                 "location.coordinates": [lon, lat]
             });
             if (existing) {
                 throw new BadRequestError(`A skatepark already exists at location for park ${i + 1}.`);
             }
-    
+
             const parkPhotos = photos.slice(photoIndex, photoIndex + photoCount);
             photoIndex += photoCount;
-    
+
             if (!parkPhotos || parkPhotos.length === 0) {
                 throw new BadRequestError(`Missing photos for park ${i + 1}.`);
             }
-    
+
             const skatepark = new SkateparkModel({
                 title: parkData.title,
                 description: parkData.description,
@@ -256,7 +252,7 @@ class SkateparkService {
                 reports: [],
                 photoNames: []
             });
-    
+
             for (const photo of parkPhotos) {
                 const fileName = uuid() + path.extname(photo.name);
                 const fullPath = path.join(process.cwd(), "public", "skateparks", fileName);
@@ -264,13 +260,13 @@ class SkateparkService {
                 fs.writeFileSync(fullPath, photo.data);
                 skatepark.photoNames.push("skateparks/" + fileName);
             }
-    
+
             await skatepark.save();
             createdParks.push(await this.checkSkatepark(skatepark._id?.toString() || ""));
         }
-    
+
         return createdParks;
-    }   
+    }
 
     public async rateSkatepark(parkId: string, userId: string, rating: number): Promise<string> {
         if (rating < 1 || rating > 5) throw new BadRequestError("Rating must be between 1 and 5.");
@@ -317,15 +313,15 @@ class SkateparkService {
     ): Promise<ISkateparkModel> {
         const skatepark = await this.checkSkatepark(parkId);
         const keep = newSkateparkData.keepPhotoNames ?? [];
-    
+
         const toDelete = skatepark.photoNames.filter(name => !keep.includes(name));
         for (const photoName of toDelete) {
             const filePath = path.join(process.cwd(), "public", photoName);
             if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
         }
-    
+
         skatepark.photoNames = keep;
-    
+
         if (photos && photos.length > 0) {
             for (const photo of photos) {
                 const fileName = uuid() + path.extname(photo.name);
@@ -335,23 +331,23 @@ class SkateparkService {
                 skatepark.photoNames.push("skateparks/" + fileName);
             }
         }
-    
+
         for (const key in newSkateparkData) {
             if (key !== "keepPhotoNames") {
                 (skatepark as any)[key] = (newSkateparkData as any)[key];
             }
         }
-    
+
         if (skatepark.rating.length > 0) {
             const total = skatepark.rating.reduce((sum, r) => sum + (r.value || 0), 0);
             skatepark.avgRating = total / skatepark.rating.length;
         } else {
             skatepark.avgRating = 0;
         }
-    
+
         await skatepark.save();
         return skatepark;
-    }    
+    }
 
     public async patchTagsOrLinks(parkId: string, tags?: string[], links?: ExternalLinks[]): Promise<ISkateparkModel> {
         const skatepark = await this.checkSkatepark(parkId);
