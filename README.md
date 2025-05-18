@@ -15,7 +15,7 @@ A Next.js application for finding and sharing skate spots.
 - TypeScript
 - MongoDB
 - React Leaflet
-- Tailwind CSS
+- MUI
 - JWT Authentication
 
 ## Prerequisites
