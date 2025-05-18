@@ -44,6 +44,8 @@ export default function SkateparkCard({
         window.open(url, '_blank');
     };
 
+    const hasPhotos = photoNames && photoNames.length > 0;
+    const isMultiple = photoNames.length > 1;
 
     return (
         <>
@@ -61,24 +63,32 @@ export default function SkateparkCard({
                         justifyContent: 'space-between'
                     }}
                 >
-                    {photoNames.length > 1 ? (
-                        <Carousel autoPlay={false} navButtonsAlwaysVisible>
-                            {photoNames.map((src, idx) => (
-                                <CardMedia
-                                    key={idx}
-                                    component="img"
-                                    height="200"
-                                    image={`/${src}`}
-                                    alt={`Skatepark photo ${idx + 1}`}
-                                />
-                            ))}
-                        </Carousel>
+                    {hasPhotos ? (
+                        isMultiple ? (
+                            <Carousel autoPlay={false}>
+                                {photoNames.map((src, idx) => (
+                                    <CardMedia
+                                        key={idx}
+                                        component="img"
+                                        height="200"
+                                        image={`/${src}`}
+                                        alt={`Skatepark photo ${idx + 1}`}
+                                    />
+                                ))}
+                            </Carousel>
+                        ) : (
+                            <CardMedia
+                                component="img"
+                                height="200"
+                                image={`/${photoNames?.[0] || "skateparks/default-skatepark.jpg"}`}                                alt="Skatepark photo"
+                            />
+                        )
                     ) : (
                         <CardMedia
                             component="img"
                             height="200"
-                            image={`/${photoNames[0]}`}
-                            alt="Skatepark photo"
+                            image="/skateparks/default-skatepark.jpeg"
+                            alt="Default skatepark placeholder"
                         />
                     )}
                     <CardContent>
@@ -139,7 +149,6 @@ export default function SkateparkCard({
                                 Waze
                             </Button>
                         </Stack>
-
                     </CardContent>
                 </Card>
             </Box>

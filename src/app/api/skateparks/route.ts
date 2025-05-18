@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     try {
         await connectToDatabase();
         const { searchParams } = new URL(request.url);
-        
+
         // Handle different query parameters
         if (searchParams.has("search")) {
             const query = Object.fromEntries(searchParams.entries());
