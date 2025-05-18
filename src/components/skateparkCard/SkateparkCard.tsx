@@ -47,6 +47,16 @@ export default function SkateparkCard({
     const hasPhotos = photoNames && photoNames.length > 0;
     const isMultiple = photoNames.length > 1;
 
+    const formatSrc = (src: string) =>
+        src.startsWith('http') ? src : `/${src}`;
+
+    const photoStyle = {
+        width: '100%',
+        height: 200,
+        objectFit: 'cover',
+        flexShrink: 0
+    };
+
     return (
         <>
             <Box onClick={() => setOpen(true)} sx={{ cursor: 'pointer' }}>
@@ -59,39 +69,39 @@ export default function SkateparkCard({
                         backgroundColor: '#A7A9AC',
                         color: '#2F2F2F',
                         display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between'
+                        flexDirection: 'column'
                     }}
                 >
                     {hasPhotos ? (
                         isMultiple ? (
-                            <Carousel autoPlay={false}>
+                            <Carousel autoPlay={false} animation="slide" navButtonsAlwaysVisible>
                                 {photoNames.map((src, idx) => (
                                     <CardMedia
                                         key={idx}
                                         component="img"
-                                        height="200"
-                                        image={`/${src}`}
+                                        image={formatSrc(src)}
                                         alt={`Skatepark photo ${idx + 1}`}
+                                        sx={photoStyle}
                                     />
                                 ))}
                             </Carousel>
                         ) : (
                             <CardMedia
                                 component="img"
-                                height="200"
-                                image={`/${photoNames?.[0] || "skateparks/default-skatepark.jpg"}`}                                alt="Skatepark photo"
+                                image={formatSrc(photoNames[0])}
+                                alt="Skatepark photo"
+                                sx={photoStyle}
                             />
                         )
                     ) : (
                         <CardMedia
                             component="img"
-                            height="200"
-                            image="/skateparks/default-skatepark.jpeg"
+                            image="https://res.cloudinary.com/dcncqacrd/image/upload/v1747566727/skateparks/default-skatepark.png"
                             alt="Default skatepark placeholder"
+                            sx={photoStyle}
                         />
                     )}
-                    <CardContent>
+                    <CardContent sx={{ flexGrow: 1 }}>
                         <Typography gutterBottom variant="h6" component="div">
                             {title}
                         </Typography>
@@ -145,7 +155,11 @@ export default function SkateparkCard({
                                     }
                                 }}
                             >
-                                <img src="/waze.png" alt="Waze" style={{ width: 16, height: 16, marginRight: 6 }} />
+                                <img
+                                    src="/waze.png"
+                                    alt="Waze"
+                                    style={{ width: 16, height: 16, marginRight: 6 }}
+                                />
                                 Waze
                             </Button>
                         </Stack>

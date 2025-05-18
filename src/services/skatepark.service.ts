@@ -1,10 +1,11 @@
+import cloudinary from "@/lib/cloudinary";
 import { BadRequestError, NotFoundError } from "@/types/error-models";
 import { UploadedFile } from "express-fileupload";
-import fs from "fs";
-import path from "path";
-import { v4 as uuid } from "uuid";
 import { ISkateparkModel, SkateparkModel } from "../models/skatepark.model";
 import { Coords, ExternalLinks, IReport, Size, SkaterLevel, Tag } from "../types/enums";
+
+const DEFAULT_IMAGE_URL = "https://res.cloudinary.com/dcncqacrd/image/upload/v1716000000/skateparks/default-skatepark.jpg";
+
 
 class SkateparkService {
     // 1. Helper Functions:
@@ -20,6 +21,25 @@ class SkateparkService {
         if (skatepark.photoNames.length === 0) return [`This skatepark has no photos.`];
         return skatepark.photoNames;
     }
+
+    private async uploadToCloudinary(photo: UploadedFile): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+                { folder: "skateparks" },
+                (error, result) => {
+                    if (error || !result) reject(new Error("Cloudinary upload failed"));
+                    else resolve(result.secure_url);
+                }
+            );
+            stream.end(photo.data);
+        });
+    }
+
+    private extractCloudinaryPublicId(url: string): string | null {
+        const match = url.match(/\/v\d+\/(.+?)\.(jpg|jpeg|png|webp)/);
+        return match ? match[1] : null;
+    }
+
 
     // 2. GETs:
     public async getAllSkateparks(): Promise<ISkateparkModel[]> {
@@ -117,24 +137,32 @@ class SkateparkService {
 
         await SkateparkModel.findByIdAndDelete(_id);
 
-        for (let photoName of photoNames) {
-            const filePath = path.join(process.cwd(), "public", photoName);
-            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        for (const url of photoNames) {
+            if (!url.includes("default-skatepark.jpg")) {
+                const publicId = this.extractCloudinaryPublicId(url);
+                if (publicId) {
+                    await cloudinary.uploader.destroy(publicId);
+                }
+            }
         }
 
         return `Skatepark ${skatepark.title} has been deleted.`;
     }
 
     public async deleteMultipleParks(_idArray: string[]): Promise<string> {
-        for (let _id of _idArray) {
+        for (const _id of _idArray) {
             const skatepark = await this.checkSkatepark(_id);
-            const photoNames = await this.getPhotoNames(_id);
+            const photoUrls = await this.getPhotoNames(_id);
 
             await SkateparkModel.findByIdAndDelete(_id);
 
-            for (let photoName of photoNames) {
-                const filePath = path.join(process.cwd(), "public", photoName);
-                if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+            for (const url of photoUrls) {
+                if (!url.includes("default-skatepark.jpg")) {
+                    const publicId = this.extractCloudinaryPublicId(url);
+                    if (publicId) {
+                        await cloudinary.uploader.destroy(publicId);
+                    }
+                }
             }
         }
 
@@ -178,24 +206,19 @@ class SkateparkService {
             photoNames: []
         });
 
-        // Handle photos
-        if (!photos || photos.length === 0) {
-            skatepark.photoNames.push("skateparks/default-skatepark.jpg");
-        } else {
+        // Upload to Cloudinary or fallback to default
+        if (!photos || photos.length === 0)  skatepark.photoNames.push(DEFAULT_IMAGE_URL); 
+         else {
             for (const photo of photos) {
-                const fileName = uuid() + path.extname(photo.name);
-                const fullPath = path.join(process.cwd(), "public", "skateparks", fileName);
-
-                fs.mkdirSync(path.dirname(fullPath), { recursive: true });
-                fs.writeFileSync(fullPath, photo.data);
-
-                skatepark.photoNames.push("skateparks/" + fileName);
+                const imageUrl = await this.uploadToCloudinary(photo);
+                skatepark.photoNames.push(imageUrl);
             }
         }
 
         await skatepark.save();
         return await this.getOneSkatepark(skatepark._id?.toString() || "");
     }
+
 
     public async addMultipleSkateparks(
         parksData: any[],
@@ -207,6 +230,7 @@ class SkateparkService {
             throw new BadRequestError("Mismatch between parks and photo counts.");
         }
 
+        const DEFAULT_IMAGE_URL = "https://res.cloudinary.com/dcncqacrd/image/upload/v1716000000/skateparks/default-skatepark.jpg";
         const createdParks: ISkateparkModel[] = [];
         let photoIndex = 0;
 
@@ -231,10 +255,6 @@ class SkateparkService {
             const parkPhotos = photos.slice(photoIndex, photoIndex + photoCount);
             photoIndex += photoCount;
 
-            if (!parkPhotos || parkPhotos.length === 0) {
-                throw new BadRequestError(`Missing photos for park ${i + 1}.`);
-            }
-
             const skatepark = new SkateparkModel({
                 title: parkData.title,
                 description: parkData.description,
@@ -253,12 +273,13 @@ class SkateparkService {
                 photoNames: []
             });
 
-            for (const photo of parkPhotos) {
-                const fileName = uuid() + path.extname(photo.name);
-                const fullPath = path.join(process.cwd(), "public", "skateparks", fileName);
-                fs.mkdirSync(path.dirname(fullPath), { recursive: true });
-                fs.writeFileSync(fullPath, photo.data);
-                skatepark.photoNames.push("skateparks/" + fileName);
+            if (!parkPhotos || parkPhotos.length === 0) {
+                skatepark.photoNames.push(DEFAULT_IMAGE_URL);
+            } else {
+                for (const photo of parkPhotos) {
+                    const imageUrl = await this.uploadToCloudinary(photo);
+                    skatepark.photoNames.push(imageUrl);
+                }
             }
 
             await skatepark.save();
@@ -314,30 +335,25 @@ class SkateparkService {
         const skatepark = await this.checkSkatepark(parkId);
         const keep = newSkateparkData.keepPhotoNames ?? [];
 
-        const toDelete = skatepark.photoNames.filter(name => !keep.includes(name));
-        for (const photoName of toDelete) {
-            const filePath = path.join(process.cwd(), "public", photoName);
-            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-        }
+        // Filter out images not in the keep list
+        skatepark.photoNames = skatepark.photoNames.filter(name => keep.includes(name));
 
-        skatepark.photoNames = keep;
-
+        // Upload new photos (if any) to Cloudinary
         if (photos && photos.length > 0) {
             for (const photo of photos) {
-                const fileName = uuid() + path.extname(photo.name);
-                const fullPath = path.join(process.cwd(), "public", "skateparks", fileName);
-                fs.mkdirSync(path.dirname(fullPath), { recursive: true });
-                fs.writeFileSync(fullPath, photo.data);
-                skatepark.photoNames.push("skateparks/" + fileName);
+                const imageUrl = await this.uploadToCloudinary(photo);
+                skatepark.photoNames.push(imageUrl);
             }
         }
 
+        // Update other fields except keepPhotoNames
         for (const key in newSkateparkData) {
             if (key !== "keepPhotoNames") {
                 (skatepark as any)[key] = (newSkateparkData as any)[key];
             }
         }
 
+        // Recalculate avgRating
         if (skatepark.rating.length > 0) {
             const total = skatepark.rating.reduce((sum, r) => sum + (r.value || 0), 0);
             skatepark.avgRating = total / skatepark.rating.length;
