@@ -3,9 +3,7 @@ import { BadRequestError, NotFoundError } from "@/types/error-models";
 import { UploadedFile } from "express-fileupload";
 import { ISkateparkModel, SkateparkModel } from "../models/skatepark.model";
 import { Coords, ExternalLinks, IReport, Size, SkaterLevel, Tag } from "../types/enums";
-
-const DEFAULT_IMAGE_URL = "https://res.cloudinary.com/dcncqacrd/image/upload/v1716000000/skateparks/default-skatepark.jpg";
-
+import { DEFAULT_IMAGE_URL } from "../types/constants";
 
 class SkateparkService {
     // 1. Helper Functions:
@@ -230,7 +228,6 @@ class SkateparkService {
             throw new BadRequestError("Mismatch between parks and photo counts.");
         }
 
-        const DEFAULT_IMAGE_URL = "https://res.cloudinary.com/dcncqacrd/image/upload/v1716000000/skateparks/default-skatepark.jpg";
         const createdParks: ISkateparkModel[] = [];
         let photoIndex = 0;
 
