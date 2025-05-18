@@ -6,6 +6,11 @@ import { POST as report } from "@/app/api/skateparks/[id]/report/route";
 import { skateparkService } from "@/services/skatepark.service";
 import { Tag } from "@/types/enums";
 
+jest.mock("@/lib/mongodb", () => ({
+    connectToDatabase: jest.fn().mockResolvedValue({ db: {} })
+  }));
+  
+
 // Mock the skatepark service
 jest.mock("@/services/skatepark.service");
 
