@@ -37,6 +37,9 @@ export default function SkateparkModal({
   size,
   level
 }: SkateparkModalProps) {
+  const formatSrc = (src: string) =>
+    src.startsWith('http') ? src : `/${src}`;
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
@@ -54,12 +57,11 @@ export default function SkateparkModal({
           {photoNames.map((src, idx) => (
             <img
               key={idx}
-              src={`/${src}`}
+              src={formatSrc(src)}
               alt={`Skatepark photo ${idx + 1}`}
               style={{
                 width: '100%',
-                height: 'auto',
-                maxHeight: 400,
+                height: 400,
                 objectFit: 'cover',
                 borderRadius: 8
               }}
