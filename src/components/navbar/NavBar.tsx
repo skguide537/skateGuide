@@ -14,23 +14,14 @@ import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import { useRouter } from 'next/navigation';
 import { DEFAULT_AVATAR_URL } from '@/types/constants';
-<<<<<<< HEAD
-<<<<<<< HEAD
-import Loading from "@/components/loading/Loading";
 
-=======
->>>>>>> 776b990 (Add Cloudinary fallback avatar support and dynamic NavBar user state)
-=======
 import Loading from "@/components/loading/Loading";
-
->>>>>>> ebac5ed (Add Loading component and apply across map, add-spot, modal, and navbar)
 
 
 export default function NavBar() {
     const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
     const [user, setUser] = React.useState<any>(null);
-<<<<<<< HEAD
-<<<<<<< HEAD
+
     const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
     const router = useRouter();
@@ -57,36 +48,7 @@ export default function NavBar() {
     };
 if (isLoading) return <Loading />;
 
-=======
-=======
-    const [isLoading, setIsLoading] = React.useState<boolean>(true);
-
->>>>>>> ebac5ed (Add Loading component and apply across map, add-spot, modal, and navbar)
-    const router = useRouter();
-
-    React.useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) setUser(JSON.parse(storedUser));
-        setIsLoading(false);
-    }, []);
-
-    const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
-        setAnchorElNav(event.currentTarget);
-    };
-
-    const handleCloseNavMenu = (href?: string) => {
-        setAnchorElNav(null);
-        if (href) router.push(href);
-    };
-
-    const handleLogout = () => {
-        localStorage.removeItem('user');
-        setUser(null);
-        router.push('/login');
-    };
-if (isLoading) return <Loading />;
-
->>>>>>> 776b990 (Add Cloudinary fallback avatar support and dynamic NavBar user state)
+    
     return (
         <AppBar
             position="static"
