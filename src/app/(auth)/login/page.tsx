@@ -10,25 +10,27 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault(); 
 
-      if (res.ok) {
-        router.push('/map');
-      } else {
-        const data = await res.json();
-        setError(data.error);
-      }
-    } catch {
-      setError('An error occurred. Please try again.');
-    }
-  };
+  const res = await fetch('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  const data = await res.json();
+
+  if (res.ok) {
+    localStorage.setItem('user', JSON.stringify(data));
+    router.push('/map'); 
+    window.location.reload();
+     
+  } else {
+    setError(data.error || 'Login failed');
+  }
+};
+
 
   return (
     <Container maxWidth="sm" sx={{ mt: 12 }}>
