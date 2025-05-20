@@ -1,16 +1,14 @@
 'use client';
 
+import Loading from '@/components/loading/Loading';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 
 // Dynamically import the Map component with no SSR
 const Map = dynamic(() => import('@/components/map/Map'), {
   ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center h-screen">
-      <p className="text-lg">Loading map...</p>
-    </div>
-  )
+  loading: () => <Loading />
+
 });
 
 export default function MapPage() {
