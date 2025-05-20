@@ -48,16 +48,16 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchParks = async (pageNumber: number = 1) => {
-    setIsLoading(true);
-    const res = await fetch(`/api/skateparks?page=${pageNumber}&limit=${limit}`);
-    const data = await res.json();
-    setParks(data);
-    setPage(pageNumber);
-    setIsLoading(false);
+  setIsLoading(true);
+  const res = await fetch(`/api/skateparks?page=${pageNumber}&limit=${limit}`);
+  const { data, totalCount } = await res.json(); // updated shape
 
-    // Temporary static total until you support total count in API
-    setTotalPages(3);
-  };
+  setParks(data);
+  setPage(pageNumber);
+  setTotalPages(Math.ceil(totalCount / limit));
+  setIsLoading(false);
+};
+
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
