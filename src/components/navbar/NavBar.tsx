@@ -19,10 +19,11 @@ import Loading from "@/components/loading/Loading";
 
 
 
+
+
 export default function NavBar() {
     const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
     const [user, setUser] = React.useState<any>(null);
-
 
     const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
