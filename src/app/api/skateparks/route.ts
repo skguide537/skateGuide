@@ -50,16 +50,20 @@ export async function GET(request: NextRequest) {
         }
 
         if (searchParams.has("page") || searchParams.has("limit")) {
-            const pageParam = searchParams.get("page");
-            const limitParam = searchParams.get("limit");
+    const pageParam = searchParams.get("page");
+    const limitParam = searchParams.get("limit");
 
-            const page = !isNaN(Number(pageParam)) && Number(pageParam) > 0 ? Number(pageParam) : 1;
-            const limit = !isNaN(Number(limitParam)) && Number(limitParam) > 0 ? Number(limitParam) : 10;
-            const skip = (page - 1) * limit;
+    const page = !isNaN(Number(pageParam)) && Number(pageParam) > 0 ? Number(pageParam) : 1;
+    const limit = !isNaN(Number(limitParam)) && Number(limitParam) > 0 ? Number(limitParam) : 10;
+    const skip = (page - 1) * limit;
 
-            const skateparks = await skateparkService.getPaginatedSkateparks(skip, limit);
-            return NextResponse.json(skateparks);
-        }
+    const [data, totalCount] = await Promise.all([
+        skateparkService.getPaginatedSkateparks(skip, limit),
+        skateparkService.getTotalSkateparksCount()
+    ]);
+
+    return NextResponse.json({ data, totalCount });
+}
 
         // Default: get all skateparks
         const skateparks = await skateparkService.getAllSkateparks();

@@ -40,6 +40,11 @@ class SkateparkService {
 
 
     // 2. GETs:
+
+    public async getTotalSkateparksCount(): Promise<number> {
+    return SkateparkModel.countDocuments();
+}
+
     public async getAllSkateparks(): Promise<ISkateparkModel[]> {
         return await SkateparkModel.find();
     }
