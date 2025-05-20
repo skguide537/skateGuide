@@ -8,8 +8,8 @@ import { Tag } from "@/types/enums";
 
 jest.mock("@/lib/mongodb", () => ({
     connectToDatabase: jest.fn().mockResolvedValue({ db: {} })
-  }));
-  
+}));
+
 
 // Mock the skatepark service
 jest.mock("@/services/skatepark.service");
@@ -39,7 +39,7 @@ describe("Skatepark API Routes", () => {
     describe("GET /api/skateparks", () => {
         it("should return all skateparks", async () => {
             (skateparkService.getAllSkateparks as jest.Mock).mockResolvedValue([mockSkatepark]);
-            
+
             const request = new NextRequest("http://localhost:3000/api/skateparks");
             const response = await GET(request);
             const data = await response.json();
@@ -50,7 +50,7 @@ describe("Skatepark API Routes", () => {
 
         it("should search skateparks by terms", async () => {
             (skateparkService.findSkateparks as jest.Mock).mockResolvedValue([mockSkatepark]);
-            
+
             const request = new NextRequest("http://localhost:3000/api/skateparks?search=test");
             const response = await GET(request);
             const data = await response.json();
@@ -61,7 +61,7 @@ describe("Skatepark API Routes", () => {
 
         it("should perform advanced search", async () => {
             (skateparkService.advancedSearch as jest.Mock).mockResolvedValue([mockSkatepark]);
-            
+
             const request = new NextRequest("http://localhost:3000/api/skateparks?advanced=true&size=Medium");
             const response = await GET(request);
             const data = await response.json();
@@ -72,7 +72,7 @@ describe("Skatepark API Routes", () => {
 
         it("should search by tags", async () => {
             (skateparkService.getSkateparksByTags as jest.Mock).mockResolvedValue([mockSkatepark]);
-            
+
             const request = new NextRequest("http://localhost:3000/api/skateparks?tags=Rail,Ledge");
             const response = await GET(request);
             const data = await response.json();
@@ -83,7 +83,7 @@ describe("Skatepark API Routes", () => {
 
         it("should find skateparks near location", async () => {
             (skateparkService.getSkateparksNearLocation as jest.Mock).mockResolvedValue([mockSkatepark]);
-            
+
             const request = new NextRequest("http://localhost:3000/api/skateparks?near=40.7128,-74.0060,10");
             const response = await GET(request);
             const data = await response.json();
@@ -94,7 +94,7 @@ describe("Skatepark API Routes", () => {
 
         it("should get top rated skateparks", async () => {
             (skateparkService.getTopRatedSkateparks as jest.Mock).mockResolvedValue([mockSkatepark]);
-            
+
             const request = new NextRequest("http://localhost:3000/api/skateparks?top-rated=true&limit=5");
             const response = await GET(request);
             const data = await response.json();
@@ -105,7 +105,7 @@ describe("Skatepark API Routes", () => {
 
         it("should get recent skateparks", async () => {
             (skateparkService.getRecentSkateparks as jest.Mock).mockResolvedValue([mockSkatepark]);
-            
+
             const request = new NextRequest("http://localhost:3000/api/skateparks?recent=true&limit=3");
             const response = await GET(request);
             const data = await response.json();
@@ -116,7 +116,7 @@ describe("Skatepark API Routes", () => {
 
         it("should handle errors", async () => {
             (skateparkService.getAllSkateparks as jest.Mock).mockRejectedValue(new Error("Test error"));
-            
+
             const request = new NextRequest("http://localhost:3000/api/skateparks");
             const response = await GET(request);
             const data = await response.json();
@@ -124,15 +124,40 @@ describe("Skatepark API Routes", () => {
             expect(response.status).toBe(500);
             expect(data.error).toBe("Test error");
         });
+
+        it("should return paginated skateparks", async () => {
+            (skateparkService.getPaginatedSkateparks as jest.Mock).mockResolvedValue([mockSkatepark]);
+
+            const request = new NextRequest("http://localhost:3000/api/skateparks?page=2&limit=5");
+            const response = await GET(request);
+            const data = await response.json();
+
+            expect(skateparkService.getPaginatedSkateparks).toHaveBeenCalledWith(5, 5); // skip = (2 - 1) * 5
+            expect(response.status).toBe(200);
+            expect(data).toEqual([mockSkatepark]);
+        });
+
+        it("should fallback to default page/limit if invalid", async () => {
+            (skateparkService.getPaginatedSkateparks as jest.Mock).mockResolvedValue([mockSkatepark]);
+
+            const request = new NextRequest("http://localhost:3000/api/skateparks?page=abc&limit=notanumber");
+            const response = await GET(request);
+            const data = await response.json();
+
+            expect(skateparkService.getPaginatedSkateparks).toHaveBeenCalledWith(0, 10); // fallback: page=1, limit=10
+            expect(response.status).toBe(200);
+            expect(data).toEqual([mockSkatepark]);
+        });
+
     });
 
     describe("POST /api/skateparks", () => {
         it("should create a new skatepark", async () => {
             (skateparkService.addSkatepark as jest.Mock).mockResolvedValue(mockSkatepark);
-            
+
             const formData = new FormData();
             formData.append("data", JSON.stringify(mockSkatepark));
-            
+
             const request = new NextRequest("http://localhost:3000/api/skateparks", {
                 method: "POST",
                 headers: {
@@ -164,7 +189,7 @@ describe("Skatepark API Routes", () => {
     describe("GET /api/skateparks/[id]", () => {
         it("should return a specific skatepark", async () => {
             (skateparkService.getOneSkatepark as jest.Mock).mockResolvedValue(mockSkatepark);
-            
+
             const request = new NextRequest("http://localhost:3000/api/skateparks/123");
             const response = await getOne(request, { params: { id: "123" } });
             const data = await response.json();
@@ -175,7 +200,7 @@ describe("Skatepark API Routes", () => {
 
         it("should return 404 if skatepark not found", async () => {
             (skateparkService.getOneSkatepark as jest.Mock).mockRejectedValue(new Error("Not found"));
-            
+
             const request = new NextRequest("http://localhost:3000/api/skateparks/123");
             const response = await getOne(request, { params: { id: "123" } });
             const data = await response.json();
@@ -188,10 +213,10 @@ describe("Skatepark API Routes", () => {
     describe("PUT /api/skateparks/[id]", () => {
         it("should update a skatepark", async () => {
             (skateparkService.updateSkatepark as jest.Mock).mockResolvedValue(mockSkatepark);
-            
+
             const formData = new FormData();
             formData.append("data", JSON.stringify(mockSkatepark));
-            
+
             const request = new NextRequest("http://localhost:3000/api/skateparks/123", {
                 method: "PUT",
                 headers: {
@@ -223,7 +248,7 @@ describe("Skatepark API Routes", () => {
     describe("DELETE /api/skateparks/[id]", () => {
         it("should delete a skatepark", async () => {
             (skateparkService.deleteSkatepark as jest.Mock).mockResolvedValue("Skatepark deleted");
-            
+
             const request = new NextRequest("http://localhost:3000/api/skateparks/123", {
                 method: "DELETE",
                 headers: {
@@ -254,7 +279,7 @@ describe("Skatepark API Routes", () => {
     describe("POST /api/skateparks/[id]/rate", () => {
         it("should rate a skatepark", async () => {
             (skateparkService.rateSkatepark as jest.Mock).mockResolvedValue("Rating added");
-            
+
             const request = new NextRequest("http://localhost:3000/api/skateparks/123/rate", {
                 method: "POST",
                 headers: {
@@ -291,7 +316,7 @@ describe("Skatepark API Routes", () => {
     describe("POST /api/skateparks/[id]/report", () => {
         it("should report a skatepark", async () => {
             (skateparkService.reportSkatepark as jest.Mock).mockResolvedValue("Report submitted");
-            
+
             const request = new NextRequest("http://localhost:3000/api/skateparks/123/report", {
                 method: "POST",
                 headers: {
