@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import Loading from '@/components/loading/Loading'; // ✅ Import
 
 // Fix Leaflet default icon
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -42,6 +43,7 @@ export default function AddSpotPage() {
   const [photos, setPhotos] = useState<FileList | null>(null);
   const [coords, setCoords] = useState<{ lat: number, lng: number } | null>(null);
 
+  const [isSubmitting, setIsSubmitting] = useState(false); // ✅ new state
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<AlertColor>('success');
@@ -58,11 +60,12 @@ export default function AddSpotPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!coords) {
       showSnackbar('Please select a location on the map.', 'warning');
       return;
     }
+
+    setIsSubmitting(true); // ✅ start loading
 
     const formData = new FormData();
     formData.append('data', JSON.stringify({
@@ -81,9 +84,7 @@ export default function AddSpotPage() {
     try {
       const res = await fetch('/api/skateparks', {
         method: 'POST',
-        headers: {
-          'x-user-id': 'mock-user-id' // Replace with real user ID in production
-        },
+        headers: { 'x-user-id': 'mock-user-id' },
         body: formData
       });
 
@@ -99,11 +100,14 @@ export default function AddSpotPage() {
           showSnackbar('Unexpected server error. Check console.', 'error');
         }
       }
-      
     } catch (err: any) {
       showSnackbar(err.message || 'Something went wrong.', 'error');
+    } finally {
+      setIsSubmitting(false); // ✅ end loading
     }
   };
+
+  if (isSubmitting) return <Loading />; // ✅ render loading UI
 
   return (
     <Box maxWidth="md" mx="auto" mt={4} component="form" onSubmit={handleSubmit} sx={{ p: 2 }}>

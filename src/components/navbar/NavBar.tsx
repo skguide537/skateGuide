@@ -14,18 +14,21 @@ import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import { useRouter } from 'next/navigation';
 import { DEFAULT_AVATAR_URL } from '@/types/constants';
+import Loading from "@/components/loading/Loading";
+
 
 
 export default function NavBar() {
     const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
     const [user, setUser] = React.useState<any>(null);
+    const [isLoading, setIsLoading] = React.useState<boolean>(true);
+
     const router = useRouter();
 
     React.useEffect(() => {
         const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        }
+        if (storedUser) setUser(JSON.parse(storedUser));
+        setIsLoading(false);
     }, []);
 
     const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -42,6 +45,7 @@ export default function NavBar() {
         setUser(null);
         router.push('/login');
     };
+if (isLoading) return <Loading />;
 
     return (
         <AppBar
