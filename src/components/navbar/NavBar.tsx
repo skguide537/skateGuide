@@ -14,9 +14,7 @@ import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import { useRouter } from 'next/navigation';
 import { DEFAULT_AVATAR_URL } from '@/types/constants';
-import Loading from "@/components/loading/Loading";
-
-
+import Loading from '@/components/loading/Loading';
 
 
 
@@ -48,7 +46,8 @@ export default function NavBar() {
         setUser(null);
         router.push('/login');
     };
-if (isLoading) return <Loading />;
+
+    if (isLoading) return <Loading />;
 
     
     return (
@@ -64,7 +63,6 @@ if (isLoading) return <Loading />;
         >
             <Container maxWidth="xl">
                 <Toolbar disableGutters>
-                    {/* Logo / Home link */}
                     <Typography
                         variant="h6"
                         noWrap
@@ -79,7 +77,6 @@ if (isLoading) return <Loading />;
                         SkateGuide🛹
                     </Typography>
 
-                    {/* Mobile Menu */}
                     <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
                         <IconButton size="large" onClick={handleOpenNavMenu} color="inherit">
                             <MenuIcon />
@@ -112,7 +109,6 @@ if (isLoading) return <Loading />;
                         </Menu>
                     </Box>
 
-                    {/* Desktop Nav */}
                     <Box sx={{ flexGrow: 1, justifyContent: 'flex-end', display: 'flex', alignItems: 'center' }}>
                         <Button
                             onClick={() => handleCloseNavMenu('/map')}
