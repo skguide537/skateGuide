@@ -14,13 +14,17 @@ import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import { useRouter } from 'next/navigation';
 import { DEFAULT_AVATAR_URL } from '@/types/constants';
+<<<<<<< HEAD
 import Loading from "@/components/loading/Loading";
 
+=======
+>>>>>>> 776b990 (Add Cloudinary fallback avatar support and dynamic NavBar user state)
 
 
 export default function NavBar() {
     const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
     const [user, setUser] = React.useState<any>(null);
+<<<<<<< HEAD
     const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
     const router = useRouter();
@@ -47,6 +51,32 @@ export default function NavBar() {
     };
 if (isLoading) return <Loading />;
 
+=======
+    const router = useRouter();
+
+    React.useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
+    }, []);
+
+    const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorElNav(event.currentTarget);
+    };
+
+    const handleCloseNavMenu = (href?: string) => {
+        setAnchorElNav(null);
+        if (href) router.push(href);
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('user');
+        setUser(null);
+        router.push('/login');
+    };
+
+>>>>>>> 776b990 (Add Cloudinary fallback avatar support and dynamic NavBar user state)
     return (
         <AppBar
             position="static"
