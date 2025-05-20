@@ -128,6 +128,11 @@ class SkateparkService {
         return SkateparkModel.find().sort({ createdAt: -1 }).limit(limit);
     }
 
+    public async getPaginatedSkateparks(skip: number, limit: number): Promise<ISkateparkModel[]> {
+    return await SkateparkModel.find().skip(skip).limit(limit);
+}
+
+
     // 3. CRUDs:
     public async deleteSkatepark(_id: string): Promise<string> {
         const skatepark = await this.checkSkatepark(_id);

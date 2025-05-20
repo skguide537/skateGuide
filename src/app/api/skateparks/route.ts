@@ -49,6 +49,18 @@ export async function GET(request: NextRequest) {
             return NextResponse.json(skateparks);
         }
 
+        if (searchParams.has("page") || searchParams.has("limit")) {
+            const pageParam = searchParams.get("page");
+            const limitParam = searchParams.get("limit");
+
+            const page = !isNaN(Number(pageParam)) && Number(pageParam) > 0 ? Number(pageParam) : 1;
+            const limit = !isNaN(Number(limitParam)) && Number(limitParam) > 0 ? Number(limitParam) : 10;
+            const skip = (page - 1) * limit;
+
+            const skateparks = await skateparkService.getPaginatedSkateparks(skip, limit);
+            return NextResponse.json(skateparks);
+        }
+
         // Default: get all skateparks
         const skateparks = await skateparkService.getAllSkateparks();
         return NextResponse.json(skateparks);
@@ -56,6 +68,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
+
 
 // POST new skatepark
 export async function POST(request: NextRequest) {
