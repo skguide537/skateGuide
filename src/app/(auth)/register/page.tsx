@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Container, TextField, Typography, Alert, Link } from '@mui/material';
+import { useToast } from '@/context/ToastContext';
+
 
 export default function RegisterPage() {
     const [name, setName] = useState('');
@@ -11,6 +13,8 @@ export default function RegisterPage() {
     const [error, setError] = useState('');
     const [photo, setPhoto] = useState<File | null>(null);
     const router = useRouter();
+    const { showToast } = useToast();
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -22,10 +26,12 @@ export default function RegisterPage() {
             });
 
             if (res.ok) {
-                router.push('/map');
+                showToast('Account created successfully!', 'success');
+                setTimeout(() => router.push('/map'), 1000);
             } else {
                 const data = await res.json();
                 setError(data.error);
+                showToast(data.error || 'Registration failed', 'error');
             }
         } catch {
             setError('An error occurred. Please try again.');
@@ -72,7 +78,7 @@ export default function RegisterPage() {
                 />
 
                 <div className="mt-4">
-                    
+
                     <div className="flex items-center space-x-4">
                         <label
                             htmlFor="photo-upload"
