@@ -1,20 +1,14 @@
 'use client';
 
-import {
-    Card,
-    CardContent,
-    CardMedia,
-    Typography,
-    Chip,
-    Button,
-    Stack,
-    Box
-} from '@mui/material';
+import { Card, CardContent, CardMedia, Typography, Chip, Button, Stack, Box } from '@mui/material';
 import Carousel from 'react-material-ui-carousel';
 import { useState } from 'react';
 import SkateparkModal from '../modals/SkateparkModal';
+import Rating from '@mui/material/Rating';
+
 
 interface SkateparkCardProps {
+    _id: string;
     title: string;
     description: string;
     tags: string[];
@@ -24,6 +18,7 @@ interface SkateparkCardProps {
     isPark: boolean;
     size: string;
     level: string;
+    avgRating: number;
 }
 
 export default function SkateparkCard({
@@ -35,7 +30,9 @@ export default function SkateparkCard({
     coordinates,
     isPark,
     size,
-    level
+    level,
+    avgRating,
+    _id
 }: SkateparkCardProps) {
     const [open, setOpen] = useState(false);
 
@@ -56,6 +53,16 @@ export default function SkateparkCard({
         objectFit: 'cover',
         flexShrink: 0
     };
+
+    function getRatingWord(rating: number): string {
+        if (rating >= 4.5) return 'Gnarly';
+        if (rating >= 3.5) return 'Steezy';
+        if (rating >= 2.5) return 'Decent';
+        if (rating >= 1.5) return 'Meh';
+        if (rating > 0) return 'Whack';
+        return 'Unrated';
+    }
+
 
     return (
         <>
@@ -105,6 +112,10 @@ export default function SkateparkCard({
                         <Typography gutterBottom variant="h6" component="div">
                             {title}
                         </Typography>
+                        <Rating value={avgRating} precision={0.5} readOnly size="small" sx={{ mb: 1 }} /><Typography variant="caption" sx={{ color: '#2F2F2F', fontStyle: 'italic', mb: 1 }}>
+                            {getRatingWord(avgRating)}
+                        </Typography>
+
                         <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mb: 1 }}>
                             {tags.slice(0, 4).map((tag, idx) => (
                                 <Chip
@@ -168,6 +179,7 @@ export default function SkateparkCard({
             </Box>
 
             <SkateparkModal
+                _id={_id}
                 open={open}
                 onClose={() => setOpen(false)}
                 title={title}
