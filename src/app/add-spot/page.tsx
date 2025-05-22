@@ -1,16 +1,13 @@
 'use client';
 
-import {
-  Box, Button, FormControl, FormLabel, MenuItem, Select,
-  Switch, TextField, Typography, InputLabel, OutlinedInput, Chip,
-  Snackbar, AlertColor
-} from '@mui/material';
-import MuiAlert from '@mui/material/Alert';
+import Loading from '@/components/loading/Loading';
+import { useToast } from '@/context/ToastContext';
+import { Box, Button, Chip, FormControl, FormLabel, InputLabel, MenuItem, OutlinedInput, Select, Switch, TextField, Typography } from '@mui/material';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { useState } from 'react';
 import { MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-import Loading from '@/components/loading/Loading'; // ✅ Import
+import { Size, Tag } from '@/types/enums';
 
 // Fix Leaflet default icon
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -19,11 +16,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl: '/marker-shadow.png'
 });
 
-const sizes = ['Tiny', 'Small', 'Medium', 'Large', 'Huge'];
-const tags = [
-  "Rail", "Ledge", "Stairs", "Manual Pad", "Bank", "Quarter Pipe", "Half Pipe",
-  "Bowl", "Pool", "Pyramid", "Hubba", "Flatbar", "Kicker", "Spine", "Funbox", "DIY"
-];
+const sizes = Object.values(Size);
+const tags = Object.values(Tag);
 
 function LocationPicker({ onSelect }: { onSelect: (coords: { lat: number, lng: number }) => void }) {
   useMapEvents({
@@ -42,30 +36,17 @@ export default function AddSpotPage() {
   const [tagList, setTagList] = useState<string[]>([]);
   const [photos, setPhotos] = useState<FileList | null>(null);
   const [coords, setCoords] = useState<{ lat: number, lng: number } | null>(null);
-
-  const [isSubmitting, setIsSubmitting] = useState(false); // ✅ new state
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState<AlertColor>('success');
-
-  const handleCloseSnackbar = () => {
-    setSnackbarOpen(false);
-  };
-
-  const showSnackbar = (message: string, severity: AlertColor) => {
-    setSnackbarMessage(message);
-    setSnackbarSeverity(severity);
-    setSnackbarOpen(true);
-  };
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!coords) {
-      showSnackbar('Please select a location on the map.', 'warning');
+      showToast('Please select a location on the map.', 'warning');
       return;
     }
 
-    setIsSubmitting(true); // ✅ start loading
+    setIsSubmitting(true);
 
     const formData = new FormData();
     formData.append('data', JSON.stringify({
@@ -89,25 +70,25 @@ export default function AddSpotPage() {
       });
 
       if (res.ok) {
-        showSnackbar('Skatepark added successfully!', 'success');
+        showToast('Skatepark added successfully!', 'success');
       } else {
         const text = await res.text();
         console.error('Error response text:', text);
         try {
           const data = JSON.parse(text);
-          showSnackbar(data.error || 'Failed to submit skatepark.', 'error');
+          showToast(data.error || 'Failed to submit skatepark.', 'error');
         } catch {
-          showSnackbar('Unexpected server error. Check console.', 'error');
+          showToast('Unexpected server error. Check console.', 'error');
         }
       }
     } catch (err: any) {
-      showSnackbar(err.message || 'Something went wrong.', 'error');
+      showToast(err.message || 'Something went wrong.', 'error');
     } finally {
-      setIsSubmitting(false); // ✅ end loading
+      setIsSubmitting(false);
     }
   };
 
-  if (isSubmitting) return <Loading />; // ✅ render loading UI
+  if (isSubmitting) return <Loading />;
 
   return (
     <Box maxWidth="md" mx="auto" mt={4} component="form" onSubmit={handleSubmit} sx={{ p: 2 }}>
@@ -173,12 +154,6 @@ export default function AddSpotPage() {
       <Button type="submit" variant="contained" sx={{ mt: 3, backgroundColor: '#2F2F2F' }}>
         Submit Skate Spot
       </Button>
-
-      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleCloseSnackbar}>
-        <MuiAlert elevation={6} variant="filled" onClose={handleCloseSnackbar} severity={snackbarSeverity}>
-          {snackbarMessage}
-        </MuiAlert>
-      </Snackbar>
     </Box>
   );
 }

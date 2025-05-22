@@ -15,6 +15,8 @@ import Avatar from '@mui/material/Avatar';
 import { useRouter } from 'next/navigation';
 import { DEFAULT_AVATAR_URL } from '@/types/constants';
 import Loading from '@/components/loading/Loading';
+import { useToast } from '@/context/ToastContext';
+
 
 
 
@@ -23,6 +25,8 @@ export default function NavBar() {
     const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
     const [user, setUser] = React.useState<any>(null);
     const [isLoading, setIsLoading] = React.useState<boolean>(true);
+    const { showToast } = useToast();
+
 
     const router = useRouter();
 
@@ -44,12 +48,13 @@ export default function NavBar() {
     const handleLogout = () => {
         localStorage.removeItem('user');
         setUser(null);
-        router.push('/login');
+        showToast('Logged out successfully', 'success');
+        setTimeout(() => router.push('/login'), 1000);
     };
 
     if (isLoading) return <Loading />;
 
-    
+
     return (
         <AppBar
             position="static"
