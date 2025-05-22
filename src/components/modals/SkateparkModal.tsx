@@ -1,9 +1,13 @@
 'use client';
 
-import { Dialog, DialogTitle, DialogContent, Typography, Chip, Stack, IconButton } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, Typography, Chip, Stack, IconButton, Box } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import Carousel from 'react-material-ui-carousel';
 import Loading from "@/components/loading/Loading";
+import Rating from '@mui/material/Rating';
+import { useEffect, useState } from 'react';
+
+
 
 interface SkateparkModalProps {
     open: boolean;
@@ -16,7 +20,18 @@ interface SkateparkModalProps {
     isPark: boolean;
     size: string;
     level: string;
+    _id: string;
 }
+
+function getRatingWord(rating: number): string {
+    if (rating >= 4.5) return 'Gnarly';
+    if (rating >= 3.5) return 'Steezy';
+    if (rating >= 2.5) return 'Decent';
+    if (rating >= 1.5) return 'Meh';
+    if (rating > 0) return 'Whack';
+    return 'Unrated';
+}
+
 
 export default function SkateparkModal({
     open,
@@ -28,12 +43,38 @@ export default function SkateparkModal({
     coordinates,
     isPark,
     size,
-    level
+    level,
+    _id
 }: SkateparkModalProps) {
     const formatSrc = (src: string) =>
         src.startsWith('http') ? src : `/${src}`;
     const isLoading = photoNames.length === 0;
     if (isLoading) return <Loading />;
+
+    const [userRating, setUserRating] = useState<number | null>(null);
+    const [hoverRating, setHoverRating] = useState<number | null>(-1);
+
+
+    useEffect(() => {
+        const fetchUserRating = async () => {
+            const user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (!user || !_id || !open) return;
+
+            try {
+                const res = await fetch(`/api/skateparks/${_id}`);
+                const park = await res.json();
+                const existing = park.rating?.find((r: any) => r.userId === user._id);
+                if (existing) {
+                    setUserRating(existing.value);
+                }
+            } catch (err) {
+                console.error("Failed to fetch park rating", err);
+            }
+        };
+
+        fetchUserRating();
+    }, [open, _id]);
+
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -90,6 +131,50 @@ export default function SkateparkModal({
                         />
                     ))}
                 </Stack>
+                <Box sx={{ mt: 2 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+                        Rate this spot:
+                    </Typography>
+                    <Rating
+                        name="user-rating"
+                        value={userRating}
+                        onChange={async (_, value) => {
+                            if (!value) return;
+                            const user = JSON.parse(localStorage.getItem("user") || "null");
+                            if (!user) return alert("You must be logged in to rate.");
+                            try {
+                                const res = await fetch(`/api/skateparks/${_id}/rate`, {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                        "x-user-id": user._id
+                                    },
+                                    body: JSON.stringify({ rating: value })
+                                });
+                                const result = await res.json();
+                                if (!res.ok) throw new Error(result.error);
+                                setUserRating(value); // update UI
+                                alert("Thanks for rating!");
+                            } catch (err: any) {
+                                alert(err.message);
+                            }
+                        }}
+                        onChangeActive={(_, hover) => setHoverRating(hover)}
+                    />{(hoverRating !== -1 || userRating) && (
+                        <Typography variant="caption" sx={{ ml: 1 }}>
+                            {getRatingWord(
+                                hoverRating !== null && hoverRating !== -1
+                                    ? hoverRating
+                                    : userRating !== null
+                                        ? userRating
+                                        : 0
+                            )}
+                        </Typography>
+
+                    )}
+
+                </Box>
+
 
                 <div style={{ marginTop: 24 }}>
                     <iframe
