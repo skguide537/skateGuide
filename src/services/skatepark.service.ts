@@ -42,8 +42,8 @@ class SkateparkService {
     // 2. GETs:
 
     public async getTotalSkateparksCount(): Promise<number> {
-    return SkateparkModel.countDocuments();
-}
+        return SkateparkModel.countDocuments();
+    }
 
     public async getAllSkateparks(): Promise<ISkateparkModel[]> {
         return await SkateparkModel.find();
@@ -134,8 +134,8 @@ class SkateparkService {
     }
 
     public async getPaginatedSkateparks(skip: number, limit: number): Promise<ISkateparkModel[]> {
-    return await SkateparkModel.find().skip(skip).limit(limit);
-}
+        return await SkateparkModel.find().skip(skip).limit(limit);
+    }
 
 
     // 3. CRUDs:
@@ -215,8 +215,8 @@ class SkateparkService {
         });
 
         // Upload to Cloudinary or fallback to default
-        if (!photos || photos.length === 0)  skatepark.photoNames.push(DEFAULT_IMAGE_URL); 
-         else {
+        if (!photos || photos.length === 0) skatepark.photoNames.push(DEFAULT_IMAGE_URL);
+        else {
             for (const photo of photos) {
                 const imageUrl = await this.uploadToCloudinary(photo);
                 skatepark.photoNames.push(imageUrl);
@@ -297,20 +297,26 @@ class SkateparkService {
     }
 
     public async rateSkatepark(parkId: string, userId: string, rating: number): Promise<string> {
-        if (rating < 1 || rating > 5) throw new BadRequestError("Rating must be between 1 and 5.");
+    if (rating < 1 || rating > 5) throw new BadRequestError("Rating must be between 1 and 5.");
 
-        const skatepark = await this.checkSkatepark(parkId);
+    const skatepark = await this.checkSkatepark(parkId);
 
-        const existingRating = skatepark.rating.find(r => r.userId?.toString() === userId);
-        if (existingRating) throw new BadRequestError("You have already rated this skatepark.");
+    const existingRating = skatepark.rating.find(r => r.userId?.toString() === userId);
 
-        skatepark.rating.push({ userId, value: rating });
-        const total = skatepark.rating.reduce((sum, r) => sum + (r.value || 0), 0);
-        skatepark.avgRating = total / skatepark.rating.length;
-        await skatepark.save();
-
-        return "Skatepark rated successfully.";
+    if (existingRating) {
+        existingRating.value = rating; 
+    } else {
+        skatepark.rating.push({ userId, value: rating }); ``
     }
+
+    // Recalculate average rating
+    const total = skatepark.rating.reduce((sum: number, r: { value: number }) => sum + r.value, 0);
+    skatepark.avgRating = total / skatepark.rating.length;
+
+    await skatepark.save();
+    return "Skatepark rated successfully.";
+}
+
 
     public async reportSkatepark(parkId: string, userId: string, reason: string): Promise<string> {
         const skatepark = await this.checkSkatepark(parkId);
