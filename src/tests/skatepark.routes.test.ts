@@ -127,6 +127,7 @@ describe("Skatepark API Routes", () => {
 
         it("should return paginated skateparks", async () => {
             (skateparkService.getPaginatedSkateparks as jest.Mock).mockResolvedValue([mockSkatepark]);
+            (skateparkService.getTotalSkateparksCount as jest.Mock).mockResolvedValue(1);
 
             const request = new NextRequest("http://localhost:3000/api/skateparks?page=2&limit=5");
             const response = await GET(request);
@@ -134,11 +135,14 @@ describe("Skatepark API Routes", () => {
 
             expect(skateparkService.getPaginatedSkateparks).toHaveBeenCalledWith(5, 5); // skip = (2 - 1) * 5
             expect(response.status).toBe(200);
-            expect(data).toEqual([mockSkatepark]);
+            expect(data.data).toEqual([mockSkatepark]);
+            expect(data.totalCount).toBe(1);
+
         });
 
         it("should fallback to default page/limit if invalid", async () => {
             (skateparkService.getPaginatedSkateparks as jest.Mock).mockResolvedValue([mockSkatepark]);
+            (skateparkService.getTotalSkateparksCount as jest.Mock).mockResolvedValue(1);
 
             const request = new NextRequest("http://localhost:3000/api/skateparks?page=abc&limit=notanumber");
             const response = await GET(request);
@@ -146,7 +150,8 @@ describe("Skatepark API Routes", () => {
 
             expect(skateparkService.getPaginatedSkateparks).toHaveBeenCalledWith(0, 10); // fallback: page=1, limit=10
             expect(response.status).toBe(200);
-            expect(data).toEqual([mockSkatepark]);
+            expect(data.data).toEqual([mockSkatepark]);
+            expect(data.totalCount).toBe(1);
         });
 
     });
