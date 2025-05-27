@@ -12,7 +12,7 @@ export default function LoginPage() {
     const [error, setError] = useState('');
     const router = useRouter();
     const { showToast } = useToast();
-    const { setUser } = useUser(); // ✅ use context
+    const { setUser } = useUser();
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -26,7 +26,7 @@ export default function LoginPage() {
         const data = await res.json();
 
         if (res.ok) {
-            setUser(data); // ✅ store user in context (no localStorage)
+            setUser(data);
             showToast(`Hi ${data.name || data.email || 'Skater'} 👋`, 'success');
             router.push('/');
         } else {
