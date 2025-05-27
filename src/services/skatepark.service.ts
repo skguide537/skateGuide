@@ -112,8 +112,9 @@ class SkateparkService {
         const sorted = allSkateparks
             .filter(p => p.rating.length > 0)
             .sort((a, b) => {
-                const avgA = a.rating.reduce((acc, r) => acc + (r.value || 0), 0) / a.rating.length;
-                const avgB = b.rating.reduce((acc, r) => acc + (r.value || 0), 0) / b.rating.length;
+                const avgA = a.rating.reduce((acc: number, r: { value: number }) => acc + (r.value || 0), 0) / a.rating.length;
+                const avgB = b.rating.reduce((acc: number, r: { value: number }) => acc + (r.value || 0), 0) / b.rating.length;
+
                 return avgB - avgA;
             });
 
@@ -297,25 +298,25 @@ class SkateparkService {
     }
 
     public async rateSkatepark(parkId: string, userId: string, rating: number): Promise<string> {
-    if (rating < 1 || rating > 5) throw new BadRequestError("Rating must be between 1 and 5.");
+        if (rating < 1 || rating > 5) throw new BadRequestError("Rating must be between 1 and 5.");
 
-    const skatepark = await this.checkSkatepark(parkId);
+        const skatepark = await this.checkSkatepark(parkId);
 
-    const existingRating = skatepark.rating.find(r => r.userId?.toString() === userId);
+        const existingRating = skatepark.rating.find(r => r.userId?.toString() === userId);
 
-    if (existingRating) {
-        existingRating.value = rating; 
-    } else {
-        skatepark.rating.push({ userId, value: rating }); ``
+        if (existingRating) {
+            existingRating.value = rating;
+        } else {
+            skatepark.rating.push({ userId, value: rating }); ``
+        }
+
+        // Recalculate average rating
+        const total = skatepark.rating.reduce((sum: number, r: { value: number }) => sum + r.value, 0);
+        skatepark.avgRating = total / skatepark.rating.length;
+
+        await skatepark.save();
+        return "Skatepark rated successfully.";
     }
-
-    // Recalculate average rating
-    const total = skatepark.rating.reduce((sum: number, r: { value: number }) => sum + r.value, 0);
-    skatepark.avgRating = total / skatepark.rating.length;
-
-    await skatepark.save();
-    return "Skatepark rated successfully.";
-}
 
 
     public async reportSkatepark(parkId: string, userId: string, reason: string): Promise<string> {
