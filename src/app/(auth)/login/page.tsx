@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Container, TextField, Typography, Alert, Link } from '@mui/material';
 import { useToast } from '@/context/ToastContext';
+import { useUser } from '@/context/UserContext';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -11,6 +12,7 @@ export default function LoginPage() {
     const [error, setError] = useState('');
     const router = useRouter();
     const { showToast } = useToast();
+    const { setUser } = useUser(); // ✅ use context
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -24,16 +26,14 @@ export default function LoginPage() {
         const data = await res.json();
 
         if (res.ok) {
-            localStorage.setItem('user', JSON.stringify(data));
+            setUser(data); // ✅ store user in context (no localStorage)
             showToast(`Hi ${data.name || data.email || 'Skater'} 👋`, 'success');
             router.push('/');
-
         } else {
             showToast(data.error || 'Login failed', 'error');
             setError(data.error || 'Login failed');
         }
     };
-
 
     return (
         <Container maxWidth="sm" sx={{ mt: 12 }}>
