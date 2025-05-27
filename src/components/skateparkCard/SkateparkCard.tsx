@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardMedia, Typography, Chip, Button, Stack, Box } from '@mui/material';
 import Carousel from 'react-material-ui-carousel';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import SkateparkModal from '../modals/SkateparkModal';
 import Rating from '@mui/material/Rating';
 
@@ -19,6 +19,7 @@ interface SkateparkCardProps {
     size: string;
     level: string;
     avgRating: number;
+    externalLinks?: { url: string; sentBy: { id: string; name: string }; sentAt: string }[];
 }
 
 export default function SkateparkCard({
@@ -32,9 +33,16 @@ export default function SkateparkCard({
     size,
     level,
     avgRating,
-    _id
+    _id,
+    externalLinks
 }: SkateparkCardProps) {
     const [open, setOpen] = useState(false);
+
+    useEffect(() => {
+        console.log("External links in card:", externalLinks);
+    }, []);
+
+
 
     const openInMaps = () => {
         const url = `https://www.google.com/maps/search/?api=1&query=${coordinates.lat},${coordinates.lng}`;
@@ -62,6 +70,8 @@ export default function SkateparkCard({
         if (rating > 0) return 'Whack';
         return 'Unrated';
     }
+
+
 
 
     return (
@@ -190,6 +200,7 @@ export default function SkateparkCard({
                 level={level}
                 tags={tags}
                 coordinates={coordinates}
+                externalLinks={externalLinks}
             />
         </>
     );

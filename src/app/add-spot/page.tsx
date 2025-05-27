@@ -2,14 +2,15 @@
 
 import Loading from '@/components/loading/Loading';
 import { useToast } from '@/context/ToastContext';
+import { useUser } from '@/context/UserContext';
 import { Box, Button, Chip, FormControl, FormLabel, InputLabel, MenuItem, OutlinedInput, Select, Switch, TextField, Typography } from '@mui/material';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useState } from 'react';
 import { MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet';
-import { Size, Tag } from '@/types/enums';
+import { Size, Tag, SkaterLevel } from '@/types/enums';
+import { useRouter } from 'next/navigation';
 
-// Fix Leaflet default icon
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
     iconUrl: '/marker-icon.png',
@@ -18,6 +19,7 @@ L.Icon.Default.mergeOptions({
 
 const sizes = Object.values(Size);
 const tags = Object.values(Tag);
+const levels = Object.values(SkaterLevel);
 
 function LocationPicker({ onSelect }: { onSelect: (coords: { lat: number, lng: number }) => void }) {
     useMapEvents({
@@ -32,6 +34,7 @@ export default function AddSpotPage() {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [size, setSize] = useState('');
+    const [level, setLevel] = useState('');
     const [isPark, setIsPark] = useState(false);
     const [tagList, setTagList] = useState<string[]>([]);
     const [photos, setPhotos] = useState<FileList | null>(null);
@@ -40,6 +43,9 @@ export default function AddSpotPage() {
     const [newLink, setNewLink] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { showToast } = useToast();
+    const { user } = useUser();
+    const router = useRouter();
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -55,10 +61,23 @@ export default function AddSpotPage() {
             title,
             description,
             size,
+            level,
             isPark,
             tags: tagList,
-            location: coords,
-            externalLinks: externalLinks.filter(link => link.trim() !== '')
+            location: {
+                type: "Point",
+                coordinates: [coords.lng, coords.lat]
+            },
+            externalLinks: externalLinks
+                .filter(link => link.trim() !== '')
+                .map(link => ({
+                    url: link,
+                    sentBy: {
+                        id: user?._id,
+                        name: user?.name
+                    },
+                    sentAt: new Date()
+                }))
         }));
 
         if (photos) {
@@ -68,12 +87,13 @@ export default function AddSpotPage() {
         try {
             const res = await fetch('/api/skateparks', {
                 method: 'POST',
-                headers: { 'x-user-id': 'mock-user-id' },
+                headers: { 'x-user-id': user?._id || '' },
                 body: formData
             });
 
             if (res.ok) {
                 showToast('Skatepark added successfully!', 'success');
+                setTimeout(() => router.push('/'), 1000);
             } else {
                 const text = await res.text();
                 console.error('Error response text:', text);
@@ -97,20 +117,20 @@ export default function AddSpotPage() {
         <Box maxWidth="md" mx="auto" mt={4} component="form" onSubmit={handleSubmit} sx={{ p: 2 }}>
             <Typography variant="h4" gutterBottom>Add New Skate Spot</Typography>
 
-            <TextField
-                fullWidth label="Title" value={title} onChange={e => setTitle(e.target.value)}
-                sx={{ mb: 2 }}
-            />
-            <TextField
-                fullWidth multiline rows={4} label="Description"
-                value={description} onChange={e => setDescription(e.target.value)}
-                sx={{ mb: 2 }}
-            />
+            <TextField fullWidth label="Title" value={title} onChange={e => setTitle(e.target.value)} sx={{ mb: 2 }} />
+            <TextField fullWidth multiline rows={4} label="Description" value={description} onChange={e => setDescription(e.target.value)} sx={{ mb: 2 }} />
 
             <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel>Size</InputLabel>
                 <Select value={size} label="Size" onChange={e => setSize(e.target.value)}>
                     {sizes.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                </Select>
+            </FormControl>
+
+            <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Level</InputLabel>
+                <Select value={level} label="Level" onChange={e => setLevel(e.target.value)}>
+                    {levels.map(l => <MenuItem key={l} value={l}>{l}</MenuItem>)}
                 </Select>
             </FormControl>
 
@@ -152,13 +172,7 @@ export default function AddSpotPage() {
                 </MapContainer>
             </Box>
 
-            <TextField
-                fullWidth
-                label="Add External Link"
-                value={newLink}
-                onChange={(e) => setNewLink(e.target.value)}
-                sx={{ mt: 2 }}
-            />
+            <TextField fullWidth label="Add External Link" value={newLink} onChange={(e) => setNewLink(e.target.value)} sx={{ mt: 2 }} />
             <Button
                 variant="outlined"
                 onClick={() => {
@@ -183,9 +197,7 @@ export default function AddSpotPage() {
                 ))}
             </Box>
 
-
             <input type="file" multiple accept="image/*" onChange={(e) => setPhotos(e.target.files)} />
-
 
             <Button type="submit" variant="contained" sx={{ mt: 3, backgroundColor: '#2F2F2F' }}>
                 Submit Skate Spot
