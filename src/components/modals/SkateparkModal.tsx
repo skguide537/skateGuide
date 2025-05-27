@@ -17,6 +17,11 @@ interface SkateparkModalProps {
     tags: string[];
     photoNames: string[];
     coordinates: { lat: number; lng: number };
+    externalLinks?: {
+        url: string;
+        sentBy: { id: string; name: string };
+        sentAt: string;
+    }[];
     isPark: boolean;
     size: string;
     level: string;
@@ -43,7 +48,8 @@ export default function SkateparkModal({
     isPark,
     size,
     level,
-    _id
+    _id,
+    externalLinks
 }: SkateparkModalProps) {
     const formatSrc = (src: string) => src.startsWith('http') ? src : `/${src}`;
     const isLoading = photoNames.length === 0;
@@ -54,24 +60,8 @@ export default function SkateparkModal({
     const { showToast } = useToast();
     const { user } = useUser();
 
-    useEffect(() => {
-        const fetchUserRating = async () => {
-            if (!user || !_id || !open) return;
 
-            try {
-                const res = await fetch(`/api/skateparks/${_id}`);
-                const park = await res.json();
-                const existing = park.rating?.find((r: any) => r.userId === user._id);
-                if (existing) {
-                    setUserRating(existing.value);
-                }
-            } catch (err) {
-                console.error("Failed to fetch park rating", err);
-            }
-        };
 
-        fetchUserRating();
-    }, [open, _id, user]);
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -120,6 +110,27 @@ export default function SkateparkModal({
                         />
                     ))}
                 </Stack>
+
+                {externalLinks && externalLinks.length > 0 && (
+                    <Box sx={{ mt: 3 }}>
+                        <Typography variant="subtitle2" gutterBottom>External Links</Typography>
+                        <Stack spacing={1}>
+                            {externalLinks.map((link, idx) => (
+                                <Box key={idx}>
+                                    <a href={link.url} target="_blank" rel="noopener noreferrer" style={{ color: '#1976d2' }}>
+                                        {link.url}
+                                    </a>
+                                    <Typography variant="caption" display="block">
+                                        Sent by: {typeof link.sentBy === 'string' ? link.sentBy : link.sentBy.name}
+                                    </Typography>
+
+                                </Box>
+                            ))}
+                        </Stack>
+                    </Box>
+                )}
+
+
 
                 <Box sx={{ mt: 2 }}>
                     <Typography variant="subtitle2" sx={{ mb: 0.5 }}>

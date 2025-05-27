@@ -18,12 +18,16 @@ interface Skatepark {
     description: string;
     tags: string[];
     photoNames: string[];
-    location: {coordinates: [number, number]};
+    location: { coordinates: [number, number] };
     isPark: boolean;
     size: string;
     level: string;
     avgRating: number;
-
+    externalLinks?: {
+        url: string;
+        sentBy: { id: string; name: string };
+        sentAt: string;
+    }[];
 }
 
 function getDistanceKm(userLat: number, userLng: number, parkLat: number, parkLng: number): number {
@@ -116,7 +120,7 @@ export default function HomePage() {
                             return (
                                 <Grid item xs={12} sm={6} md={4} key={park._id} {...({} as any)}>
                                     <SkateparkCard
-                                    _id={park._id}
+                                        _id={park._id}
                                         title={park.title}
                                         description={park.description}
                                         tags={park.tags}
@@ -127,6 +131,7 @@ export default function HomePage() {
                                         size={park.size}
                                         level={park.level}
                                         avgRating={park.avgRating}
+                                        externalLinks={park.externalLinks}
                                     />
                                 </Grid>
                             );

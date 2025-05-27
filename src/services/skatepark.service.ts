@@ -46,13 +46,19 @@ class SkateparkService {
     }
 
     public async getAllSkateparks(): Promise<ISkateparkModel[]> {
-        return await SkateparkModel.find();
+        return await SkateparkModel.find().populate("externalLinks.sentBy", "name").exec();
     }
 
+
     public async getOneSkatepark(_id: string): Promise<ISkateparkModel> {
-        const skatepark = await this.checkSkatepark(_id);
+        const skatepark = await SkateparkModel.findById(_id)
+            .populate("externalLinks.sentBy", "name")
+            .exec();
+
+        if (!skatepark) throw new NotFoundError(`Skatepark with _id ${_id} not found.`);
         return skatepark;
     }
+
 
     public async findSkateparks(partialData: Partial<ISkateparkModel>): Promise<ISkateparkModel[]> {
         const query: Record<string, any> = {};
@@ -84,10 +90,14 @@ class SkateparkService {
     }
 
     public async getSkateparksBySkater(userId: string): Promise<ISkateparkModel[]> {
-        const skateparks = await SkateparkModel.find({ createdBy: userId });
+        const skateparks = await SkateparkModel.find({ createdBy: userId })
+            .populate("externalLinks.sentBy", "name")
+            .exec();
+
         if (skateparks.length === 0) throw new NotFoundError(`No parks found for user with id ${userId}`);
         return skateparks;
     }
+
 
     public async getSkateparksNearLocation(coords: Coords, radiusKm: number): Promise<ISkateparkModel[]> {
         const radiusInMeters = radiusKm * 1000;
@@ -102,13 +112,20 @@ class SkateparkService {
                     $maxDistance: radiusInMeters
                 }
             }
-        });
+        })
+            .populate("externalLinks.sentBy", "name")
+            .exec();
+
         if (skateparks.length === 0) throw new NotFoundError("No skateparks found near this location.");
         return skateparks;
     }
 
+
     public async getTopRatedSkateparks(limit?: number): Promise<ISkateparkModel[]> {
-        const allSkateparks = await SkateparkModel.find();
+        const allSkateparks = await SkateparkModel.find()
+            .populate("externalLinks.sentBy", "name")
+            .exec();
+
         const sorted = allSkateparks
             .filter(p => p.rating.length > 0)
             .sort((a, b) => {
@@ -121,6 +138,7 @@ class SkateparkService {
         return limit ? sorted.slice(0, limit) : sorted;
     }
 
+
     public async getSkateparksByTags(tags: Tag[]): Promise<ISkateparkModel[]> {
         if (!tags || tags.length === 0) throw new BadRequestError(`Missing tags for search.`);
 
@@ -131,12 +149,38 @@ class SkateparkService {
     }
 
     public async getRecentSkateparks(limit: number = 3): Promise<ISkateparkModel[]> {
-        return SkateparkModel.find().sort({ createdAt: -1 }).limit(limit);
+        return SkateparkModel.find()
+            .sort({ createdAt: -1 })
+            .limit(limit)
+            .populate("externalLinks.sentBy", "name")
+            .exec();
     }
 
-    public async getPaginatedSkateparks(skip: number, limit: number): Promise<ISkateparkModel[]> {
-        return await SkateparkModel.find().skip(skip).limit(limit);
-    }
+
+    public async getPaginatedSkateparks(skip: number, limit: number) {
+    const rawParks = await SkateparkModel.find()
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('externalLinks.sentBy', 'name')
+        .lean();
+
+    const parks = rawParks.map((park: any) => ({
+        ...park,
+        externalLinks: park.externalLinks?.map((link: any) => ({
+            ...link,
+            sentBy: {
+                id: link.sentBy._id.toString(),
+                name: link.sentBy.name
+            }
+        }))
+    }));
+
+    return parks;
+}
+
+
+
 
 
     // 3. CRUDs:
@@ -210,10 +254,15 @@ class SkateparkService {
             isPark: parkData.isPark === true || parkData.isPark === "true",
             rating: [],
             createdBy: userId,
-            externalLinks: parkData.externalLinks || [],
+            externalLinks: (parkData.externalLinks || []).map((link: any) => ({
+                url: link.url,
+                sentBy: link.sentBy?.id || userId,
+                sentAt: new Date(link.sentAt || Date.now())
+            })),
             reports: [],
             photoNames: []
         });
+
 
         // Upload to Cloudinary or fallback to default
         if (!photos || photos.length === 0) skatepark.photoNames.push(DEFAULT_IMAGE_URL);
