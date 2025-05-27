@@ -6,6 +6,7 @@ import Carousel from 'react-material-ui-carousel';
 import Loading from "@/components/loading/Loading";
 import Rating from '@mui/material/Rating';
 import { useEffect, useState } from 'react';
+import { useToast } from '@/context/ToastContext';
 
 
 
@@ -53,6 +54,8 @@ export default function SkateparkModal({
 
     const [userRating, setUserRating] = useState<number | null>(null);
     const [hoverRating, setHoverRating] = useState<number | null>(-1);
+    const { showToast } = useToast();
+
 
 
     useEffect(() => {
@@ -141,7 +144,7 @@ export default function SkateparkModal({
                         onChange={async (_, value) => {
                             if (!value) return;
                             const user = JSON.parse(localStorage.getItem("user") || "null");
-                            if (!user) return alert("You must be logged in to rate.");
+                            if (!user) return showToast("You must be logged in to rate.", "error");
                             try {
                                 const res = await fetch(`/api/skateparks/${_id}/rate`, {
                                     method: "POST",
@@ -153,10 +156,10 @@ export default function SkateparkModal({
                                 });
                                 const result = await res.json();
                                 if (!res.ok) throw new Error(result.error);
-                                setUserRating(value); // update UI
-                                alert("Thanks for rating!");
+                                setUserRating(value);
+                                showToast("Thanks for rating!", "success");
                             } catch (err: any) {
-                                alert(err.message);
+                                showToast(err.message, "error");
                             }
                         }}
                         onChangeActive={(_, hover) => setHoverRating(hover)}
