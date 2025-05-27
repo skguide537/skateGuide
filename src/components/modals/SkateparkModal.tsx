@@ -7,8 +7,7 @@ import Loading from "@/components/loading/Loading";
 import Rating from '@mui/material/Rating';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/context/ToastContext';
-
-
+import { useUser } from '@/context/UserContext';
 
 interface SkateparkModalProps {
     open: boolean;
@@ -33,7 +32,6 @@ function getRatingWord(rating: number): string {
     return 'Unrated';
 }
 
-
 export default function SkateparkModal({
     open,
     onClose,
@@ -47,20 +45,17 @@ export default function SkateparkModal({
     level,
     _id
 }: SkateparkModalProps) {
-    const formatSrc = (src: string) =>
-        src.startsWith('http') ? src : `/${src}`;
+    const formatSrc = (src: string) => src.startsWith('http') ? src : `/${src}`;
     const isLoading = photoNames.length === 0;
     if (isLoading) return <Loading />;
 
     const [userRating, setUserRating] = useState<number | null>(null);
     const [hoverRating, setHoverRating] = useState<number | null>(-1);
     const { showToast } = useToast();
-
-
+    const { user } = useUser();
 
     useEffect(() => {
         const fetchUserRating = async () => {
-            const user = JSON.parse(localStorage.getItem('user') || 'null');
             if (!user || !_id || !open) return;
 
             try {
@@ -76,8 +71,7 @@ export default function SkateparkModal({
         };
 
         fetchUserRating();
-    }, [open, _id]);
-
+    }, [open, _id, user]);
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -108,15 +102,7 @@ export default function SkateparkModal({
                     ))}
                 </Carousel>
 
-                <Typography
-                    variant="body2"
-                    sx={{
-                        mt: 2,
-                        maxHeight: 100,
-                        overflowY: 'auto',
-                        whiteSpace: 'pre-line'
-                    }}
-                >
+                <Typography variant="body2" sx={{ mt: 2, maxHeight: 100, overflowY: 'auto', whiteSpace: 'pre-line' }}>
                     {description}
                 </Typography>
 
@@ -134,6 +120,7 @@ export default function SkateparkModal({
                         />
                     ))}
                 </Stack>
+
                 <Box sx={{ mt: 2 }}>
                     <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
                         Rate this spot:
@@ -143,8 +130,8 @@ export default function SkateparkModal({
                         value={userRating}
                         onChange={async (_, value) => {
                             if (!value) return;
-                            const user = JSON.parse(localStorage.getItem("user") || "null");
                             if (!user) return showToast("You must be logged in to rate.", "error");
+
                             try {
                                 const res = await fetch(`/api/skateparks/${_id}/rate`, {
                                     method: "POST",
@@ -163,7 +150,8 @@ export default function SkateparkModal({
                             }
                         }}
                         onChangeActive={(_, hover) => setHoverRating(hover)}
-                    />{(hoverRating !== -1 || userRating) && (
+                    />
+                    {(hoverRating !== -1 || userRating) && (
                         <Typography variant="caption" sx={{ ml: 1 }}>
                             {getRatingWord(
                                 hoverRating !== null && hoverRating !== -1
@@ -173,11 +161,8 @@ export default function SkateparkModal({
                                         : 0
                             )}
                         </Typography>
-
                     )}
-
                 </Box>
-
 
                 <div style={{ marginTop: 24 }}>
                     <iframe
