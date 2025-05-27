@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 export interface User {
   _id: string;
@@ -19,6 +19,23 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+  const restoreSession = async () => {
+    try {
+      const res = await fetch('/api/auth/me'); // or your route
+      if (!res.ok) return;
+
+      const user = await res.json();
+      setUser(user);
+    } catch (err) {
+      console.error("Failed to restore session", err);
+    }
+  };
+
+  restoreSession();
+}, []);
+
 
   const logout = () => {
     setUser(null);
