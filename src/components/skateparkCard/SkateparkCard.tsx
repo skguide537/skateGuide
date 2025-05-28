@@ -38,9 +38,7 @@ export default function SkateparkCard({
 }: SkateparkCardProps) {
     const [open, setOpen] = useState(false);
 
-    useEffect(() => {
-        console.log("External links in card:", externalLinks);
-    }, []);
+    
 
 
 
