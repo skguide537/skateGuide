@@ -52,15 +52,22 @@ export default function HomePage() {
     const [isLoading, setIsLoading] = useState(true);
 
     const fetchParks = async (pageNumber: number = 1) => {
+    try {
         setIsLoading(true);
         const res = await fetch(`/api/skateparks?page=${pageNumber}&limit=${limit}`);
-        const { data, totalCount } = await res.json(); // updated shape
+        const { data = [], totalCount = 0 } = await res.json();
 
-        setParks(data);
+        setParks(Array.isArray(data) ? data : []);
         setPage(pageNumber);
         setTotalPages(Math.ceil(totalCount / limit));
+    } catch (err) {
+        console.error("Failed to fetch parks:", err);
+        setParks([]);
+        setTotalPages(1);
+    } finally {
         setIsLoading(false);
-    };
+    }
+};
 
 
     useEffect(() => {
@@ -105,38 +112,39 @@ export default function HomePage() {
             ) : (
                 <>
                     <Grid container spacing={4}>
-                        {parks.map((park) => {
-                            const parkCoords = {
-                                lat: park.location.coordinates[1],
-                                lng: park.location.coordinates[0],
-                            };
-                            const distanceKm = getDistanceKm(
-                                userCoords.lat,
-                                userCoords.lng,
-                                parkCoords.lat,
-                                parkCoords.lng
-                            );
+    {Array.isArray(parks) && parks.map((park) => {
+        const parkCoords = {
+            lat: park.location.coordinates[1],
+            lng: park.location.coordinates[0],
+        };
+        const distanceKm = getDistanceKm(
+            userCoords.lat,
+            userCoords.lng,
+            parkCoords.lat,
+            parkCoords.lng
+        );
 
-                            return (
-                                <Grid item xs={12} sm={6} md={4} key={park._id} {...({} as any)}>
-                                    <SkateparkCard
-                                        _id={park._id}
-                                        title={park.title}
-                                        description={park.description}
-                                        tags={park.tags}
-                                        photoNames={park.photoNames}
-                                        distanceKm={distanceKm}
-                                        coordinates={parkCoords}
-                                        isPark={park.isPark}
-                                        size={park.size}
-                                        level={park.level}
-                                        avgRating={park.avgRating}
-                                        externalLinks={park.externalLinks}
-                                    />
-                                </Grid>
-                            );
-                        })}
-                    </Grid>
+        return (
+            <Grid item xs={12} sm={6} md={4} key={park._id} {...({} as any)}>
+                <SkateparkCard
+                    _id={park._id}
+                    title={park.title}
+                    description={park.description}
+                    tags={park.tags}
+                    photoNames={park.photoNames}
+                    distanceKm={distanceKm}
+                    coordinates={parkCoords}
+                    isPark={park.isPark}
+                    size={park.size}
+                    level={park.level}
+                    avgRating={park.avgRating}
+                    externalLinks={park.externalLinks}
+                />
+            </Grid>
+        );
+    })}
+</Grid>
+
 
                     <Box display="flex" justifyContent="center" mt={4}>
                         <Pagination
