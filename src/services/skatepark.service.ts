@@ -4,6 +4,7 @@ import { UploadedFile } from "express-fileupload";
 import { ISkateparkModel, SkateparkModel } from "../models/skatepark.model";
 import { Coords, ExternalLinks, IReport, Size, SkaterLevel, Tag } from "../types/enums";
 import { DEFAULT_IMAGE_URL } from "../types/constants";
+import "@/models/User";
 
 class SkateparkService {
     // 1. Helper Functions:
@@ -169,10 +170,12 @@ class SkateparkService {
         ...park,
         externalLinks: park.externalLinks?.map((link: any) => ({
             ...link,
-            sentBy: {
-                id: link.sentBy._id.toString(),
-                name: link.sentBy.name
-            }
+            sentBy: link.sentBy
+                ? {
+                    id: link.sentBy._id?.toString() || "unknown",
+                    name: link.sentBy.name || "Unknown"
+                }
+                : undefined
         }))
     }));
 
