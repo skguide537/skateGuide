@@ -1,207 +1,127 @@
 'use client';
 
-import Loading from '@/components/loading/Loading';
-import { useToast } from '@/context/ToastContext';
-import { useUser } from '@/context/UserContext';
-import { Box, Button, Chip, FormControl, FormLabel, InputLabel, MenuItem, OutlinedInput, Select, Switch, TextField, Typography } from '@mui/material';
-import L from 'leaflet';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useState } from 'react';
-import { MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet';
-import { Size, Tag, SkaterLevel } from '@/types/enums';
-import { useRouter } from 'next/navigation';
+import L from 'leaflet';
+import { useEffect, useState, useRef } from 'react';
+import { Map } from 'leaflet';
+import { Box } from '@mui/material';
+import { useToast } from '@/context/ToastContext';
+import SkateparkModal from '@/components/modals/SkateparkModal';
 
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconUrl: '/marker-icon.png',
-    shadowUrl: '/marker-shadow.png'
+const icon = L.icon({
+  iconUrl: '/marker-icon.png',
+  iconRetinaUrl: '/marker-icon-2x.png',
+  shadowUrl: '/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  tooltipAnchor: [16, -28],
+  shadowSize: [41, 41]
 });
 
-const sizes = Object.values(Size);
-const tags = Object.values(Tag);
-const levels = Object.values(SkaterLevel);
-
-function LocationPicker({ onSelect }: { onSelect: (coords: { lat: number, lng: number }) => void }) {
-    useMapEvents({
-        click(e) {
-            onSelect(e.latlng);
-        }
-    });
-    return null;
+interface MapProps {
+  userLocation: [number, number] | null;
 }
 
-export default function AddSpotPage() {
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [size, setSize] = useState('');
-    const [level, setLevel] = useState('');
-    const [isPark, setIsPark] = useState(false);
-    const [tagList, setTagList] = useState<string[]>([]);
-    const [photos, setPhotos] = useState<FileList | null>(null);
-    const [coords, setCoords] = useState<{ lat: number, lng: number } | null>(null);
-    const [externalLinks, setExternalLinks] = useState<string[]>([]);
-    const [newLink, setNewLink] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const { showToast } = useToast();
-    const { user } = useUser();
-    const router = useRouter();
+interface Skatepark {
+  _id: string;
+  title: string;
+  description: string;
+  location: {
+    type: 'Point';
+    coordinates: [number, number]; // [lng, lat]
+  };
+  photoName: string[];
+  isPark: boolean;
+  size: string;
+  level: string;
+  tags: string[];
+  externalLinks?: {
+    url: string;
+    sentBy: { id: string; name: string };
+    sentAt: string;
+  }[];
+}
 
+export default function MapComponent({ userLocation }: MapProps) {
+  const [spots, setSpots] = useState<Skatepark[]>([]);
+  const [selectedSpot, setSelectedSpot] = useState<Skatepark | null>(null);
+  const mapRef = useRef<Map | null>(null);
+  const { showToast } = useToast();
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!coords) {
-            showToast('Please select a location on the map.', 'warning');
-            return;
-        }
-
-        setIsSubmitting(true);
-
-        const formData = new FormData();
-        formData.append('data', JSON.stringify({
-            title,
-            description,
-            size,
-            level,
-            isPark,
-            tags: tagList,
-            location: {
-                type: "Point",
-                coordinates: [coords.lng, coords.lat]
-            },
-            externalLinks: externalLinks
-                .filter(link => link.trim() !== '')
-                .map(link => ({
-                    url: link,
-                    sentBy: {
-                        id: user?._id,
-                        name: user?.name
-                    },
-                    sentAt: new Date()
-                }))
-        }));
-
-        if (photos) {
-            Array.from(photos).forEach(photo => formData.append('photos', photo));
-        }
-
-        try {
-            const res = await fetch('/api/skateparks', {
-                method: 'POST',
-                headers: { 'x-user-id': user?._id || '' },
-                body: formData
-            });
-
-            if (res.ok) {
-                showToast('Skatepark added successfully!', 'success');
-                setTimeout(() => router.push('/'), 1000);
-            } else {
-                const text = await res.text();
-                console.error('Error response text:', text);
-                try {
-                    const data = JSON.parse(text);
-                    showToast(data.error || 'Failed to submit skatepark.', 'error');
-                } catch {
-                    showToast('Unexpected server error. Check console.', 'error');
-                }
-            }
-        } catch (err: any) {
-            showToast(err.message || 'Something went wrong.', 'error');
-        } finally {
-            setIsSubmitting(false);
-        }
+  useEffect(() => {
+    const fetchSpots = async () => {
+      try {
+        const res = await fetch('/api/skateparks');
+        if (!res.ok) throw new Error('Failed to fetch skateparks');
+        const data = await res.json();
+        setSpots(data);
+      } catch (err: any) {
+        showToast(err.message || 'Unable to load skateparks', 'error');
+      }
     };
 
-    if (isSubmitting) return <Loading />;
+    fetchSpots();
+  }, [showToast]);
 
-    return (
-        <Box maxWidth="md" mx="auto" mt={4} component="form" onSubmit={handleSubmit} sx={{ p: 2 }}>
-            <Typography variant="h4" gutterBottom>Add New Skate Spot</Typography>
+  useEffect(() => {
+    if (mapRef.current) {
+      mapRef.current.invalidateSize();
+    }
+  }, [userLocation]);
 
-            <TextField fullWidth label="Title" value={title} onChange={e => setTitle(e.target.value)} sx={{ mb: 2 }} />
-            <TextField fullWidth multiline rows={4} label="Description" value={description} onChange={e => setDescription(e.target.value)} sx={{ mb: 2 }} />
+  return (
+    <Box mt={4} mx="auto" width="80%" height="60vh" borderRadius={2} boxShadow={3} overflow="hidden" maxWidth={1200}>
+      <MapContainer
+        center={userLocation || [32.073, 34.789]}
+        zoom={13}
+        scrollWheelZoom
+        zoomControl
+        style={{ height: '100%', width: '100%' }}
+        ref={mapRef}
+        whenReady={() => {
+          if (mapRef.current) mapRef.current.invalidateSize();
+        }}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
 
-            <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Size</InputLabel>
-                <Select value={size} label="Size" onChange={e => setSize(e.target.value)}>
-                    {sizes.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
-                </Select>
-            </FormControl>
+        {userLocation && <Marker position={userLocation} icon={icon} />}
 
-            <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Level</InputLabel>
-                <Select value={level} label="Level" onChange={e => setLevel(e.target.value)}>
-                    {levels.map(l => <MenuItem key={l} value={l}>{l}</MenuItem>)}
-                </Select>
-            </FormControl>
+        {spots.map((spot) => (
+          <Marker
+            key={spot._id}
+            position={[spot.location.coordinates[1], spot.location.coordinates[0]]}
+            icon={icon}
+            eventHandlers={{
+              click: () => setSelectedSpot(spot)
+            }}
+          />
+        ))}
+      </MapContainer>
 
-            <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Tags</InputLabel>
-                <Select
-                    multiple value={tagList}
-                    onChange={e => setTagList(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
-                    input={<OutlinedInput label="Tags" />}
-                    renderValue={(selected) => (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                            {selected.map((value) => <Chip key={value} label={value} />)}
-                        </Box>
-                    )}
-                >
-                    {tags.map(tag => (
-                        <MenuItem key={tag} value={tag}>{tag}</MenuItem>
-                    ))}
-                </Select>
-            </FormControl>
-
-            <FormControl sx={{ mb: 2 }}>
-                <FormLabel>Spot Type</FormLabel>
-                <Box display="flex" alignItems="center" gap={1}>
-                    <Typography variant="body2">Street</Typography>
-                    <Switch checked={isPark} onChange={() => setIsPark(!isPark)} />
-                    <Typography variant="body2">Skatepark</Typography>
-                </Box>
-            </FormControl>
-
-            <Box sx={{ height: 300, mb: 2 }}>
-                <MapContainer center={[32.0853, 34.7818]} zoom={13} style={{ height: '100%' }}>
-                    <TileLayer
-                        attribution='&copy; OpenStreetMap'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
-                    <LocationPicker onSelect={(c) => setCoords(c)} />
-                    {coords && <Marker position={[coords.lat, coords.lng]} />}
-                </MapContainer>
-            </Box>
-
-            <TextField fullWidth label="Add External Link" value={newLink} onChange={(e) => setNewLink(e.target.value)} sx={{ mt: 2 }} />
-            <Button
-                variant="outlined"
-                onClick={() => {
-                    if (newLink.trim()) {
-                        setExternalLinks(prev => [...prev, newLink.trim()]);
-                        setNewLink('');
-                    }
-                }}
-                sx={{ mt: 1 }}
-            >
-                Add Link
-            </Button>
-
-            <Box sx={{ mt: 2 }}>
-                {externalLinks.map((link, index) => (
-                    <Chip
-                        key={index}
-                        label={link}
-                        onDelete={() => setExternalLinks(prev => prev.filter((_, i) => i !== index))}
-                        sx={{ mr: 1, mb: 1 }}
-                    />
-                ))}
-            </Box>
-
-            <input type="file" multiple accept="image/*" onChange={(e) => setPhotos(e.target.files)} />
-
-            <Button type="submit" variant="contained" sx={{ mt: 3, backgroundColor: '#2F2F2F' }}>
-                Submit Skate Spot
-            </Button>
-        </Box>
-    );
+      {selectedSpot && (
+        <SkateparkModal
+          open
+          onClose={() => setSelectedSpot(null)}
+          _id={selectedSpot._id}
+          title={selectedSpot.title}
+          description={selectedSpot.description}
+          photoNames={selectedSpot.photoName}
+          isPark={selectedSpot.isPark}
+          size={selectedSpot.size}
+          level={selectedSpot.level}
+          tags={selectedSpot.tags}
+          coordinates={{
+            lat: selectedSpot.location.coordinates[1],
+            lng: selectedSpot.location.coordinates[0]
+          }}
+          externalLinks={selectedSpot.externalLinks}
+        />
+      )}
+    </Box>
+  );
 }
