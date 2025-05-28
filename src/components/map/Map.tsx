@@ -6,111 +6,149 @@ import L from 'leaflet';
 import { useEffect, useState, useRef } from 'react';
 import { Map } from 'leaflet';
 import { Box } from '@mui/material';
+import SkateparkModal from '../modals/SkateparkModal';
+
 
 const icon = L.icon({
-  iconUrl: '/marker-icon.png',
-  iconRetinaUrl: '/marker-icon-2x.png',
-  shadowUrl: '/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  tooltipAnchor: [16, -28],
-  shadowSize: [41, 41],
+    iconUrl: '/marker-icon.png',
+    iconRetinaUrl: '/marker-icon-2x.png',
+    shadowUrl: '/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    tooltipAnchor: [16, -28],
+    shadowSize: [41, 41],
 });
 
 interface MapProps {
-  userLocation: [number, number] | null;
+    userLocation: [number, number] | null;
 }
 
 interface Skatepark {
-  _id: string;
-  title: string;
-  description: string;
-  location: {
-    type: 'Point';
-    coordinates: [number, number]; // [lng, lat]
-  };
+    _id: string;
+    title: string;
+    description: string;
+    location: {
+        type: 'Point';
+        coordinates: [number, number]; // [lng, lat]
+    };
+    photoName: string[];
+    isPark: boolean;
+    size: string;
+    level: string;
+    tags: string[];
+    externalLinks?: {
+        url: string;
+        sentBy: { id: string; name: string };
+        sentAt: string;
+    }[];
 }
 
 export default function MapComponent({ userLocation }: MapProps) {
-  const [spots, setSpots] = useState<Skatepark[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const mapRef = useRef<Map | null>(null);
+    const [spots, setSpots] = useState<Skatepark[]>([]);
+    const [selectedSpot, setSelectedSpot] = useState<Skatepark | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const mapRef = useRef<Map | null>(null);
 
-  useEffect(() => {
-    const fetchSpots = async () => {
-      try {
-        const response = await fetch('/api/skateparks');
-        if (!response.ok) throw new Error('Failed to fetch skateparks');
-        const data = await response.json();
-        setSpots(data);
-      } catch (err) {
-        setError('Unable to load skateparks');
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
 
-    fetchSpots();
-  }, []);
+    useEffect(() => {
+        const fetchSpots = async () => {
+            try {
+                const response = await fetch('/api/skateparks');
+                if (!response.ok) throw new Error('Failed to fetch skateparks');
+                const data = await response.json();
+                setSpots(data);
+            } catch (err) {
+                setError('Unable to load skateparks');
+                console.error(err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
 
-  useEffect(() => {
-    if (mapRef.current) {
-      mapRef.current.invalidateSize();
-    }
-  }, [userLocation]);
+        fetchSpots();
+    }, []);
 
-  return (
-    <Box
-      mt={4}
-      mx="auto"
-      width="80%"
-      height="60vh"
-      borderRadius={2}
-      boxShadow={3}
-      overflow="hidden"
-      maxWidth={1200}
-    >
-      <MapContainer
-        center={userLocation || [32.073, 34.789]}
-        zoom={13}
-        style={{ height: '100%', width: '100%' }}
-        scrollWheelZoom
-        zoomControl
-        whenReady={() => {
-          if (mapRef.current) {
+    useEffect(() => {
+        if (mapRef.current) {
             mapRef.current.invalidateSize();
-          }
-        }}
-        ref={mapRef}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        }
+    }, [userLocation]);
 
-        {userLocation && (
-          <Marker position={userLocation} icon={icon}>
-            <Popup>Your location</Popup>
-          </Marker>
-        )}
+    return (
+        <Box
+            mt={4}
+            mx="auto"
+            width="80%"
+            height="60vh"
+            borderRadius={2}
+            boxShadow={3}
+            overflow="hidden"
+            maxWidth={1200}
+        >
+            <MapContainer
+                center={userLocation || [32.073, 34.789]}
+                zoom={13}
+                style={{ height: '100%', width: '100%' }}
+                scrollWheelZoom
+                zoomControl
+                whenReady={() => {
+                    if (mapRef.current) {
+                        mapRef.current.invalidateSize();
+                    }
+                }}
+                ref={mapRef}
+            >
+                <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
 
-        {spots.map((spot) => (
-          <Marker
-            key={spot._id}
-            position={[spot.location.coordinates[1], spot.location.coordinates[0]]}
-            icon={icon}
-          >
-            <Popup>
-              <strong>{spot.title}</strong>
-              <br />
-              {spot.description}
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
-    </Box>
-  );
+                {userLocation && (
+                    <Marker position={userLocation} icon={icon}>
+                        <Popup>Your location</Popup>
+                    </Marker>
+                )}
+
+                {spots.map((spot) => (
+                    <Marker
+                        key={spot._id}
+                        position={[spot.location.coordinates[1], spot.location.coordinates[0]]}
+                        icon={icon}
+                        eventHandlers={{
+                            click: () => setSelectedSpot(spot),
+                        }}
+                    >
+                        <Popup>
+                            <strong>{spot.title}</strong>
+                            <br />
+                            {spot.description}
+                        </Popup>
+                    </Marker>
+                ))}
+            </MapContainer>
+            {selectedSpot && (
+                <SkateparkModal
+                    open={!!selectedSpot}
+                    onClose={() => setSelectedSpot(null)}
+                    _id={selectedSpot._id}
+                    title={selectedSpot.title}
+                    description={selectedSpot.description}
+                    photoNames={selectedSpot.photoName || []}
+                    isPark={selectedSpot.isPark}
+                    size={selectedSpot.size}
+                    level={selectedSpot.level}
+                    tags={selectedSpot.tags}
+                    coordinates={{
+                        lat: selectedSpot.location.coordinates[1],
+                        lng: selectedSpot.location.coordinates[0]
+                    }}
+                    externalLinks={selectedSpot.externalLinks}
+                />
+            )}
+        </Box>
+
+
+    );
 }
