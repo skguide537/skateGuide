@@ -3,12 +3,12 @@
 import Loading from '@/components/loading/Loading';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
+import 'leaflet/dist/leaflet.css';
 
 // Dynamically import the Map component with no SSR
 const Map = dynamic(() => import('@/components/map/Map'), {
   ssr: false,
   loading: () => <Loading />
-
 });
 
 export default function MapPage() {
@@ -18,7 +18,6 @@ export default function MapPage() {
 
   useEffect(() => {
     setMounted(true);
-    // Get user's location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -44,9 +43,11 @@ export default function MapPage() {
         <div className="flex items-center justify-center h-full">
           <p className="text-red-500">{error}</p>
         </div>
-      ) : (
+      ) : userLocation ? (
         <Map userLocation={userLocation} />
+      ) : (
+        <Loading />
       )}
     </main>
   );
-} 
+}
