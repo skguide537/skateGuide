@@ -73,6 +73,8 @@ class SkateparkService {
         return skateparks;
     }
 
+
+    // refactor, and than perfect for home page
     public async advancedSearch(filters: {
         size?: Size;
         level?: SkaterLevel;
@@ -181,9 +183,6 @@ class SkateparkService {
 
     return parks;
 }
-
-
-
 
 
     // 3. CRUDs:
