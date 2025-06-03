@@ -117,15 +117,37 @@ export default function MapComponent({ userLocation }: MapProps) {
                         position={[spot.location.coordinates[1], spot.location.coordinates[0]]}
                         icon={icon}
                         eventHandlers={{
-                            click: () => setSelectedSpot(spot),
+                            click: (e) => {
+                                e.target.openPopup();
+                            }
                         }}
                     >
                         <Popup>
                             <strong>{spot.title}</strong>
                             <br />
                             {spot.description}
+                            <br />
+                            <button
+                                style={{
+                                    marginTop: '4px',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#007bff',
+                                    cursor: 'pointer',
+                                    padding: 0,
+                                    textDecoration: 'underline'
+                                }}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setTimeout(() => setSelectedSpot(spot), 0);
+                                }}
+                            >
+                                View Details
+                            </button>
                         </Popup>
                     </Marker>
+
                 ))}
             </MapContainer>
             {selectedSpot && (
