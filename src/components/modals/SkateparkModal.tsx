@@ -5,7 +5,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import Carousel from 'react-material-ui-carousel';
 import Loading from "@/components/loading/Loading";
 import Rating from '@mui/material/Rating';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useToast } from '@/context/ToastContext';
 import { useUser } from '@/context/UserContext';
 
