@@ -20,6 +20,17 @@ const icon = L.icon({
     shadowSize: [41, 41],
 });
 
+const myLocationIcon = L.icon({
+  iconUrl: '/marker-my-location.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  tooltipAnchor: [16, -28],
+  shadowUrl: '/marker-shadow.png',
+  shadowSize: [41, 41],
+});
+
+
 interface MapProps {
     userLocation: [number, number] | null;
 }
@@ -106,7 +117,7 @@ export default function MapComponent({ userLocation }: MapProps) {
                 />
 
                 {userLocation && (
-                    <Marker position={userLocation} icon={icon}>
+                    <Marker position={userLocation} icon={myLocationIcon}>
                         <Popup>Your location</Popup>
                     </Marker>
                 )}
@@ -117,37 +128,15 @@ export default function MapComponent({ userLocation }: MapProps) {
                         position={[spot.location.coordinates[1], spot.location.coordinates[0]]}
                         icon={icon}
                         eventHandlers={{
-                            click: (e) => {
-                                e.target.openPopup();
-                            }
+                            click: () => setSelectedSpot(spot),
                         }}
                     >
                         <Popup>
                             <strong>{spot.title}</strong>
                             <br />
                             {spot.description}
-                            <br />
-                            <button
-                                style={{
-                                    marginTop: '4px',
-                                    background: 'none',
-                                    border: 'none',
-                                    color: '#007bff',
-                                    cursor: 'pointer',
-                                    padding: 0,
-                                    textDecoration: 'underline'
-                                }}
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    setTimeout(() => setSelectedSpot(spot), 0);
-                                }}
-                            >
-                                View Details
-                            </button>
                         </Popup>
                     </Marker>
-
                 ))}
             </MapContainer>
             {selectedSpot && (
