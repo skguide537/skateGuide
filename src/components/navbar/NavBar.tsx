@@ -16,6 +16,8 @@ import { useRouter } from 'next/navigation';
 import { DEFAULT_AVATAR_URL } from '@/types/constants';
 import { useToast } from '@/context/ToastContext';
 import { useUser } from '@/context/UserContext';
+import Tooltip from '@mui/material/Tooltip';
+
 
 export default function NavBar() {
     const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
@@ -98,6 +100,25 @@ export default function NavBar() {
                     </Box>
 
                     <Box sx={{ flexGrow: 1, justifyContent: 'flex-end', display: 'flex', alignItems: 'center' }}>
+                        <Tooltip title={!user ? "You need to login to add a spot" : ""}>
+                            <span>
+                                <Button
+                                    onClick={() => user && handleCloseNavMenu('/add-spot')}
+                                    disabled={!user}
+                                    sx={{
+                                        color: '#2F2F2F',
+                                        fontWeight: 'bold',
+                                        mx: 1,
+                                        '&:hover': {
+                                            backgroundColor: user ? '#8A8A8A' : 'inherit',
+                                            color: user ? '#fff' : '#2F2F2F'
+                                        }
+                                    }}
+                                >
+                                    Add Spot
+                                </Button>
+                            </span>
+                        </Tooltip>
                         <Button
                             onClick={() => handleCloseNavMenu('/map')}
                             sx={{
