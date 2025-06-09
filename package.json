@@ -41,6 +41,7 @@
     "devDependencies": {
         "@eslint/eslintrc": "^3",
         "@tailwindcss/postcss": "^4",
+        
         "@types/express-fileupload": "^1.5.1",
         "@types/jest": "^29.5.14",
         "@types/jsonwebtoken": "^9.0.5",
@@ -49,6 +50,8 @@
         "@types/node": "^20.11.0",
         "@types/react": "^18.2.0",
         "@types/react-dom": "^18.2.0",
+        "@types/testing-library__jest-dom": "^5.14.9",
+        "@types/testing-library__react": "^10.0.1",
         "autoprefixer": "^10.4.21",
         "eslint": "^8.56.0",
         "eslint-config-next": "14.1.0",
