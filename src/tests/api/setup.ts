@@ -8,9 +8,10 @@ export const connectDB = async () => {
   mongod = await MongoMemoryServer.create();
   const uri = mongod.getUri();
 
-  // ✅ Use your global connection method, NOT mongoose.connect()
-  await connectToDatabase(uri);
+  const { db } = await connectToDatabase(uri);
+  (global as any).db = db;
 };
+
 
 export const clearDB = async () => {
   const collections = mongoose.connection.collections;
@@ -20,10 +21,10 @@ export const clearDB = async () => {
 };
 
 export const closeDB = async () => {
-    if (mongoose.connection.readyState !== 0) {
-      await mongoose.connection.dropDatabase();
-      await mongoose.connection.close();
-    }
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.connection.dropDatabase();
+    await mongoose.connection.close();
+  }
   
     if (mongod) {
       await mongod.stop();
