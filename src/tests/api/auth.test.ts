@@ -1,6 +1,14 @@
 import { POST as register } from '@/app/api/auth/register/route';
 import { POST as login } from '@/app/api/auth/login/route';
+import { GET as me } from '@/app/api/auth/me/route';
 import { connectDB, clearDB, closeDB } from './setup';
+import jwt from 'jsonwebtoken';
+import { ObjectId } from 'mongodb';
+
+jest.mock('next/headers', () => ({
+  cookies: jest.fn(),
+}));
+import { cookies as mockCookies } from 'next/headers';
 
 const mockRequest = (method: string, body?: any) =>
   ({
@@ -112,6 +120,69 @@ describe('Auth API', () => {
 
       expect(res.status).toBe(401);
       expect(data.error).toBe('Invalid credentials');
+    });
+  });
+
+  describe('GET /api/auth/me', () => {
+    const createToken = (userId: string) =>
+      jwt.sign({ userId }, process.env.JWT_SECRET || 'your-secret-key', {
+        expiresIn: '1d',
+      });
+
+    it('should return 401 if no token is provided', async () => {
+      (mockCookies as jest.Mock).mockReturnValue({
+        get: () => undefined,
+      });
+
+      const res = await me({} as any);
+      const data = await res.json();
+
+      expect(res.status).toBe(401);
+      expect(data.error).toBe('No token provided');
+    });
+
+    it('should return limited user fields if logged in', async () => {
+      const inserted = await (global as any).db.collection('users').insertOne({
+        name: 'Me Test',
+        email: 'me@example.com',
+        password: 'hashed-password',
+        role: 'user',
+        photoUrl: 'https://example.com/photo.jpg',
+        photoId: 'some-photo-id',
+        createdAt: new Date(),
+      });
+
+      const token = createToken(inserted.insertedId.toString());
+
+      (mockCookies as jest.Mock).mockReturnValue({
+        get: () => ({ value: token }),
+      });
+
+      const res = await me({} as any);
+      const data = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(data._id).toBeDefined();
+      expect(data.name).toBe('Me Test');
+      expect(data.photoUrl).toBe('https://example.com/photo.jpg');
+      expect(data.email).toBeUndefined();
+      expect(data.role).toBeUndefined();
+      expect(data.photoId).toBeUndefined();
+    });
+
+    it('should return 404 if token is valid but user does not exist', async () => {
+      const fakeId = new ObjectId().toString();
+      const token = createToken(fakeId);
+
+      (mockCookies as jest.Mock).mockReturnValue({
+        get: () => ({ value: token }),
+      });
+
+      const res = await me({} as any);
+      const data = await res.json();
+
+      expect(res.status).toBe(404);
+      expect(data.error).toBe('User not found');
     });
   });
 });
