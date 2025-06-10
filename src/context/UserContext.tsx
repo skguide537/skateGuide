@@ -23,8 +23,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const restoreSession = async () => {
             try {
-                const res = await fetch('/api/auth/me'); // or your route
-                if (!res.ok) return;
+                const res = await fetch('/api/auth/me');
+                if (!res.ok) {
+                    if (res.status !== 401) console.error('Auth check failed');
+                    return;
+                }
 
                 const user = await res.json();
                 setUser(user);
@@ -32,6 +35,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 console.error("Failed to restore session", err);
             }
         };
+
 
         restoreSession();
     }, []);
