@@ -28,10 +28,12 @@ export function LocationPicker({ onSelect }: { onSelect: (coords: { lat: number;
 
 export default function AddSpotMap({
   coords,
-  setCoords
+  setCoords,
+  onMapClick
 }: {
   coords: { lat: number; lng: number } | null;
   setCoords: (coords: { lat: number; lng: number }) => void;
+  onMapClick?: (coords: { lat: number; lng: number }) => void;
 }) {
   useEffect(() => {
     // Customize default Leaflet icon
@@ -51,7 +53,7 @@ export default function AddSpotMap({
 
       <RecenterMap coords={coords} />
 
-      <LocationPicker onSelect={setCoords} />
+      <LocationPicker onSelect={onMapClick || setCoords} />
 
       {coords && <Marker position={[coords.lat, coords.lng]} />}
     </MapContainer>
