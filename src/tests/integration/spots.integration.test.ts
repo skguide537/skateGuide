@@ -8,6 +8,11 @@ let isDbAvailable = false;
 
 // Check if database is available for testing
 async function isDatabaseAvailable(): Promise<boolean> {
+  // In CI environment, always return false to avoid connection attempts
+  if (process.env.CI) {
+    return false;
+  }
+  
   try {
     // Try to connect to a test database
     const testUri = process.env.MONGO_URI_TEST || process.env.MONGO_URI;
@@ -33,6 +38,13 @@ function getTestDb() {
 
 // Setup integration tests
 async function setupIntegrationTests() {
+  // In CI environment, skip database setup entirely
+  if (process.env.CI) {
+    console.log('⚠️ Running in CI environment - skipping database connection');
+    isDbAvailable = false;
+    return;
+  }
+
   try {
     const testUri = process.env.MONGO_URI_TEST || process.env.MONGO_URI;
     if (testUri) {
@@ -66,6 +78,11 @@ async function setupIntegrationTests() {
 
 // Cleanup after tests
 async function cleanupTests() {
+  // In CI environment, skip cleanup
+  if (process.env.CI) {
+    return;
+  }
+
   try {
     if (testDb) {
       await testDb.close();
