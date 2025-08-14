@@ -7,8 +7,8 @@ import { connectToDatabase } from "@/lib/mongodb";
 // GET all skateparks
 export async function GET(request: NextRequest) {
     try {
-        // In CI environment, return empty array to avoid database connection issues
-        if (process.env.CI) {
+        // In CI environment (not test), return empty array to avoid database connection issues
+        if (process.env.CI && process.env.NODE_ENV !== 'test') {
             return NextResponse.json([]);
         }
 
@@ -82,8 +82,8 @@ export async function GET(request: NextRequest) {
 // POST new skatepark
 export async function POST(request: NextRequest) {
     try {
-        // In CI environment, return mock response to avoid database connection issues
-        if (process.env.CI) {
+        // In CI environment (not test), return mock response to avoid database connection issues
+        if (process.env.CI && process.env.NODE_ENV !== 'test') {
             return NextResponse.json({ _id: 'mock-id', message: 'Mock response in CI' }, { status: 201 });
         }
 

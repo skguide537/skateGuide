@@ -6,8 +6,8 @@ import { cookies } from 'next/headers';
 
 export async function GET(req: NextRequest) {
     try {
-        // In CI environment, return a mock response to avoid database connection issues
-        if (process.env.CI) {
+        // In CI environment (not test), return a mock response to avoid database connection issues
+        if (process.env.CI && process.env.NODE_ENV !== 'test') {
             return NextResponse.json({ error: 'No token provided' }, { status: 401 });
         }
 
