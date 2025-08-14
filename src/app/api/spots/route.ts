@@ -4,8 +4,8 @@ import Spot from '@/models/Spot';
 
 export async function GET() {
     try {
-        // In CI environment, return empty array to avoid database connection issues
-        if (process.env.CI) {
+        // In CI environment (not test), return empty array to avoid database connection issues
+        if (process.env.CI && process.env.NODE_ENV !== 'test') {
             return NextResponse.json([]);
         }
 
@@ -19,8 +19,8 @@ export async function GET() {
 
 export async function POST(req: Request) {
     try {
-        // In CI environment, return mock response to avoid database connection issues
-        if (process.env.CI) {
+        // In CI environment (not test), return mock response to avoid database connection issues
+        if (process.env.CI && process.env.NODE_ENV !== 'test') {
             return NextResponse.json({ _id: 'mock-id', message: 'Mock response in CI' });
         }
 

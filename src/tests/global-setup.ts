@@ -1,8 +1,5 @@
 // Global setup for Jest tests
 export default async function globalSetup() {
-  // Set test environment
-  process.env.NODE_ENV = 'test';
-  
   // Add TextEncoder polyfill globally if not available
   if (typeof global.TextEncoder === 'undefined') {
     const { TextEncoder, TextDecoder } = require('util');
