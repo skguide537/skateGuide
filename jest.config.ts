@@ -27,15 +27,22 @@ const config: Config = {
   transformIgnorePatterns: [
     'node_modules/(?!(next|@next)/)',
   ],
-  testPathIgnorePatterns: [
-    '/node_modules/',
-    '/src/tests/ui/', // Exclude Playwright tests
-  ],
   testMatch: [
     '<rootDir>/src/tests/**/*.test.{ts,tsx}',
     '!<rootDir>/src/tests/ui/**/*', // Explicitly exclude UI tests
     '!<rootDir>/src/tests/**/*.spec.{ts,tsx}', // Exclude Playwright spec files
   ],
+  // Add test environment setup
+  testEnvironmentOptions: {
+    url: 'http://localhost:3000',
+  },
+  // Handle integration tests gracefully
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/src/tests/ui/', // Exclude Playwright tests
+  ],
+  // Add global setup for integration tests
+  globalSetup: '<rootDir>/src/tests/global-setup.ts',
 };
 
 export default config;

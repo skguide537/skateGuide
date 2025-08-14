@@ -4,6 +4,13 @@ import { config } from 'dotenv';
 // Load environment variables
 config();
 
+// Add TextEncoder polyfill for Node.js environment
+if (typeof global.TextEncoder === 'undefined') {
+  const { TextEncoder, TextDecoder } = require('util');
+  global.TextEncoder = TextEncoder;
+  global.TextDecoder = TextDecoder;
+}
+
 // Mock next/navigation hooks
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -71,27 +78,36 @@ if (!isIntegrationTest) {
 
   // Mock Mongoose models for unit tests
   jest.mock('@/models/Spot', () => ({
-    find: jest.fn(() => Promise.resolve([])),
-    create: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
-    findByIdAndUpdate: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
-    findByIdAndDelete: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
-    findById: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
+    __esModule: true,
+    default: {
+      find: jest.fn(() => Promise.resolve([])),
+      create: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
+      findByIdAndUpdate: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
+      findByIdAndDelete: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
+      findById: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
+    },
   }));
 
   jest.mock('@/models/skatepark.model', () => ({
-    find: jest.fn(() => Promise.resolve([])),
-    create: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
-    findByIdAndUpdate: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
-    findByIdAndDelete: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
-    findById: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
+    __esModule: true,
+    default: {
+      find: jest.fn(() => Promise.resolve([])),
+      create: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
+      findByIdAndUpdate: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
+      findByIdAndDelete: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
+      findById: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
+    },
   }));
 
   jest.mock('@/models/User', () => ({
-    find: jest.fn(() => Promise.resolve([])),
-    create: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
-    findByIdAndUpdate: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
-    findByIdAndDelete: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
-    findById: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
+    __esModule: true,
+    default: {
+      find: jest.fn(() => Promise.resolve([])),
+      create: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
+      findByIdAndUpdate: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
+      findByIdAndDelete: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
+      findById: jest.fn(() => Promise.resolve({ _id: 'mock-id' })),
+    },
   }));
 }
 

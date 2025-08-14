@@ -25,24 +25,37 @@ export function UserProvider({ children }: { children: ReactNode }) {
             try {
                 const res = await fetch('/api/auth/me');
                 if (!res.ok) {
-                    if (res.status !== 401) console.error('Auth check failed');
+                    if (res.status !== 401) {
+                        // Only log non-401 errors in non-test environments
+                        if (process.env.NODE_ENV !== 'test') {
+                            console.error('Auth check failed');
+                        }
+                    }
                     return;
                 }
 
                 const user = await res.json();
                 setUser(user);
             } catch (err) {
-                console.error("Failed to restore session", err);
+                // Only log errors in non-test environments
+                if (process.env.NODE_ENV !== 'test') {
+                    console.error("Failed to restore session", err);
+                }
             }
         };
-
 
         restoreSession();
     }, []);
 
-
     const logout = async () => {
-        await fetch('/api/auth/logout', { method: 'POST' });
+        try {
+            await fetch('/api/auth/logout', { method: 'POST' });
+        } catch (err) {
+            // Only log errors in non-test environments
+            if (process.env.NODE_ENV !== 'test') {
+                console.error("Logout failed", err);
+            }
+        }
         setUser(null);
     };
 
