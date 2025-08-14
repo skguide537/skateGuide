@@ -8,6 +8,7 @@ import Rating from '@mui/material/Rating';
 import { useState } from 'react';
 import { useToast } from '@/context/ToastContext';
 import { useUser } from '@/context/UserContext';
+import Image from 'next/image';
 
 interface SkateparkModalProps {
   open: boolean;
@@ -51,14 +52,16 @@ export default function SkateparkModal({
   _id,
   externalLinks
 }: SkateparkModalProps) {
-  const formatSrc = (src: string) => src.startsWith('http') ? src : `/${src}`;
-  const isLoading = photoNames.length === 0;
-  if (isLoading) return <Loading />;
-
+  // All hooks must be called at the top level, before any conditional returns
   const [userRating, setUserRating] = useState<number | null>(null);
   const [hoverRating, setHoverRating] = useState<number | null>(-1);
   const { showToast } = useToast();
   const { user } = useUser();
+
+  const formatSrc = (src: string) => src.startsWith('http') ? src : `/${src}`;
+  const isLoading = photoNames.length === 0;
+  
+  if (isLoading) return <Loading />;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -75,10 +78,12 @@ export default function SkateparkModal({
       <DialogContent dividers>
         <Carousel autoPlay={false} navButtonsAlwaysVisible={photoNames.length > 1} indicators={photoNames.length > 1}>
           {photoNames.map((src, idx) => (
-            <img
+            <Image
               key={idx}
               src={formatSrc(src)}
               alt={`Skatepark photo ${idx + 1}`}
+              width={600}
+              height={400}
               style={{
                 width: '100%',
                 height: 400,
