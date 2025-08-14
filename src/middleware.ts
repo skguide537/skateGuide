@@ -3,9 +3,11 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
+  const method = request.method;
+  const pathname = request.nextUrl.pathname;
 
-  const isProtectedMethod = request.method !== 'GET';
-  const isSpotsRoute = request.nextUrl.pathname.startsWith('/api/spots');
+  const isProtectedMethod = method !== 'GET';
+  const isSpotsRoute = pathname.startsWith('/api/spots');
 
   // Block only non-GET requests without a token
   if (!token && isSpotsRoute && isProtectedMethod) {
