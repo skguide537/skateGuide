@@ -1,0 +1,89 @@
+import { test, expect } from '@playwright/test';
+
+test.describe('Add Spot Page', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/add-spot');
+  });
+
+  test('should display the add spot form', async ({ page }) => {
+    // Check if the form is visible
+    await expect(page.getByRole('heading', { name: /add new skate spot/i })).toBeVisible();
+    
+    // Check if all form fields are present
+    await expect(page.getByLabel(/title/i)).toBeVisible();
+    await expect(page.getByLabel(/description/i)).toBeVisible();
+    await expect(page.getByLabel(/street address/i)).toBeVisible();
+    await expect(page.getByLabel(/city/i)).toBeVisible();
+    await expect(page.getByLabel(/state\/province/i)).toBeVisible();
+    await expect(page.getByLabel(/country/i)).toBeVisible();
+    
+    // Check if buttons are present
+    await expect(page.getByRole('button', { name: /use my location/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /search address/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /choose on map/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /submit skate spot/i })).toBeVisible();
+  });
+
+  test('should allow user to fill out the form', async ({ page }) => {
+    // Fill out the form
+    await page.getByLabel(/title/i).fill('Test Skate Spot');
+    await page.getByLabel(/description/i).fill('A great place to skate');
+    await page.getByLabel(/street address/i).fill('123 Main Street');
+    await page.getByLabel(/city/i).fill('Tel Aviv');
+    await page.getByLabel(/state\/province/i).fill('Tel Aviv');
+    await page.getByLabel(/country/i).fill('Israel');
+    
+    // Verify the form is filled
+    await expect(page.getByLabel(/title/i)).toHaveValue('Test Skate Spot');
+    await expect(page.getByLabel(/description/i)).toHaveValue('A great place to skate');
+    await expect(page.getByLabel(/street address/i)).toHaveValue('123 Main Street');
+    await expect(page.getByLabel(/city/i)).toHaveValue('Tel Aviv');
+  });
+
+  test('should show map when choose on map is clicked', async ({ page }) => {
+    // Initially map should be hidden (no coords set)
+    await expect(page.locator('.leaflet-container')).not.toBeVisible();
+    
+    // Click choose on map button
+    await page.getByRole('button', { name: /choose on map/i }).click();
+    
+    // Map should now be visible
+    await expect(page.locator('.leaflet-container')).toBeVisible();
+  });
+
+  test('should validate required fields', async ({ page }) => {
+    // Try to submit without filling required fields
+    await page.getByRole('button', { name: /submit skate spot/i }).click();
+    
+    // Should show validation errors
+    await expect(page.getByText(/title is required/i)).toBeVisible();
+    await expect(page.getByText(/size is required/i)).toBeVisible();
+    await expect(page.getByText(/level is required/i)).toBeVisible();
+  });
+
+  test('should handle address search', async ({ page }) => {
+    // Fill address fields
+    await page.getByLabel(/street address/i).fill('Dizengoff Street');
+    await page.getByLabel(/city/i).fill('Tel Aviv');
+    await page.getByLabel(/state\/province/i).fill('Tel Aviv');
+    await page.getByLabel(/country/i).fill('Israel');
+    
+    // Click search address button
+    await page.getByRole('button', { name: /search address/i }).click();
+    
+    // Should show loading state or results
+    // This test will need to be updated based on your actual geocoding implementation
+  });
+
+  test('should be responsive on mobile', async ({ page }) => {
+    // Set mobile viewport
+    await page.setViewportSize({ width: 375, height: 667 });
+    
+    // Form should still be usable on mobile
+    await expect(page.getByLabel(/title/i)).toBeVisible();
+    await expect(page.getByLabel(/description/i)).toBeVisible();
+    
+    // Buttons should be properly sized for mobile
+    await expect(page.getByRole('button', { name: /submit skate spot/i })).toBeVisible();
+  });
+});
