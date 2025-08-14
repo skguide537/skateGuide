@@ -5,6 +5,7 @@ import Carousel from 'react-material-ui-carousel';
 import { useEffect, useState } from 'react';
 import SkateparkModal from '../modals/SkateparkModal';
 import Rating from '@mui/material/Rating';
+import Image from 'next/image';
 
 
 interface SkateparkCardProps {
@@ -174,10 +175,12 @@ export default function SkateparkCard({
                                     }
                                 }}
                             >
-                                <img
+                                <Image
                                     src="/waze.png"
                                     alt="Waze"
-                                    style={{ width: 16, height: 16, marginRight: 6 }}
+                                    width={16}
+                                    height={16}
+                                    style={{ marginRight: 6 }}
                                 />
                                 Waze
                             </Button>
