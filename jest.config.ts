@@ -31,6 +31,11 @@ const config: Config = {
     '/node_modules/',
     '/src/tests/ui/', // Exclude Playwright tests
   ],
+  testMatch: [
+    '<rootDir>/src/tests/**/*.test.{ts,tsx}',
+    '!<rootDir>/src/tests/ui/**/*', // Explicitly exclude UI tests
+    '!<rootDir>/src/tests/**/*.spec.{ts,tsx}', // Exclude Playwright spec files
+  ],
 };
 
 export default config;
