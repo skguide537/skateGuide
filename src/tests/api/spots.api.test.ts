@@ -1,26 +1,31 @@
-import { GET, POST } from '@/app/api/spots/route';
+// Mock the Spot model and database connection before imports
+jest.mock('@/models/Spot', () => ({
+  __esModule: true,
+  default: {
+    find: jest.fn(() => ({
+      populate: jest.fn(() => Promise.resolve([]))
+    })),
+    create: jest.fn(() => Promise.resolve({ _id: 'mock-id' }))
+  }
+}));
 
-// Mock the database connection
 jest.mock('@/lib/mongodb', () => ({
   connectToDatabase: jest.fn(() => Promise.resolve({ db: {} }))
 }));
 
-// Mock the Spot model with proper default export handling
-jest.mock('@/models/Spot', () => ({
-  __esModule: true,
-  default: {
-    find: jest.fn(),
-    create: jest.fn()
-  }
-}));
+import { GET, POST } from '@/app/api/spots/route';
 
 describe('Spots API', () => {
   let mockSpot: any;
   let mockRequest: any;
+  let mockSpotModel: any;
 
   beforeEach(() => {
     // Clear all mocks before each test
     jest.clearAllMocks();
+    
+    // Get the mocked Spot model
+    mockSpotModel = require('@/models/Spot').default;
     
     mockSpot = {
       _id: 'mock-spot-id',
@@ -46,8 +51,10 @@ describe('Spots API', () => {
 
   describe('GET /api/spots', () => {
     it('should return spots list', async () => {
-      const { default: Spot } = require('@/models/Spot');
-      Spot.find.mockResolvedValue([mockSpot]);
+      const mockSpots = [mockSpot];
+      mockSpotModel.find.mockReturnValue({
+        populate: jest.fn().mockResolvedValue(mockSpots)
+      });
 
       const response = await GET();
       const data = await response.json();
@@ -55,11 +62,13 @@ describe('Spots API', () => {
       expect(response.status).toBe(200);
       expect(data).toBeDefined();
       expect(Array.isArray(data)).toBe(true);
+      expect(data).toEqual(mockSpots);
     });
 
     it('should handle database errors gracefully', async () => {
-      const { default: Spot } = require('@/models/Spot');
-      Spot.find.mockRejectedValue(new Error('Database error'));
+      mockSpotModel.find.mockReturnValue({
+        populate: jest.fn().mockRejectedValue(new Error('Database error'))
+      });
 
       const response = await GET();
       const data = await response.json();
@@ -71,9 +80,7 @@ describe('Spots API', () => {
 
   describe('POST /api/spots', () => {
     it('should create new spot with valid data', async () => {
-      const { default: Spot } = require('@/models/Spot');
-      
-      Spot.create.mockResolvedValue(mockSpot);
+      mockSpotModel.create.mockResolvedValue(mockSpot);
       mockRequest.json = jest.fn().mockResolvedValue(mockSpot);
 
       const response = await POST(mockRequest);
@@ -85,8 +92,7 @@ describe('Spots API', () => {
     });
 
     it('should handle database errors gracefully', async () => {
-      const { default: Spot } = require('@/models/Spot');
-      Spot.create.mockRejectedValue(new Error('Database error'));
+      mockSpotModel.create.mockRejectedValue(new Error('Database error'));
       mockRequest.json = jest.fn().mockResolvedValue(mockSpot);
 
       const response = await POST(mockRequest);

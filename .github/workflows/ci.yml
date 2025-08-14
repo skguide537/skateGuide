@@ -1,7 +1,9 @@
-name: CI - Run Unit Tests
+name: CI - Run All Tests
 
 on:
   pull_request:
+    branches: [ main ]
+  push:
     branches: [ main ]
 
 jobs:
@@ -10,15 +12,31 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'  
+        node-version: '20'
+        cache: 'npm'
 
     - name: Install dependencies
-      run: npm install
+      run: npm ci
 
-    - name: Run Jest tests
-      run: npm test 
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps
+
+    - name: Run Unit Tests
+      run: npm run test:unit
+
+    - name: Run Integration Tests
+      run: npm run test:integration
+
+    - name: Run UI Tests
+      run: npm run test:ui
+
+    - name: Run Linting
+      run: npm run lint
+
+    - name: Build Application
+      run: npm run build 
