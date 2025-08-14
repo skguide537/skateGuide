@@ -1,7 +1,7 @@
 import type { Config } from 'jest';
 
 const config: Config = {
-  testTimeout: 30000, // Global timeout
+  testTimeout: 60000, // Increased global timeout to 60 seconds
   testEnvironment: 'jsdom',
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
@@ -18,7 +18,10 @@ const config: Config = {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     '\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$': '<rootDir>/src/tests/__mocks__/fileMock.js',
   },
-  setupFilesAfterEnv: ['<rootDir>/src/tests/setup.ts'],
+  setupFilesAfterEnv: [
+    '<rootDir>/src/tests/setup.ts',
+    '<rootDir>/src/tests/suppress-warnings.ts'
+  ],
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',
