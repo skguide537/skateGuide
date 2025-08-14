@@ -36,9 +36,24 @@ async function setupIntegrationTests() {
   try {
     const testUri = process.env.MONGO_URI_TEST || process.env.MONGO_URI;
     if (testUri) {
-      await connectToDatabase();
-      console.log('✅ Connected to test database for integration tests');
-      isDbAvailable = true;
+      // Add timeout to prevent hanging
+      const connectionPromise = connectToDatabase();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database connection timeout')), 10000)
+      );
+      
+      try {
+        await Promise.race([connectionPromise, timeoutPromise]);
+        console.log('✅ Connected to test database for integration tests');
+        isDbAvailable = true;
+      } catch (error: any) {
+        if (error.message === 'Database connection timeout') {
+          console.log('⚠️ Database connection timed out, continuing without database');
+        } else {
+          console.log('⚠️ Failed to connect to test database:', error.message);
+        }
+        isDbAvailable = false;
+      }
     } else {
       console.log('⚠️ No test database URI found, integration tests will be skipped');
       isDbAvailable = false;
