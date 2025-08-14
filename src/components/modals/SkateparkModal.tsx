@@ -127,6 +127,13 @@ export default function SkateparkModal({
                   hostname = 'Link';
                 }
 
+                // Safely handle sentBy property
+                const sentByName = link.sentBy && typeof link.sentBy === 'object' && 'name' in link.sentBy 
+                  ? link.sentBy.name 
+                  : typeof link.sentBy === 'string' 
+                    ? link.sentBy 
+                    : 'Unknown User';
+
                 return (
                   <Box key={idx} sx={{ textAlign: 'center' }}>
                     <Button
@@ -138,7 +145,7 @@ export default function SkateparkModal({
                       {hostname}
                     </Button>
                     <Typography variant="caption" display="block" mt={0.5}>
-                      Sent by: {typeof link.sentBy === 'string' ? link.sentBy : link.sentBy.name}
+                      Sent by: {sentByName}
                     </Typography>
                   </Box>
                 );

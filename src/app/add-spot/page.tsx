@@ -29,6 +29,7 @@ export default function AddSpotPage() {
     const [externalLinks, setExternalLinks] = useState<string[]>([]);
     const [newLink, setNewLink] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
     
     // New address state variables
     const [street, setStreet] = useState('');
@@ -51,6 +52,7 @@ export default function AddSpotPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setHasAttemptedSubmit(true);
 
         if (!user?._id) return;
         
@@ -218,7 +220,7 @@ export default function AddSpotPage() {
     };
 
     return (
-        <Box component="form" onSubmit={handleSubmit} maxWidth="md" mx="auto" mt={4} sx={{ p: 2 }}>
+        <form onSubmit={handleSubmit} style={{ maxWidth: 'md', margin: 'auto', marginTop: 4, padding: 2 }}>
             <Typography variant="h4" gutterBottom>Add New Skate Spot</Typography>
 
             <TextField 
@@ -229,27 +231,27 @@ export default function AddSpotPage() {
                 sx={{ mb: 2 }} 
                 required
                 placeholder="e.g., Central Park Skate Spot"
-                error={!title.trim()}
-                helperText={!title.trim() ? "Title is required" : ""}
+                error={hasAttemptedSubmit && !title.trim()}
+                helperText={hasAttemptedSubmit && !title.trim() ? "Title is required" : ""}
             />
             <TextField fullWidth multiline rows={4} label="Description" placeholder="More info to help get to the spot?" value={description} onChange={e => setDescription(e.target.value)} sx={{ mb: 2 }} />
 
-            <FormControl fullWidth sx={{ mb: 2 }} required error={!size}>
+            <FormControl fullWidth sx={{ mb: 2 }} required error={hasAttemptedSubmit && !size}>
                 <InputLabel>Size *</InputLabel>
                 <Select value={size} label="Size *" onChange={e => setSize(e.target.value)}>
                     <MenuItem value="">Select a size</MenuItem>
                     {sizes.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
                 </Select>
-                {!size && <Typography variant="caption" color="error">Size is required</Typography>}
+                {hasAttemptedSubmit && !size && <Typography variant="caption" color="error">Size is required</Typography>}
             </FormControl>
 
-            <FormControl fullWidth sx={{ mb: 2 }} required error={!level}>
+            <FormControl fullWidth sx={{ mb: 2 }} required error={hasAttemptedSubmit && !level}>
                 <InputLabel>Level *</InputLabel>
                 <Select value={level} label="Level *" onChange={e => setLevel(e.target.value)}>
                     <MenuItem value="">Select a level</MenuItem>
                     {levels.map(l => <MenuItem key={l} value={l}>{l}</MenuItem>)}
                 </Select>
-                {!level && <Typography variant="caption" color="error">Level is required</Typography>}
+                {hasAttemptedSubmit && !level && <Typography variant="caption" color="error">Level is required</Typography>}
             </FormControl>
 
             <FormControl fullWidth sx={{ mb: 2 }}>
@@ -286,8 +288,8 @@ export default function AddSpotPage() {
                 sx={{ mb: 2 }} 
                 placeholder="e.g., רחוב דיזנגוף 99 or 99 Dizengoff Street"
                 required
-                error={!street.trim()}
-                helperText={!street.trim() ? "Street address is required" : ""}
+                error={hasAttemptedSubmit && !street.trim()}
+                helperText={hasAttemptedSubmit && !street.trim() ? "Street address is required" : ""}
             />
             
             <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
@@ -298,8 +300,8 @@ export default function AddSpotPage() {
                     onChange={e => setCity(e.target.value)} 
                     placeholder="e.g., תל אביב or Tel Aviv"
                     required
-                    error={!city.trim()}
-                    helperText={!city.trim() ? "City is required" : ""}
+                    error={hasAttemptedSubmit && !city.trim()}
+                    helperText={hasAttemptedSubmit && !city.trim() ? "City is required" : ""}
                 />
                 <TextField 
                     fullWidth 
@@ -394,6 +396,6 @@ export default function AddSpotPage() {
             >
                 {isSubmitting ? 'Adding Spot...' : 'Submit Skate Spot'}
             </Button>
-        </Box>
+        </form>
     );
 }
