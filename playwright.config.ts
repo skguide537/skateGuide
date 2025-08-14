@@ -3,7 +3,7 @@ import os from 'os';
 import path from 'path';
 
 export default defineConfig({
-  testDir: './tests/ui',
+  testDir: './src/tests/ui',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
