@@ -9,6 +9,17 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    
+    services:
+      mongo:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
     - name: Checkout code
@@ -25,6 +36,12 @@ jobs:
 
     - name: Install Playwright browsers
       run: npx playwright install --with-deps
+
+    - name: Wait for MongoDB to be ready
+      run: |
+        until nc -z localhost 27017; do
+          sleep 1
+        done
 
     - name: Run Unit Tests
       run: npm run test:unit
