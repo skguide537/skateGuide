@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation';
 // Use lightweight card for home page performance
 import SkateparkCard from '@/components/skateparkCard/LightSkateparkCard';
 import SkeletonCard from '@/components/loading/SkeletonCard';
-// Direct MUI imports for better tree shaking (except Grid which has import issues)
+// Direct MUI imports for better tree shaking
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Container from '@mui/material/Container';
-import { Grid } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import Pagination from '@mui/material/Pagination';
 import Typography from '@mui/material/Typography';
 
@@ -218,7 +218,7 @@ export default function HomePage() {
                 <Grid container spacing={4}>
                     {/* Show skeleton cards while loading */}
                     {Array.from({ length: limit }).map((_, index) => (
-                        <Grid item xs={12} sm={6} md={4} key={`skeleton-${index}`}>
+                        <Grid item xs={12} sm={6} md={4} key={`skeleton-${index}`} {...({} as any)}>
                             <SkeletonCard />
                         </Grid>
                     ))}
@@ -227,7 +227,7 @@ export default function HomePage() {
                 <>
                     <Grid container spacing={4}>
                         {parksWithDistance.map((park) => (
-                            <Grid item xs={12} sm={6} md={4} key={park._id}>
+                            <Grid item xs={12} sm={6} md={4} key={park._id} {...({} as any)}>
                                 <SkateparkCard
                                     _id={park._id}
                                     title={park.title}
@@ -240,7 +240,7 @@ export default function HomePage() {
                                     size={park.size}
                                     level={park.level}
                                     avgRating={park.avgRating}
-                                    externalLinks={park.externalLinks}
+                                    externalLinks={park.externalLinks || []}
                                 />
                             </Grid>
                         ))}
