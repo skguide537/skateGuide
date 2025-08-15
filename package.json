@@ -34,7 +34,6 @@
         "jsonwebtoken": "^9.0.2",
         "leaflet": "^1.9.4",
         "leaflet-control-geocoder": "^3.2.1",
-        "leaflet.markercluster": "^1.5.3",
         "mongodb": "^6.16.0",
         "mongoose": "^8.14.1",
         "mongosh": "^2.5.0",
@@ -44,7 +43,6 @@
         "react-dom": "^18.2.0",
         "react-hook-form": "^7.56.1",
         "react-leaflet": "^4.2.1",
-        "react-leaflet-cluster": "^3.1.1",
         "react-material-ui-carousel": "^3.4.2",
         "sharp": "^0.34.1",
         "zod": "^3.24.3"
@@ -58,7 +56,6 @@
         "@types/jest": "^29.5.14",
         "@types/jsonwebtoken": "^9.0.5",
         "@types/leaflet": "^1.9.17",
-        "@types/leaflet.markercluster": "^1.5.5",
         "@types/mongodb-memory-server": "^1.8.0",
         "@types/node": "^20.11.0",
         "@types/react": "^18.2.0",
