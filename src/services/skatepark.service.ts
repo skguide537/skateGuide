@@ -1,4 +1,5 @@
 import cloudinary from "@/lib/cloudinary";
+import { cache, cacheKeys } from "@/lib/cache";
 import { BadRequestError, NotFoundError } from "@/types/error-models";
 import { UploadedFile } from "express-fileupload";
 import { ISkateparkModel, SkateparkModel } from "../models/skatepark.model";
@@ -43,11 +44,36 @@ class SkateparkService {
     // 2. GETs:
 
     public async getTotalSkateparksCount(): Promise<number> {
-        return SkateparkModel.countDocuments();
+        const cacheKey = cacheKeys.totalCount();
+        const cached = cache.get<number>(cacheKey);
+        
+        if (cached !== null) {
+            return cached;
+        }
+
+        const count = await SkateparkModel.countDocuments();
+        cache.set(cacheKey, count, 10 * 60 * 1000); // Cache for 10 minutes
+        return count;
     }
 
     public async getAllSkateparks(): Promise<ISkateparkModel[]> {
-        return await SkateparkModel.find().populate("externalLinks.sentBy", "name").exec();
+        const cacheKey = cacheKeys.allSkateparks();
+        const cached = cache.get<ISkateparkModel[]>(cacheKey);
+        
+        if (cached !== null) {
+            return cached;
+        }
+
+        // Optimize query with lean() and select only needed fields
+        const skateparks = await SkateparkModel
+            .find()
+            .select('title description tags location photoNames isPark size level avgRating rating externalLinks')
+            .populate("externalLinks.sentBy", "name")
+            .lean()
+            .exec();
+
+        cache.set(cacheKey, skateparks as unknown as ISkateparkModel[], 5 * 60 * 1000); // Cache for 5 minutes
+        return skateparks as unknown as ISkateparkModel[];
     }
 
 
@@ -161,28 +187,38 @@ class SkateparkService {
 
 
     public async getPaginatedSkateparks(skip: number, limit: number) {
-    const rawParks = await SkateparkModel.find()
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .populate('externalLinks.sentBy', 'name')
-        .lean();
+        const page = Math.floor(skip / limit) + 1;
+        const cacheKey = cacheKeys.paginatedSkateparks(page, limit);
+        const cached = cache.get<any[]>(cacheKey);
+        
+        if (cached !== null) {
+            return cached;
+        }
 
-    const parks = rawParks.map((park: any) => ({
-        ...park,
-        externalLinks: park.externalLinks?.map((link: any) => ({
-            ...link,
-            sentBy: link.sentBy
-                ? {
-                    id: link.sentBy._id?.toString() || "unknown",
-                    name: link.sentBy.name || "Unknown"
-                }
-                : undefined
-        }))
-    }));
+        const rawParks = await SkateparkModel.find()
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .select('title description tags location photoNames isPark size level avgRating rating externalLinks createdAt')
+            .populate('externalLinks.sentBy', 'name')
+            .lean();
 
-    return parks;
-}
+        const parks = rawParks.map((park: any) => ({
+            ...park,
+            externalLinks: park.externalLinks?.map((link: any) => ({
+                ...link,
+                sentBy: link.sentBy
+                    ? {
+                        id: link.sentBy._id?.toString() || "unknown",
+                        name: link.sentBy.name || "Unknown"
+                    }
+                    : undefined
+            }))
+        }));
+
+        cache.set(cacheKey, parks, 3 * 60 * 1000); // Cache for 3 minutes
+        return parks;
+    }
 
 
     // 3. CRUDs:
@@ -276,7 +312,25 @@ class SkateparkService {
         }
 
         await skatepark.save();
+        
+        // Invalidate relevant caches
+        this.invalidateCache();
+        
         return await this.getOneSkatepark(skatepark._id?.toString() || "");
+    }
+
+    // Helper method to invalidate caches when data changes
+    private invalidateCache(): void {
+        cache.delete(cacheKeys.allSkateparks());
+        cache.delete(cacheKeys.totalCount());
+        
+        // Clear paginated caches (we could be more specific, but this is safer)
+        const stats = cache.getStats();
+        stats.keys.forEach(key => {
+            if (key.includes('skateparks:paginated') || key.includes('skateparks:recent') || key.includes('skateparks:toprated')) {
+                cache.delete(key);
+            }
+        });
     }
 
 

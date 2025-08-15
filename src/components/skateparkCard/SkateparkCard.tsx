@@ -1,11 +1,14 @@
 'use client';
 
-import { Card, CardContent, CardMedia, Typography, Chip, Button, Stack, Box } from '@mui/material';
-import Carousel from 'react-material-ui-carousel';
-import { useEffect, useState } from 'react';
-import SkateparkModal from '../modals/SkateparkModal';
+import { Card, CardContent, Typography, Chip, Button, Stack, Box } from '@mui/material';
+import { useEffect, useState, memo, lazy, Suspense } from 'react';
 import Rating from '@mui/material/Rating';
 import Image from 'next/image';
+
+// Only lazy load the heaviest component (Carousel)
+const Carousel = lazy(() => import('react-material-ui-carousel'));
+// Import modal normally to avoid Suspense overhead
+import SkateparkModal from '../modals/SkateparkModal';
 
 
 interface SkateparkCardProps {
@@ -23,7 +26,7 @@ interface SkateparkCardProps {
     externalLinks?: { url: string; sentBy: { id: string; name: string }; sentAt: string }[];
 }
 
-export default function SkateparkCard({
+const SkateparkCard = memo(function SkateparkCard({
     title,
     description,
     tags,
@@ -90,32 +93,53 @@ export default function SkateparkCard({
                 >
                     {hasPhotos ? (
                         isMultiple ? (
-                            <Carousel autoPlay={false} animation="slide" navButtonsAlwaysVisible>
-                                {photoNames.map((src, idx) => (
-                                    <CardMedia
-                                        key={idx}
-                                        component="img"
-                                        image={formatSrc(src)}
-                                        alt={`Skatepark photo ${idx + 1}`}
-                                        sx={photoStyle}
-                                    />
-                                ))}
-                            </Carousel>
+                            <Suspense fallback={<Box sx={{ height: 200, bgcolor: 'grey.100', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Typography variant="caption">Loading...</Typography>
+                            </Box>}>
+                                <Carousel autoPlay={false} animation="slide" navButtonsAlwaysVisible>
+                                    {photoNames.map((src, idx) => (
+                                        <Box key={idx} sx={{ position: 'relative', width: '100%', height: 200 }}>
+                                            <Image
+                                                src={formatSrc(src)}
+                                                alt={`${title} photo ${idx + 1}`}
+                                                fill
+                                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                                style={{ objectFit: 'cover' }}
+                                                loading="lazy"
+                                                placeholder="blur"
+                                                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+                                            />
+                                        </Box>
+                                    ))}
+                                </Carousel>
+                            </Suspense>
                         ) : (
-                            <CardMedia
-                                component="img"
-                                image={formatSrc(photoNames[0])}
-                                alt="Skatepark photo"
-                                sx={photoStyle}
-                            />
+                            <Box sx={{ position: 'relative', width: '100%', height: 200 }}>
+                                <Image
+                                    src={formatSrc(photoNames[0])}
+                                    alt={`${title} photo`}
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                    style={{ objectFit: 'cover' }}
+                                    loading="lazy"
+                                    placeholder="blur"
+                                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+                                />
+                            </Box>
                         )
                     ) : (
-                        <CardMedia
-                            component="img"
-                            image="https://res.cloudinary.com/dcncqacrd/image/upload/v1747566727/skateparks/default-skatepark.png"
-                            alt="Default skatepark placeholder"
-                            sx={photoStyle}
-                        />
+                        <Box sx={{ position: 'relative', width: '100%', height: 200 }}>
+                            <Image
+                                src="https://res.cloudinary.com/dcncqacrd/image/upload/v1747566727/skateparks/default-skatepark.png"
+                                alt="Default skatepark placeholder"
+                                fill
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                style={{ objectFit: 'cover' }}
+                                loading="lazy"
+                                placeholder="blur"
+                                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+                            />
+                        </Box>
                     )}
                     <CardContent sx={{ flexGrow: 1 }}>
                         <Typography gutterBottom variant="h6" component="div">
@@ -189,20 +213,22 @@ export default function SkateparkCard({
                 </Card>
             </Box>
 
-            <SkateparkModal
-                _id={_id}
-                open={open}
-                onClose={() => setOpen(false)}
-                title={title}
-                description={description}
-                photoNames={photoNames}
-                isPark={isPark}
-                size={size}
-                level={level}
-                tags={tags}
-                coordinates={coordinates}
-                externalLinks={externalLinks}
-            />
+                            <SkateparkModal
+                    _id={_id}
+                    open={open}
+                    onClose={() => setOpen(false)}
+                    title={title}
+                    description={description}
+                    photoNames={photoNames}
+                    isPark={isPark}
+                    size={size}
+                    level={level}
+                    tags={tags}
+                    coordinates={coordinates}
+                    externalLinks={externalLinks}
+                />
         </>
     );
-}
+});
+
+export default SkateparkCard;

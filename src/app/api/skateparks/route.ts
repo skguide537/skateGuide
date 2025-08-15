@@ -67,12 +67,22 @@ export async function GET(request: NextRequest) {
         skateparkService.getTotalSkateparksCount()
     ]);
 
-    return NextResponse.json({ data, totalCount });
+    const response = NextResponse.json({ data, totalCount });
+    
+    // Add cache headers for better browser caching
+    response.headers.set('Cache-Control', 'public, s-maxage=180, stale-while-revalidate=300');
+    
+    return response;
 }
 
         // Default: get all skateparks
         const skateparks = await skateparkService.getAllSkateparks();
-        return NextResponse.json(skateparks);
+        const response = NextResponse.json(skateparks);
+        
+        // Add cache headers
+        response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+        
+        return response;
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
