@@ -1,0 +1,135 @@
+'use client';
+
+// Lightweight version of SkateparkCard without heavy Carousel
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Typography from '@mui/material/Typography';
+import Chip from '@mui/material/Chip';
+import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
+import Box from '@mui/material/Box';
+import Rating from '@mui/material/Rating';
+import { useState, memo } from 'react';
+import Image from 'next/image';
+import SkateparkModal from '../modals/SkateparkModal';
+import FastCarousel from '../ui/FastCarousel';
+
+interface LightSkateparkCardProps {
+    _id: string;
+    title: string;
+    description: string;
+    tags: string[];
+    photoNames: string[];
+    coordinates: { lat: number; lng: number };
+    isPark: boolean;
+    size: string;
+    level: string;
+    avgRating: number;
+    distanceKm: number;
+    externalLinks: any[];
+}
+
+const LightSkateparkCard = memo(function LightSkateparkCard({
+    _id,
+    title,
+    description,
+    tags,
+    photoNames,
+    coordinates,
+    isPark,
+    size,
+    level,
+    avgRating,
+    distanceKm,
+    externalLinks
+}: LightSkateparkCardProps) {
+    const [open, setOpen] = useState(false);
+
+    const formatSrc = (src: string) => {
+        if (src.startsWith('http')) return src;
+        return `/${src}`;
+    };
+
+    const hasPhotos = photoNames && photoNames.length > 0;
+    const imagesToShow = hasPhotos ? photoNames : ["https://res.cloudinary.com/dcncqacrd/image/upload/v1747566727/skateparks/default-skatepark.png"];
+
+    return (
+        <>
+            <Box onClick={() => setOpen(true)} sx={{ cursor: 'pointer' }}>
+                <Card
+                    sx={{
+                        width: 345,
+                        height: 420,
+                        boxShadow: 5,
+                        borderRadius: 2,
+                        backgroundColor: '#A7A9AC',
+                        color: '#2F2F2F',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        transition: 'transform 0.2s, box-shadow 0.2s',
+                        '&:hover': {
+                            transform: 'translateY(-4px)',
+                            boxShadow: 8,
+                        }
+                    }}
+                >
+                    {/* Fast custom carousel - much lighter than react-material-ui-carousel */}
+                    <FastCarousel 
+                        images={imagesToShow} 
+                        alt={title}
+                        height={200}
+                    />
+
+                    <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
+                        <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', mb: 1, fontSize: '1.1rem' }}>
+                            {title}
+                        </Typography>
+
+                        <Box display="flex" alignItems="center" gap={1} mb={1}>
+                            <Rating value={avgRating} readOnly size="small" />
+                            <Typography variant="body2" color="text.secondary">
+                                ({avgRating.toFixed(1)})
+                            </Typography>
+                        </Box>
+
+                        <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mb: 1 }}>
+                            <Chip label={isPark ? 'Park' : 'Street'} size="small" color={isPark ? 'success' : 'warning'} />
+                            <Chip label={size} size="small" />
+                            <Chip label={level} size="small" />
+                        </Stack>
+
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            Distance: {distanceKm.toFixed(1)} km
+                        </Typography>
+
+                        <Stack direction="row" spacing={1} sx={{ mt: 'auto' }}>
+                            <Button variant="contained" size="small" fullWidth>
+                                View Details
+                            </Button>
+                            <Button variant="outlined" size="small">
+                                Navigate
+                            </Button>
+                        </Stack>
+                    </CardContent>
+                </Card>
+            </Box>
+
+            <SkateparkModal
+                _id={_id}
+                open={open}
+                onClose={() => setOpen(false)}
+                title={title}
+                description={description}
+                photoNames={photoNames}
+                isPark={isPark}
+                size={size}
+                level={level}
+                tags={tags}
+                coordinates={coordinates}
+                externalLinks={externalLinks}
+            />
+        </>
+    );
+});
+
+export default LightSkateparkCard;

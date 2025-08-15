@@ -8,7 +8,8 @@ const nextConfig = {
   
   // Performance optimizations
   experimental: {
-    optimizeCss: true,
+    // Temporarily disabled optimizeCss due to critters dependency issue
+    // optimizeCss: true,
     optimizePackageImports: ['@mui/material', '@mui/icons-material', 'leaflet'],
     webpackBuildWorker: true, // Use separate process for webpack builds
     turbo: {
@@ -96,10 +97,7 @@ const nextConfig = {
 
     // Production optimizations
     if (!dev && !isServer) {
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        '@mui/styled-engine': '@mui/styled-engine-sc',
-      };
+      // Removed problematic MUI styled engine alias that was causing build issues
       
       // Optimize bundle splitting for production
       config.optimization = {
@@ -127,23 +125,13 @@ const nextConfig = {
               chunks: 'all',
               priority: 20,
             },
-            carousel: {
-              test: /[\\/]node_modules[\\/]react-material-ui-carousel[\\/]/,
-              name: 'carousel',
-              chunks: 'all',
-              priority: 20,
-            },
+                              // Removed carousel chunk - no longer using react-material-ui-carousel
           },
         },
       };
     }
     
-    // General optimizations
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      // Reduce bundle size by aliasing to smaller versions
-      'react-material-ui-carousel': 'react-material-ui-carousel/dist/index.js',
-    };
+    // General optimizations - removed carousel alias as we no longer use it
     
     return config;
   },

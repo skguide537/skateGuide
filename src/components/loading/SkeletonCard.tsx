@@ -1,4 +1,8 @@
-import { Card, CardContent, Box, Skeleton } from '@mui/material';
+// Direct MUI imports for better tree shaking
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Box from '@mui/material/Box';
+import Skeleton from '@mui/material/Skeleton';
 import { memo } from 'react';
 
 const SkeletonCard = memo(function SkeletonCard() {

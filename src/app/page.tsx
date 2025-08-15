@@ -2,13 +2,15 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import SkateparkCard from '@/components/skateparkCard/SkateparkCard';
+// Use lightweight card for home page performance
+import SkateparkCard from '@/components/skateparkCard/LightSkateparkCard';
 import SkeletonCard from '@/components/loading/SkeletonCard';
+// Direct MUI imports for better tree shaking (except Grid which has import issues)
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Container from '@mui/material/Container';
-import Grid from '@mui/material/Grid';
+import { Grid } from '@mui/material';
 import Pagination from '@mui/material/Pagination';
 import Typography from '@mui/material/Typography';
 
