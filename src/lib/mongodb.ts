@@ -31,7 +31,18 @@ export async function connectToDatabase(uri: string = MONGODB_URI) {
         bufferCommands: false,
       };
   
-      cached.promise = mongoose.connect(uri, opts).then((mongoose) => mongoose);
+      cached.promise = mongoose.connect(uri, opts).then(async (mongoose) => {
+        // Create database indexes on first connection
+        if (process.env.NODE_ENV !== 'test') {
+          try {
+            const { createDatabaseIndexes } = await import('./db-indexes');
+            await createDatabaseIndexes();
+          } catch (error) {
+            console.warn('Warning: Could not create database indexes:', error);
+          }
+        }
+        return mongoose;
+      });
     }
   
     try {
