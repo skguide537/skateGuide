@@ -18,9 +18,9 @@
         "test:watch": "jest --watch",
         "test:coverage": "jest --coverage",
         "test:clean": "jest --clearCache",
-        "analyze": "ANALYZE=true npm run build",
-        "analyze:server": "BUNDLE_ANALYZE=server npm run build",
-        "analyze:browser": "BUNDLE_ANALYZE=browser npm run build"
+        "analyze": "set ANALYZE=true && npm run build",
+        "analyze:server": "set BUNDLE_ANALYZE=server && npm run build",
+        "analyze:browser": "set BUNDLE_ANALYZE=browser && npm run build"
     },
     "dependencies": {
         "@emotion/react": "^11.14.0",
@@ -44,7 +44,6 @@
         "react-dom": "^18.2.0",
         "react-hook-form": "^7.56.1",
         "react-leaflet": "^4.2.1",
-        "react-material-ui-carousel": "^3.4.2",
         "sharp": "^0.34.1",
         "zod": "^3.24.3"
     },

@@ -2,13 +2,13 @@
 
 import { Dialog, DialogTitle, DialogContent, Typography, Chip, Stack, IconButton, Box, Button } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import Carousel from 'react-material-ui-carousel';
+import FastCarousel from '../ui/FastCarousel';
 import Loading from "@/components/loading/Loading";
 import Rating from '@mui/material/Rating';
+import Image from 'next/image';
 import { useState } from 'react';
 import { useToast } from '@/context/ToastContext';
 import { useUser } from '@/context/UserContext';
-import Image from 'next/image';
 
 interface SkateparkModalProps {
   open: boolean;
@@ -76,23 +76,11 @@ export default function SkateparkModal({
         </IconButton>
       </DialogTitle>
       <DialogContent dividers>
-        <Carousel autoPlay={false} navButtonsAlwaysVisible={photoNames.length > 1} indicators={photoNames.length > 1}>
-          {photoNames.map((src, idx) => (
-            <Image
-              key={idx}
-              src={formatSrc(src)}
-              alt={`Skatepark photo ${idx + 1}`}
-              width={600}
-              height={400}
-              style={{
-                width: '100%',
-                height: 400,
-                objectFit: 'cover',
-                borderRadius: 8
-              }}
-            />
-          ))}
-        </Carousel>
+        <FastCarousel 
+          images={photoNames} 
+          alt={title}
+          height={400}
+        />
 
         <Typography variant="body2" sx={{ mt: 2, maxHeight: 100, overflowY: 'auto', whiteSpace: 'pre-line' }}>
           {description}
