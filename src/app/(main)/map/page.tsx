@@ -5,8 +5,8 @@ import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 
-// Dynamically import the Map component with no SSR
-const Map = dynamic(() => import('@/components/map/Map'), {
+// Dynamically import the EnhancedMap component with no SSR
+const EnhancedMap = dynamic(() => import('@/components/map/EnhancedMap'), {
   ssr: false,
   loading: () => <Loading />
 });
@@ -44,7 +44,7 @@ export default function MapPage() {
           <p className="text-red-500">{error}</p>
         </div>
       ) : userLocation ? (
-        <Map userLocation={userLocation} />
+        <EnhancedMap userLocation={userLocation} />
       ) : (
         <Loading />
       )}
