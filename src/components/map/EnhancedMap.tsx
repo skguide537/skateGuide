@@ -1,17 +1,14 @@
 'use client';
 
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
-import { MarkerClusterGroup } from 'react-leaflet-cluster';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import 'leaflet.markercluster/dist/MarkerCluster.css';
-import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import L from 'leaflet';
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Map } from 'leaflet';
-import { Box, IconButton, Tooltip, Chip, Rating, Typography, Button, Collapse } from '@mui/material';
-import { Layers, MyLocation, Info, ExpandMore, ExpandLess } from '@mui/icons-material';
+import { Box, IconButton, Tooltip, Chip, Rating, Typography, Button } from '@mui/material';
+import { Layers } from '@mui/icons-material';
 import SkateparkModal from '../modals/SkateparkModal';
-import { weatherService, WeatherData, SkatingConditions } from '../../services/weather.service';
+
 
 // Custom icons for different spot types
 const createCustomIcon = (isPark: boolean, size: string, level: string) => {
@@ -31,7 +28,7 @@ const createCustomIcon = (isPark: boolean, size: string, level: string) => {
   return L.divIcon({
     html: svgIcon,
     className: 'custom-marker-icon',
-    iconSize: baseSize,
+    iconSize: [baseSize[0], baseSize[1]],
     iconAnchor: [15, 15],
     popupAnchor: [0, -15],
   });
@@ -174,10 +171,7 @@ export default function EnhancedMap({ userLocation }: MapProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentMapStyle, setCurrentMapStyle] = useState('street');
-  const [showDistanceCircles, setShowDistanceCircles] = useState(true);
-  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
-  const [skatingConditions, setSkatingConditions] = useState<SkatingConditions | null>(null);
-  const [showWeatherDetails, setShowWeatherDetails] = useState(false);
+
   const mapRef = useRef<Map | null>(null);
 
   // Fetch spots data
@@ -199,12 +193,7 @@ export default function EnhancedMap({ userLocation }: MapProps) {
     fetchSpots();
   }, []);
 
-  // Fetch weather data when user location changes
-  useEffect(() => {
-    if (userLocation) {
-      fetchWeatherData(userLocation);
-    }
-  }, [userLocation]);
+
 
   // Force map refresh when user location changes
   useEffect(() => {
@@ -213,43 +202,11 @@ export default function EnhancedMap({ userLocation }: MapProps) {
     }
   }, [userLocation]);
 
-  // Fetch weather data using the weather service
-  const fetchWeatherData = async (location: [number, number]) => {
-    try {
-      const weather = await weatherService.getWeatherData(location[0], location[1]);
-      setWeatherData(weather);
-      
-      // Get skating recommendations
-      const conditions = weatherService.getSkatingRecommendations(weather);
-      setSkatingConditions(conditions);
-    } catch (error) {
-      console.error('Failed to fetch weather data:', error);
-    }
-  };
 
-  // Calculate distance between two points
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371; // Earth's radius in km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  };
 
-  // Filter spots by distance
-  const getNearbySpots = (radius: number) => {
-    if (!userLocation) return [];
-    return spots.filter(spot => {
-      const distance = calculateDistance(
-        userLocation[0], userLocation[1],
-        spot.location.coordinates[1], spot.location.coordinates[0]
-      );
-      return distance <= radius;
-    });
-  };
+
+
+
 
   const handleStyleChange = (style: string) => {
     setCurrentMapStyle(style);
@@ -308,107 +265,11 @@ export default function EnhancedMap({ userLocation }: MapProps) {
             </Tooltip>
           ))}
           
-          {/* Distance Circles Toggle */}
-          {userLocation && (
-            <Tooltip title={showDistanceCircles ? 'Hide distance circles' : 'Show distance circles'}>
-              <IconButton
-                size="small"
-                onClick={() => setShowDistanceCircles(!showDistanceCircles)}
-                color={showDistanceCircles ? 'primary' : 'default'}
-                sx={{ 
-                  bgcolor: showDistanceCircles ? 'primary.light' : 'transparent',
-                  '&:hover': { bgcolor: 'primary.light' }
-                }}
-              >
-                <MyLocation fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
+
         </Box>
       </Box>
 
-      {/* Enhanced Weather Info */}
-      {weatherData && (
-        <Box
-          position="absolute"
-          top={10}
-          left={10}
-          zIndex={1000}
-          bgcolor="white"
-          borderRadius={1}
-          boxShadow={2}
-          p={2}
-          minWidth="280px"
-          maxWidth="320px"
-        >
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-            <Typography variant="subtitle2" fontWeight="bold">
-              Skating Conditions
-            </Typography>
-            <IconButton
-              size="small"
-              onClick={() => setShowWeatherDetails(!showWeatherDetails)}
-            >
-              {showWeatherDetails ? <ExpandLess /> : <ExpandMore />}
-            </IconButton>
-          </Box>
-          
-          <Box display="flex" alignItems="center" gap={2} mb={1}>
-            <Typography variant="h6" color="primary">
-              {weatherData.temperature}°C
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {weatherData.condition}
-            </Typography>
-          </Box>
-          
-          <Box display="flex" alignItems="center" gap={1} mb={1}>
-            <Typography variant="body2">Skating Score:</Typography>
-            <Rating value={weatherData.skatingScore} readOnly size="small" max={10} />
-            <Typography variant="body2" color="text.secondary">
-              ({weatherData.skatingScore}/10)
-            </Typography>
-          </Box>
-          
-          <Collapse in={showWeatherDetails}>
-            <Box mt={1} pt={1} borderTop="1px solid #eee">
-              <Box display="flex" justifyContent="space-between" mb={0.5}>
-                <Typography variant="body2">Wind:</Typography>
-                <Typography variant="body2">{weatherData.windSpeed} km/h</Typography>
-              </Box>
-              <Box display="flex" justifyContent="space-between" mb={0.5}>
-                <Typography variant="body2">Humidity:</Typography>
-                <Typography variant="body2">{weatherData.humidity}%</Typography>
-              </Box>
-              <Box display="flex" justifyContent="space-between" mb={0.5}>
-                <Typography variant="body2">UV Index:</Typography>
-                <Typography variant="body2">{weatherData.uvIndex}</Typography>
-              </Box>
-              <Box display="flex" justifyContent="space-between" mb={1}>
-                <Typography variant="body2">Precipitation:</Typography>
-                <Typography variant="body2">{weatherData.precipitation}%</Typography>
-              </Box>
-              
-              {skatingConditions && (
-                <Box mt={1}>
-                  <Typography 
-                    variant="body2" 
-                    color={skatingConditions.isGoodForSkating ? 'success.main' : 'warning.main'}
-                    fontWeight="bold"
-                  >
-                    {skatingConditions.reason}
-                  </Typography>
-                  {skatingConditions.recommendations.slice(0, 2).map((rec, index) => (
-                    <Typography key={index} variant="caption" color="text.secondary" display="block">
-                      • {rec}
-                    </Typography>
-                  ))}
-                </Box>
-              )}
-            </Box>
-          </Collapse>
-        </Box>
-      )}
+
 
       <MapContainer
         center={userLocation || [32.073, 34.789]}
@@ -441,56 +302,23 @@ export default function EnhancedMap({ userLocation }: MapProps) {
           </Marker>
         )}
 
-        {/* Distance Circles */}
-        {userLocation && showDistanceCircles && (
-          <>
-            <Circle
-              center={userLocation}
-              radius={1000}
-              pathOptions={{ color: 'blue', fillColor: 'blue', fillOpacity: 0.1 }}
-            >
-              <Popup>1km radius</Popup>
-            </Circle>
-            <Circle
-              center={userLocation}
-              radius={3000}
-              pathOptions={{ color: 'green', fillColor: 'green', fillOpacity: 0.1 }}
-            >
-              <Popup>3km radius</Popup>
-            </Circle>
-            <Circle
-              center={userLocation}
-              radius={5000}
-              pathOptions={{ color: 'orange', fillColor: 'orange', fillOpacity: 0.1 }}
-            >
-              <Popup>5km radius</Popup>
-            </Circle>
-          </>
-        )}
 
-        {/* Clustered Markers */}
-        <MarkerClusterGroup
-          chunkedLoading
-          maxClusterRadius={60}
-          spiderfyOnMaxZoom={true}
-          showCoverageOnHover={false}
-          zoomToBoundsOnClick={true}
-        >
-          {spots.map((spot) => (
-            <Marker
-              key={spot._id}
-              position={[spot.location.coordinates[1], spot.location.coordinates[0]]}
-              icon={createCustomIcon(spot.isPark, spot.size, spot.level)}
-              eventHandlers={{
-                click: () => handleViewDetails(spot),
-              }}
-            >
-              <Popup>
-                <RichPopup spot={spot} onViewDetails={handleViewDetails} />
-              </Popup>
-            </Marker>
-          ))}
-        </MarkerClusterGroup>
+
+        {/* Regular Markers */}
+        {spots.map((spot) => (
+          <Marker
+            key={spot._id}
+            position={[spot.location.coordinates[1], spot.location.coordinates[0]]}
+            icon={createCustomIcon(spot.isPark, spot.size, spot.level)}
+            eventHandlers={{
+              click: () => handleViewDetails(spot),
+            }}
+          >
+            <Popup>
+              <RichPopup spot={spot} onViewDetails={handleViewDetails} />
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
 
       {/* Skatepark Modal */}
