@@ -297,9 +297,9 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
             <TextField 
                 fullWidth 
                 label="Title *" 
-                value={title} 
-                onChange={e => setTitle(e.target.value)} 
-                sx={{ mb: 2 }} 
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                sx={{ mb: 2 }}
                 required
                 placeholder="e.g., Central Park Skate Spot"
                 error={hasAttemptedSubmit && !title.trim()}
@@ -476,7 +476,6 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                     variant="contained"
                     onClick={searchAddress}
                     disabled={!street || !city || isGeocoding}
-                    sx={{ flex: 1 }}
                 >
                     {isGeocoding ? 'Searching...' : 'Search Address'}
                 </Button>
