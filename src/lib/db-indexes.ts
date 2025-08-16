@@ -3,7 +3,12 @@ import { connectToDatabase } from './mongodb';
 
 export async function createDatabaseIndexes() {
     try {
-        const db = await connectToDatabase();
+        const { db } = await connectToDatabase();
+        
+        if (!db) {
+            console.warn('No database connection available for index creation');
+            return;
+        }
         
         // Create 2dsphere index on location for geospatial queries
         await db.collection('skateparks').createIndex(
@@ -42,7 +47,10 @@ export async function createDatabaseIndexes() {
 // Function to check existing indexes
 export async function listDatabaseIndexes() {
   try {
-    const indexes = await SkateparkModel.collection.listIndexes().toArray();
+    const { db } = await connectToDatabase();
+    if (!db) return [];
+    
+    const indexes = await db.collection('skateparks').listIndexes().toArray();
     console.log('Current database indexes:', indexes);
     return indexes;
   } catch (error) {
