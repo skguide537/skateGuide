@@ -1,23 +1,33 @@
 'use client';
 
-import Loading from '@/components/loading/Loading';
-import dynamic from 'next/dynamic';
-import { useEffect, useState } from 'react';
-import 'leaflet/dist/leaflet.css';
+import { Suspense, lazy, useEffect, useState } from 'react';
+import { Box, Typography, CircularProgress } from '@mui/material';
 
-// Dynamically import the EnhancedMap component with no SSR
-const EnhancedMap = dynamic(() => import('@/components/map/EnhancedMap'), {
-  ssr: false,
-  loading: () => <Loading />
-});
+// Lazy load the heavy map component
+const EnhancedMap = lazy(() => import('@/components/map/EnhancedMap'));
+
+// Loading component for the map
+const MapLoading = () => (
+  <Box sx={{ 
+    display: 'flex', 
+    flexDirection: 'column', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    minHeight: '60vh',
+    gap: 3
+  }}>
+    <CircularProgress size={48} sx={{ color: '#A7A9AC' }} />
+    <Typography variant="h6" color="text.secondary">
+      Loading Interactive Map...
+    </Typography>
+  </Box>
+);
 
 export default function MapPage() {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -33,21 +43,29 @@ export default function MapPage() {
     }
   }, []);
 
-  if (!mounted) {
-    return null;
+  if (error) {
+    return (
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        height: '100vh',
+        color: 'error.main'
+      }}>
+        <Typography variant="h6">{error}</Typography>
+      </Box>
+    );
+  }
+
+  if (!userLocation) {
+    return <MapLoading />;
   }
 
   return (
-    <main className="h-screen w-full">
-      {error ? (
-        <div className="flex items-center justify-center h-full">
-          <p className="text-red-500">{error}</p>
-        </div>
-      ) : userLocation ? (
+    <Box sx={{ height: '100vh', width: '100%' }}>
+      <Suspense fallback={<MapLoading />}>
         <EnhancedMap userLocation={userLocation} />
-      ) : (
-        <Loading />
-      )}
-    </main>
+      </Suspense>
+    </Box>
   );
 }
