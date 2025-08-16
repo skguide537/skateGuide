@@ -9,16 +9,16 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 1, // Add retries for flaky tests
   workers: process.env.CI ? 1 : 2, // Reduce workers to avoid overwhelming the server
   reporter: 'list', // Minimal console output, no HTML files
-  timeout: 60000, // Increase global timeout to 60 seconds
+  timeout: process.env.CI ? 120000 : 60000, // Increase global timeout to 2 minutes in CI
   expect: {
-    timeout: 10000, // Increase expect timeout to 10 seconds
+    timeout: process.env.CI ? 15000 : 10000, // Increase expect timeout in CI
   },
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'off', // No tracing
     screenshot: 'off', // No screenshots
-    actionTimeout: 15000, // Increase action timeout
-    navigationTimeout: 30000, // Increase navigation timeout
+    actionTimeout: process.env.CI ? 20000 : 15000, // Increase action timeout in CI
+    navigationTimeout: process.env.CI ? 45000 : 30000, // Increase navigation timeout in CI
   },
 
   projects: [

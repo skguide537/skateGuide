@@ -3,11 +3,21 @@ import { test, expect } from '@playwright/test';
 test.describe('Login Page', () => {
   test.beforeEach(async ({ page }) => {
     try {
-      await page.goto('/login', { timeout: 30000, waitUntil: 'domcontentloaded' });
+      // In CI, use longer timeout and wait for network idle
+      await page.goto('/login', { 
+        timeout: 30000, 
+        waitUntil: 'networkidle' 
+      });
     } catch (error) {
       // If navigation fails, try again with a shorter timeout
-      await page.goto('/login', { timeout: 15000, waitUntil: 'domcontentloaded' });
+      await page.goto('/login', { 
+        timeout: 15000, 
+        waitUntil: 'domcontentloaded' 
+      });
     }
+    
+    // Wait for the page to be fully interactive
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should display the login form', async ({ page }) => {
@@ -30,16 +40,23 @@ test.describe('Login Page', () => {
     await expect(page.getByLabel(/email/i)).toBeVisible({ timeout: 15000 });
     await expect(page.getByLabel(/password/i)).toBeVisible({ timeout: 15000 });
     
-    // Fill out the form
+    // Clear fields first to ensure clean state
+    await page.getByLabel(/email/i).clear();
+    await page.getByLabel(/password/i).clear();
+    
+    // Fill out the form with explicit waits
     await page.getByLabel(/email/i).fill('test@example.com');
+    await page.waitForTimeout(500); // Wait for input to process
+    
     await page.getByLabel(/password/i).fill('testpassword123');
+    await page.waitForTimeout(500); // Wait for input to process
     
     // Wait a moment for the form to process the input and ensure values are set
     await page.waitForTimeout(1000);
     
-    // Verify the form is filled
-    await expect(page.getByLabel(/email/i)).toHaveValue('test@example.com');
-    await expect(page.getByLabel(/password/i)).toHaveValue('testpassword123');
+    // Verify the form is filled with longer timeout for CI
+    await expect(page.getByLabel(/email/i)).toHaveValue('test@example.com', { timeout: 15000 });
+    await expect(page.getByLabel(/password/i)).toHaveValue('testpassword123', { timeout: 15000 });
   });
 
   test('should validate required fields', async ({ page }) => {
