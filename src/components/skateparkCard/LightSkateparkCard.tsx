@@ -55,64 +55,72 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
 
     return (
         <>
-            <Box onClick={() => setOpen(true)} sx={{ cursor: 'pointer' }}>
-                <Card
-                    sx={{
-                        width: 345,
-                        height: 420,
-                        boxShadow: 5,
-                        borderRadius: 2,
-                        backgroundColor: '#A7A9AC',
-                        color: '#2F2F2F',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        transition: 'transform 0.2s, box-shadow 0.2s',
-                        '&:hover': {
-                            transform: 'translateY(-4px)',
-                            boxShadow: 8,
-                        }
-                    }}
-                >
-                    {/* Fast custom carousel - much lighter than react-material-ui-carousel */}
-                    <FastCarousel 
-                        images={imagesToShow} 
-                        alt={title}
-                        height={200}
-                    />
+            <Card
+                onClick={() => setOpen(true)}
+                sx={{
+                    width: 345,
+                    height: 420,
+                    boxShadow: 5,
+                    borderRadius: 2,
+                    backgroundColor: '#A7A9AC',
+                    color: '#2F2F2F',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                        transform: 'translateY(-6px)',
+                        boxShadow: 12,
+                        backgroundColor: '#B8B9BC',
+                    },
+                    '&:active': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: 8,
+                    }
+                }}
+            >
+                {/* Fast custom carousel - much lighter than react-material-ui-carousel */}
+                <FastCarousel 
+                    images={imagesToShow} 
+                    alt={title}
+                    height={200}
+                />
 
-                    <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
-                        <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', mb: 1, fontSize: '1.1rem' }}>
-                            {title}
+                <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
+                    <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', mb: 1, fontSize: '1.1rem' }}>
+                        {title}
+                    </Typography>
+
+                    <Box display="flex" alignItems="center" gap={1} mb={1}>
+                        <Rating value={avgRating} readOnly size="small" />
+                        <Typography variant="body2" color="text.secondary">
+                            ({avgRating.toFixed(1)})
                         </Typography>
+                    </Box>
 
-                        <Box display="flex" alignItems="center" gap={1} mb={1}>
-                            <Rating value={avgRating} readOnly size="small" />
-                            <Typography variant="body2" color="text.secondary">
-                                ({avgRating.toFixed(1)})
-                            </Typography>
-                        </Box>
+                    <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mb: 1 }}>
+                        <Chip label={isPark ? 'Park' : 'Street'} size="small" color={isPark ? 'success' : 'warning'} />
+                        <Chip label={size} size="small" />
+                        <Chip label={level} size="small" />
+                    </Stack>
 
-                        <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mb: 1 }}>
-                            <Chip label={isPark ? 'Park' : 'Street'} size="small" color={isPark ? 'success' : 'warning'} />
-                            <Chip label={size} size="small" />
-                            <Chip label={level} size="small" />
-                        </Stack>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                        Distance: {distanceKm.toFixed(1)} km
+                    </Typography>
 
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                            Distance: {distanceKm.toFixed(1)} km
-                        </Typography>
-
-                        <Stack direction="row" spacing={1} sx={{ mt: 'auto' }}>
-                            <Button variant="contained" size="small" fullWidth>
-                                View Details
-                            </Button>
-                            <Button variant="outlined" size="small">
-                                Navigate
-                            </Button>
-                        </Stack>
-                    </CardContent>
-                </Card>
-            </Box>
+                    {/* Click hint - subtle indication that card is clickable */}
+                    <Box sx={{ 
+                        mt: 'auto', 
+                        textAlign: 'center',
+                        py: 1,
+                        color: 'rgba(47, 47, 47, 0.7)',
+                        fontSize: '0.8rem',
+                        fontStyle: 'italic'
+                    }}>
+                        Click to view details
+                    </Box>
+                </CardContent>
+            </Card>
 
             <SkateparkModal
                 _id={_id}
