@@ -49,23 +49,18 @@ test.describe('Login Page', () => {
   });
 
   test('should handle successful login', async ({ page }) => {
-    // Mock successful login response with better error handling
+    // Mock successful login response
     await page.route('/api/auth/login', async route => {
-      try {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            _id: 'test-user-id',
-            name: 'Test User',
-            email: 'test@example.com',
-            token: 'mock-jwt-token'
-          })
-        });
-      } catch (error) {
-        console.error('Route fulfillment error:', error);
-        await route.continue();
-      }
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          _id: 'test-user-id',
+          name: 'Test User',
+          email: 'test@example.com',
+          token: 'test-token'
+        })
+      });
     });
 
     // Fill and submit form
@@ -75,33 +70,15 @@ test.describe('Login Page', () => {
     // Submit the form
     await page.getByRole('button', { name: /sign in/i }).click();
     
-    // Wait for the response and potential redirect
-    try {
-      // Wait for either redirect or stay on login page
-      await Promise.race([
-        page.waitForURL('**/', { timeout: 10000 }),
-        page.waitForURL('**/login', { timeout: 10000 })
-      ]);
-      
-      // Check current URL
-      const currentUrl = page.url();
-      console.log('Current URL after login:', currentUrl);
-      
-      // Should either redirect to home page or stay on login (depending on implementation)
-      if (currentUrl.includes('/login')) {
-        // If staying on login, check for success message or toast
-        await expect(page.locator('body')).toContainText(/success|welcome|logged in/i);
-      } else {
-        // If redirected, should be on home page
-        await expect(page).toHaveURL('/');
-      }
-    } catch (error) {
-      console.error('Login redirect error:', error);
-      
-      // At minimum, verify we're not on an error page
-      await expect(page).not.toHaveURL('/500');
-      await expect(page).not.toHaveURL('/404');
-    }
+    // Wait for the redirect to home page
+    await page.waitForURL('**/', { timeout: 10000 });
+    
+    // Should redirect to home page
+    await expect(page).toHaveURL('/');
+    
+    // On the home page, should see user-specific content or navigation
+    // Check if navbar shows user info or if we're logged in
+    await expect(page.locator('body')).toContainText(/skateguide|skateparks|map|add spot/i);
   });
 
   test('should handle login failure', async ({ page }) => {
