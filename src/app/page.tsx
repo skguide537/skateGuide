@@ -74,7 +74,6 @@ export default function HomePage() {
                 setTotalPages(Math.ceil(totalCount / limit));
             } else {
                 // Background prefetch - just cache the data
-                console.log(`✅ Prefetched page ${pageNumber} (${data.length} parks)`);
                 setPrefetchedPages(prev => new Set([...prev, pageNumber]));
             }
         } catch (err) {
@@ -92,27 +91,43 @@ export default function HomePage() {
 
     // Fetch all parks in background for instant pagination
     const fetchAllParksBackground = useCallback(async () => {
-        if (backgroundDataLoaded) return;
-        
-        setIsBackgroundLoading(true);
-        console.log(`🔄 Loading all parks in background for instant pagination...`);
-        
         try {
-            // Fetch all parks without pagination
-            const res = await fetch('/api/skateparks');
-            const allParksData = await res.json();
-            
-            if (Array.isArray(allParksData)) {
-                setAllParks(allParksData);
+            const res = await fetch(`/api/skateparks?limit=1000`);
+            if (res.ok) {
+                const data = await res.json();
+                // Handle both array and object responses
+                const parksData = Array.isArray(data) ? data : (data.parks || data.data || []);
+                setAllParks(parksData);
                 setBackgroundDataLoaded(true);
-                console.log(`✅ Background loaded ${allParksData.length} parks for instant pagination!`);
             }
         } catch (error) {
-            console.warn('Failed to load all parks in background:', error);
-        } finally {
-            setIsBackgroundLoading(false);
+            // Silent background fetch - don't show errors to user
         }
-    }, [backgroundDataLoaded]);
+    }, []);
+
+    const prefetchNextPages = useCallback(async () => {
+        if (page >= totalPages) return;
+        
+        const nextPage = page + 1;
+        const startIndex = (nextPage - 1) * limit;
+        
+        try {
+            const res = await fetch(`/api/skateparks?page=${nextPage}&limit=${limit}`);
+            if (res.ok) {
+                const data = await res.json();
+                // Store in background data for instant pagination
+                setAllParks(prev => {
+                    const newParks = [...(prev || [])];
+                    data.parks.forEach((park: any, index: number) => {
+                        newParks[startIndex + index] = park;
+                    });
+                    return newParks;
+                });
+            }
+        } catch (error) {
+            // Silent prefetch - don't show errors to user
+        }
+    }, [page, totalPages, limit]);
 
     // Get current page parks from background data or fallback to paginated data
     const getCurrentPageParks = useCallback((pageNum: number) => {
@@ -226,6 +241,7 @@ export default function HomePage() {
             ) : (
                 <>
                     <Grid container spacing={4}>
+                        {/* Show actual skatepark cards */}
                         {parksWithDistance.map((park) => (
                             <Grid item xs={12} sm={6} md={4} key={park._id} {...({} as any)}>
                                 <SkateparkCard
@@ -253,9 +269,9 @@ export default function HomePage() {
                             page={page}
                             onChange={(_, value) => {
                                 if (backgroundDataLoaded) {
-                                    console.log(`⚡ Instant page ${value} from background data`);
+                                    // console.log(`⚡ Instant page ${value} from background data`);
                                 } else {
-                                    console.log(`🔄 Loading page ${value} from server`);
+                                    // console.log(`🔄 Loading page ${value} from server`);
                                 }
                                 setPage(value);
                             }}

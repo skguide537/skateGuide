@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
         }
 
         await connectToDatabase();
+        
         const { searchParams } = new URL(request.url);
 
         // Handle different query parameters
