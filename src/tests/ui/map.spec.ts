@@ -6,9 +6,10 @@ test.describe('Map Page', () => {
   });
 
   test('should display the map page', async ({ page }) => {
-    // Check if the page loads without errors - our new structure uses Box with height: 100vh
+    // Check if the page loads without errors - our new structure uses MUI Box
     // Wait for either the map to load or an error message to appear
-    await expect(page.locator('div[style*="height: 100vh"]')).toBeVisible({ timeout: 15000 });
+    // MUI Box with height: 100vh will be rendered as a div with CSS classes
+    await expect(page.locator('div').filter({ hasText: /loading interactive map|unable to retrieve your location|geolocation is not supported/i })).toBeVisible({ timeout: 15000 });
     
     // The page should load without errors
     await expect(page).toHaveURL('/map');
@@ -51,8 +52,8 @@ test.describe('Map Page', () => {
     // and geolocation is available
     await expect(page).toHaveURL('/map');
     
-    // Verify the page structure is intact - look for our Box container
-    await expect(page.locator('div[style*="height: 100vh"]')).toBeVisible({ timeout: 15000 });
+    // Verify the page structure is intact - look for content instead of specific CSS
+    await expect(page.locator('div').filter({ hasText: /loading interactive map|unable to retrieve your location|geolocation is not supported/i })).toBeVisible({ timeout: 15000 });
     
     // The geolocation mock is set up, so the page should handle it gracefully
     // without causing errors
@@ -184,8 +185,8 @@ test.describe('Map Page', () => {
     // and geolocation is available
     await expect(page).toHaveURL('/map');
     
-    // Verify the page structure is intact - look for our Box container
-    await expect(page.locator('div[style*="height: 100vh"]')).toBeVisible({ timeout: 15000 });
+    // Verify the page structure is intact - look for content instead of specific CSS
+    await expect(page.locator('div').filter({ hasText: /loading interactive map|unable to retrieve your location|geolocation is not supported/i })).toBeVisible({ timeout: 15000 });
     
     // The geolocation mock is set up, so the page should handle it gracefully
     // without causing errors
@@ -195,46 +196,16 @@ test.describe('Map Page', () => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
     
-    // Mock successful geolocation
-    await page.addInitScript(() => {
-      Object.defineProperty(navigator, 'geolocation', {
-        value: {
-          getCurrentPosition: (success: any) => {
-            success({
-              coords: {
-                latitude: 32.073,
-                longitude: 34.789
-              }
-            });
-          }
-        }
-      });
-    });
-
-    // Reload page
-    await page.reload();
+    // Navigate to map page
+    await page.goto('/map');
     
-    // Instead of waiting for map to load (which can be slow), just verify the page structure
-    // and that it's responsive on mobile
-    await expect(page).toHaveURL('/map');
-    
-    // Verify the page structure is intact - look for our Box container
-    await expect(page.locator('div[style*="height: 100vh"]')).toBeVisible({ timeout: 15000 });
-    
-    // Check if the page maintains mobile layout - verify the Box element has mobile-friendly styles
-    const boxElement = page.locator('div[style*="height: 100vh"]');
-    const hasMobileStyle = await boxElement.evaluate(el => 
-      el.style.height === '100vh' ||
-      el.style.width === '100%' ||
-      el.className.includes('h-screen') || 
-      el.className.includes('min-h-screen')
-    );
+    // Verify the page structure is intact - look for content instead of specific CSS
+    // Use first() to avoid strict mode violations when multiple elements have the same text
+    const pageContent = page.locator('div').filter({ hasText: /loading interactive map|unable to retrieve your location|geolocation is not supported/i }).first();
     
     // If no specific mobile style, just verify the element is visible and the page loads
-    if (!hasMobileStyle) {
-      await expect(boxElement).toBeVisible();
-      // The page should still be functional on mobile even without specific mobile styles
-    }
+    await expect(pageContent).toBeVisible();
+    // The page should still be functional on mobile even without specific mobile styles
   });
 
   test('should handle navigation back to home', async ({ page }) => {
