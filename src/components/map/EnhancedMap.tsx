@@ -257,6 +257,20 @@ export default function EnhancedMap({ userLocation }: MapProps) {
     setSelectedSpot(spot);
   };
 
+  const handleSpotClick = (spot: Skatepark) => {
+    // Fly to the spot location
+    if (mapRef.current) {
+      const [lng, lat] = spot.location.coordinates;
+      mapRef.current.flyTo([lat, lng], 16, {
+        duration: 1.5,
+        easeLinearity: 0.25
+      });
+    }
+    
+    // Don't open modal - let the popup handle it
+    setSelectedSpot(null);
+  };
+
   // Calculate distance between two points
   const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
     const R = 6371; // Earth's radius in kilometers
@@ -502,7 +516,7 @@ export default function EnhancedMap({ userLocation }: MapProps) {
                     cursor: 'pointer',
                     '&:hover': { elevation: 4 }
                   }}
-                  onClick={() => handleViewDetails(spot)}
+                  onClick={() => handleSpotClick(spot)}
                 >
                   <Box sx={{ display: 'flex' }}>
                     <CardMedia
