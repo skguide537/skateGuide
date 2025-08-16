@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, Button, Chip, FormControl, FormLabel, InputLabel, MenuItem, OutlinedInput, Select, Switch, TextField, Typography } from '@mui/material';
+import { Box, Button, Chip, FormControl, FormLabel, InputLabel, MenuItem, OutlinedInput, Select, Switch, TextField, Typography, Autocomplete, CircularProgress } from '@mui/material';
 import { useToast } from '@/context/ToastContext';
 import { useUser } from '@/context/UserContext';
 import { Size, Tag, SkaterLevel } from '@/types/enums';
 import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 
 const sizes = Object.values(Size);
 const tags = Object.values(Tag);
@@ -39,6 +39,14 @@ export default function AddSpotPage() {
     const [showMap, setShowMap] = useState(false);
     const [isGeocoding, setIsGeocoding] = useState(false);
     const [locationMethod, setLocationMethod] = useState<'address' | 'gps' | 'map' | null>(null);
+    
+    // Autocomplete state
+    const [streetSuggestions, setStreetSuggestions] = useState<string[]>([]);
+    const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
+    const [countrySuggestions, setCountrySuggestions] = useState<string[]>([]);
+    const [isLoadingStreet, setIsLoadingStreet] = useState(false);
+    const [isLoadingCity, setIsLoadingCity] = useState(false);
+    const [isLoadingCountry, setIsLoadingCountry] = useState(false);
 
     const { user } = useUser();
     const { showToast } = useToast();
@@ -212,6 +220,79 @@ export default function AddSpotPage() {
         }
     };
 
+    // Autocomplete functions
+    const fetchStreetSuggestions = useCallback(async (query: string) => {
+        if (query.length < 3) return;
+        
+        setIsLoadingStreet(true);
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=5&featuretype=street`
+            );
+            
+            if (response.ok) {
+                const data = await response.json();
+                const streets = data
+                    .map((item: any) => item.address?.road || item.display_name.split(',')[0])
+                    .filter(Boolean)
+                    .slice(0, 5);
+                setStreetSuggestions(streets);
+            }
+        } catch (error) {
+            console.error('Street autocomplete error:', error);
+        } finally {
+            setIsLoadingStreet(false);
+        }
+    }, []);
+
+    const fetchCitySuggestions = useCallback(async (query: string) => {
+        if (query.length < 2) return;
+        
+        setIsLoadingCity(true);
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=5&featuretype=city`
+            );
+            
+            if (response.ok) {
+                const data = await response.json();
+                const cities = data
+                    .map((item: any) => item.address?.city || item.address?.town || item.address?.village || item.display_name.split(',')[0])
+                    .filter(Boolean)
+                    .slice(0, 5);
+                setCitySuggestions(cities);
+            }
+        } catch (error) {
+            console.error('City autocomplete error:', error);
+        } finally {
+            setIsLoadingCity(false);
+        }
+    }, []);
+
+    const fetchCountrySuggestions = useCallback(async (query: string) => {
+        if (query.length < 2) return;
+        
+        setIsLoadingCountry(true);
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=5&featuretype=country`
+            );
+            
+            if (response.ok) {
+                const data = await response.json();
+                const countries = data
+                    .map((item: any) => item.address?.country || item.display_name.split(',')[0])
+                    .filter(Boolean)
+                    .slice(0, 5);
+                setCountrySuggestions(countries);
+            }
+        } catch (error) {
+            console.error('Country autocomplete error:', error);
+        } finally {
+            setIsLoadingCountry(false);
+        }
+    }, []);
+
     const handleMapClick = (coords: { lat: number; lng: number }) => {
         if (setValidatedCoords(coords.lat, coords.lng)) {
             setLocationMethod('map');
@@ -280,28 +361,66 @@ export default function AddSpotPage() {
             {/* Address Fields */}
             <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>Location</Typography>
             
-            <TextField 
-                fullWidth 
-                label="Street Address *" 
-                value={street} 
-                onChange={e => setStreet(e.target.value)} 
-                sx={{ mb: 2 }} 
-                placeholder="e.g., רחוב דיזנגוף 99 or 99 Dizengoff Street"
-                required
-                error={hasAttemptedSubmit && !street.trim()}
-                helperText={hasAttemptedSubmit && !street.trim() ? "Street address is required" : ""}
+            <Autocomplete
+                freeSolo
+                options={streetSuggestions}
+                value={street}
+                onChange={(_, newValue) => setStreet(newValue || '')}
+                onInputChange={(_, newInputValue) => {
+                    setStreet(newInputValue);
+                    fetchStreetSuggestions(newInputValue);
+                }}
+                renderInput={(params) => (
+                    <TextField
+                        {...params}
+                        label="Street Address *"
+                        placeholder="e.g., רחוב דיזנגוף 99 or 99 Dizengoff Street"
+                        required
+                        error={hasAttemptedSubmit && !street.trim()}
+                        helperText={hasAttemptedSubmit && !street.trim() ? "Street address is required" : ""}
+                        InputProps={{
+                            ...params.InputProps,
+                            endAdornment: (
+                                <>
+                                    {isLoadingStreet ? <CircularProgress color="inherit" size={20} /> : null}
+                                    {params.InputProps.endAdornment}
+                                </>
+                            ),
+                        }}
+                    />
+                )}
+                sx={{ mb: 2 }}
             />
             
             <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                <TextField 
-                    fullWidth 
-                    label="City *" 
-                    value={city} 
-                    onChange={e => setCity(e.target.value)} 
-                    placeholder="e.g., תל אביב or Tel Aviv"
-                    required
-                    error={hasAttemptedSubmit && !city.trim()}
-                    helperText={hasAttemptedSubmit && !city.trim() ? "City is required" : ""}
+                <Autocomplete
+                    freeSolo
+                    options={citySuggestions}
+                    value={city}
+                    onChange={(_, newValue) => setCity(newValue || '')}
+                    onInputChange={(_, newInputValue) => {
+                        setCity(newInputValue);
+                        fetchCitySuggestions(newInputValue);
+                    }}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="City *"
+                            placeholder="e.g., תל אביב or Tel Aviv"
+                            required
+                            error={hasAttemptedSubmit && !city.trim()}
+                            helperText={hasAttemptedSubmit && !city.trim() ? "City is required" : ""}
+                            InputProps={{
+                                ...params.InputProps,
+                                endAdornment: (
+                                    <>
+                                        {isLoadingCity ? <CircularProgress color="inherit" size={20} /> : null}
+                                        {params.InputProps.endAdornment}
+                                    </>
+                                ),
+                            }}
+                        />
+                    )}
                 />
                 <TextField 
                     fullWidth 
@@ -312,13 +431,32 @@ export default function AddSpotPage() {
                 />
             </Box>
             
-            <TextField 
-                fullWidth 
-                label="Country" 
-                value={country} 
-                onChange={e => setCountry(e.target.value)} 
-                sx={{ mb: 2 }} 
-                placeholder="e.g., ישראל or Israel"
+            <Autocomplete
+                freeSolo
+                options={countrySuggestions}
+                value={country}
+                onChange={(_, newValue) => setCountry(newValue || '')}
+                onInputChange={(_, newInputValue) => {
+                    setCountry(newInputValue);
+                    fetchCountrySuggestions(newInputValue);
+                }}
+                renderInput={(params) => (
+                    <TextField
+                        {...params}
+                        label="Country"
+                        placeholder="e.g., ישראל or Israel"
+                        InputProps={{
+                            ...params.InputProps,
+                            endAdornment: (
+                                <>
+                                    {isLoadingCountry ? <CircularProgress color="inherit" size={20} /> : null}
+                                    {params.InputProps.endAdornment}
+                                </>
+                            ),
+                        }}
+                    />
+                )}
+                sx={{ mb: 2 }}
             />
 
             {/* Location Status */}
