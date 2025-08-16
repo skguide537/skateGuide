@@ -1,4 +1,3 @@
-// Direct MUI imports for better tree shaking
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Box from '@mui/material/Box';
@@ -15,7 +14,20 @@ const SkeletonCard = memo(function SkeletonCard() {
                 borderRadius: 2,
                 backgroundColor: '#A7A9AC',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                position: 'relative',
+                overflow: 'hidden',
+                '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: '-100%',
+                    width: '100%',
+                    height: '100%',
+                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+                    animation: 'shimmer 2s infinite',
+                    zIndex: 1
+                }
             }}
         >
             {/* Image skeleton */}
@@ -23,10 +35,14 @@ const SkeletonCard = memo(function SkeletonCard() {
                 variant="rectangular" 
                 width="100%" 
                 height={200} 
-                sx={{ borderRadius: '8px 8px 0 0' }}
+                sx={{ 
+                    borderRadius: '8px 8px 0 0',
+                    position: 'relative',
+                    zIndex: 2
+                }}
             />
             
-            <CardContent sx={{ flexGrow: 1, p: 2 }}>
+            <CardContent sx={{ flexGrow: 1, p: 2, position: 'relative', zIndex: 2 }}>
                 {/* Title skeleton */}
                 <Skeleton variant="text" width="80%" height={28} sx={{ mb: 1 }} />
                 
@@ -52,6 +68,13 @@ const SkeletonCard = memo(function SkeletonCard() {
                     <Skeleton variant="rounded" width={80} height={32} />
                 </Box>
             </CardContent>
+            
+            <style jsx>{`
+                @keyframes shimmer {
+                    0% { left: -100%; }
+                    100% { left: 100%; }
+                }
+            `}</style>
         </Card>
     );
 });
