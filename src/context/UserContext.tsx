@@ -13,15 +13,23 @@ interface UserContextType {
     user: User | null;
     setUser: (user: User | null) => void;
     logout: () => void;
+    isLoading: boolean;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         const restoreSession = async () => {
+            // Only check auth if we don't already have user data
+            if (user) {
+                return;
+            }
+
+            setIsLoading(true);
             try {
                 const res = await fetch('/api/auth/me');
                 if (!res.ok) {
@@ -34,18 +42,20 @@ export function UserProvider({ children }: { children: ReactNode }) {
                     return;
                 }
 
-                const user = await res.json();
-                setUser(user);
+                const userData = await res.json();
+                setUser(userData);
             } catch (err) {
                 // Only log errors in non-test environments
                 if (process.env.NODE_ENV !== 'test') {
                     console.error("Failed to restore session", err);
                 }
+            } finally {
+                setIsLoading(false);
             }
         };
 
         restoreSession();
-    }, []);
+    }, [user]); // Only run when user changes
 
     const logout = async () => {
         try {
@@ -60,7 +70,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <UserContext.Provider value={{ user, setUser, logout }}>
+        <UserContext.Provider value={{ user, setUser, logout, isLoading }}>
             {children}
         </UserContext.Provider>
     );

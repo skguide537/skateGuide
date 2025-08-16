@@ -32,12 +32,23 @@ export async function connectToDatabase(uri: string = MONGODB_URI) {
       };
   
       cached.promise = mongoose.connect(uri, opts).then(async (mongoose) => {
-        // Create database indexes on first connection
+        // Create database indexes on first connection with proper error handling
         if (process.env.NODE_ENV !== 'test') {
           try {
-            const { createDatabaseIndexes } = await import('./db-indexes');
-            await createDatabaseIndexes();
+            // Add timeout to prevent hanging
+            const indexPromise = import('./db-indexes').then(async ({ createDatabaseIndexes }) => {
+              await createDatabaseIndexes();
+            });
+            
+            // Wait for indexes with a 10-second timeout
+            await Promise.race([
+              indexPromise,
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Index creation timeout')), 10000)
+              )
+            ]);
           } catch (error) {
+            // Log error but don't block the connection
             console.warn('Warning: Could not create database indexes:', error);
           }
         }

@@ -1,31 +1,42 @@
 // Database indexes for performance optimization
-import { SkateparkModel } from '@/models/skatepark.model';
+import { connectToDatabase } from './mongodb';
 
 export async function createDatabaseIndexes() {
-  try {
-    console.log('Creating essential database indexes...');
-
-    // Index for location-based queries (ESSENTIAL for maps)
-    await SkateparkModel.collection.createIndex({ location: '2dsphere' });
-    console.log('✅ Created 2dsphere index on location');
-
-    // Index for sorting by creation date (ESSENTIAL for pagination)
-    await SkateparkModel.collection.createIndex({ createdAt: -1 });
-    console.log('✅ Created index on createdAt');
-
-    // Index for text search (ESSENTIAL for search functionality)
-    await SkateparkModel.collection.createIndex({ 
-      title: 'text', 
-      description: 'text', 
-      tags: 'text' 
-    });
-    console.log('✅ Created text search index');
-
-    console.log('🎉 Essential database indexes created successfully!');
-
-  } catch (error) {
-    console.error('❌ Error creating database indexes:', error);
-  }
+    try {
+        const db = await connectToDatabase();
+        
+        // Create 2dsphere index on location for geospatial queries
+        await db.collection('skateparks').createIndex(
+            { location: '2dsphere' },
+            { background: true }
+        );
+        
+        // Create index on createdAt for sorting
+        await db.collection('skateparks').createIndex(
+            { createdAt: -1 },
+            { background: true }
+        );
+        
+        // Create text search index on title, description, and tags
+        await db.collection('skateparks').createIndex(
+            { title: 'text', description: 'text', tags: 'text' },
+            { 
+                background: true,
+                weights: {
+                    title: 10,
+                    tags: 5,
+                    description: 1
+                }
+            }
+        );
+        
+        console.log('🎉 Essential database indexes created successfully!');
+    } catch (error) {
+        // Only log in non-test environments
+        if (process.env.NODE_ENV !== 'test') {
+            console.error('Failed to create database indexes:', error);
+        }
+    }
 }
 
 // Function to check existing indexes
