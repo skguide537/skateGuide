@@ -2,8 +2,11 @@
 
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import L from 'leaflet';
+import { Box, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import MapIcon from '@mui/icons-material/Map';
+import SatelliteIcon from '@mui/icons-material/Satellite';
 
 // 🎯 Custom hook to recenter map when coords change
 function RecenterMap({ coords }: { coords: { lat: number; lng: number } | null }) {
@@ -26,6 +29,69 @@ export function LocationPicker({ onSelect }: { onSelect: (coords: { lat: number;
   return null;
 }
 
+// 🗺️ Map Style Controller Component
+function MapStyleController({ onStyleChange }: { onStyleChange: (style: string) => void }) {
+  const [mapStyle, setMapStyle] = useState('street');
+
+  const handleStyleChange = (event: React.MouseEvent<HTMLElement>, newStyle: string | null) => {
+    if (newStyle !== null) {
+      setMapStyle(newStyle);
+      onStyleChange(newStyle);
+    }
+  };
+
+  return (
+    <Box
+      sx={{
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        zIndex: 1000,
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderRadius: 2,
+        padding: 1,
+        boxShadow: 2,
+      }}
+    >
+      <ToggleButtonGroup
+        value={mapStyle}
+        exclusive
+        onChange={handleStyleChange}
+        size="small"
+        sx={{
+          '& .MuiToggleButton-root': {
+            px: 2,
+            py: 1,
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            color: '#2F2F2F',
+            border: '1px solid #A7A9AC',
+            '&.Mui-selected': {
+              backgroundColor: '#A7A9AC',
+              color: '#fff',
+              '&:hover': {
+                backgroundColor: '#8A8A8A',
+              },
+            },
+            '&:hover': {
+              backgroundColor: 'rgba(167, 169, 172, 0.1)',
+            },
+          },
+        }}
+      >
+        <ToggleButton value="street">
+          <MapIcon sx={{ fontSize: 16, mr: 0.5 }} />
+          Street
+        </ToggleButton>
+        <ToggleButton value="satellite">
+          <SatelliteIcon sx={{ fontSize: 16, mr: 0.5 }} />
+          Satellite
+        </ToggleButton>
+      </ToggleButtonGroup>
+    </Box>
+  );
+}
+
 export default function AddSpotMap({
   coords,
   setCoords,
@@ -35,6 +101,8 @@ export default function AddSpotMap({
   setCoords: (coords: { lat: number; lng: number }) => void;
   onMapClick?: (coords: { lat: number; lng: number }) => void;
 }) {
+  const [currentMapStyle, setCurrentMapStyle] = useState('street');
+
   useEffect(() => {
     // Customize default Leaflet icon
     delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -44,18 +112,46 @@ export default function AddSpotMap({
     });
   }, []);
 
+  const handleMapStyleChange = (style: string) => {
+    setCurrentMapStyle(style);
+  };
+
+  const getTileLayerUrl = () => {
+    switch (currentMapStyle) {
+      case 'satellite':
+        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+      case 'street':
+      default:
+        return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    }
+  };
+
+  const getTileLayerAttribution = () => {
+    switch (currentMapStyle) {
+      case 'satellite':
+        return '&copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community';
+      case 'street':
+      default:
+        return '&copy; OpenStreetMap contributors';
+    }
+  };
+
   return (
-    <MapContainer center={[32.073, 34.789]} zoom={13} style={{ height: '100%', width: '100%' }}>
-      <TileLayer
-        attribution='&copy; OpenStreetMap contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+    <Box sx={{ position: 'relative', height: '100%', width: '100%' }}>
+      <MapContainer center={[32.073, 34.789]} zoom={13} style={{ height: '100%', width: '100%' }}>
+        <TileLayer
+          attribution={getTileLayerAttribution()}
+          url={getTileLayerUrl()}
+        />
 
-      <RecenterMap coords={coords} />
+        <RecenterMap coords={coords} />
 
-      <LocationPicker onSelect={onMapClick || setCoords} />
+        <LocationPicker onSelect={onMapClick || setCoords} />
 
-      {coords && <Marker position={[coords.lat, coords.lng]} />}
-    </MapContainer>
+        {coords && <Marker position={[coords.lat, coords.lng]} />}
+      </MapContainer>
+      
+      <MapStyleController onStyleChange={handleMapStyleChange} />
+    </Box>
   );
 }

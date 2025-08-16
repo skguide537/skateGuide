@@ -1,11 +1,9 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-// Use lightweight card for home page performance
+import { useRouter, usePathname } from 'next/navigation';
 import SkateparkCard from '@/components/skateparkCard/LightSkateparkCard';
 import SkeletonCard from '@/components/loading/SkeletonCard';
-// Direct MUI imports for better tree shaking
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -13,6 +11,7 @@ import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import Pagination from '@mui/material/Pagination';
 import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
 
 
 interface Skatepark {
@@ -47,6 +46,7 @@ function getDistanceKm(userLat: number, userLng: number, parkLat: number, parkLn
 
 export default function HomePage() {
     const router = useRouter();
+    const pathname = usePathname();
     const [parks, setParks] = useState<Skatepark[]>([]);
     const [allParks, setAllParks] = useState<Skatepark[]>([]); // Store all parks for background loading
     const [page, setPage] = useState(1);
@@ -150,6 +150,54 @@ export default function HomePage() {
         );
     }, []);
 
+    // Reset to page 1 when component mounts or when pathname changes
+    useEffect(() => {
+        setPage(1);
+        // Reset background data when coming back to home
+        if (allParks.length > 0) {
+            setBackgroundDataLoaded(false);
+            setAllParks([]);
+        }
+    }, [pathname]); // Only depend on pathname, not allParks.length
+
+    // Handle URL changes (e.g., when logo is clicked)
+    useEffect(() => {
+        const handleRouteChange = () => {
+            setPage(1);
+            if (allParks.length > 0) {
+                setBackgroundDataLoaded(false);
+                setAllParks([]);
+            }
+        };
+
+        // Listen for route changes
+        window.addEventListener('popstate', handleRouteChange);
+        
+        return () => {
+            window.removeEventListener('popstate', handleRouteChange);
+        };
+    }, []); // Remove allParks.length dependency
+
+    // Listen for navbar logo click when on home page
+    useEffect(() => {
+        const handleLogoClick = () => {
+            setPage(1);
+            // Reset background data when logo is clicked
+            if (allParks.length > 0) {
+                setBackgroundDataLoaded(false);
+                setAllParks([]);
+            }
+        };
+
+        // Listen for custom event from navbar
+        window.addEventListener('resetToPageOne', handleLogoClick);
+        
+        return () => {
+            window.removeEventListener('resetToPageOne', handleLogoClick);
+        };
+    }, [allParks.length]);
+
+    // Fetch parks when user coordinates are available
     useEffect(() => {
         // Always fetch first page immediately for fast initial load
         fetchParks(page);
@@ -227,19 +275,129 @@ export default function HomePage() {
 
             {!userCoords ? (
                 <Box display="flex" justifyContent="center" mt={4}>
-                    <CircularProgress />
+                    <Box sx={{ textAlign: 'center' }}>
+                        <CircularProgress size={40} sx={{ color: '#A7A9AC', mb: 2 }} />
+                        <Typography variant="body2" color="text.secondary">
+                            Getting your location...
+                        </Typography>
+                    </Box>
                 </Box>
             ) : isLoading ? (
-                <Grid container spacing={4}>
-                    {/* Show skeleton cards while loading */}
-                    {Array.from({ length: limit }).map((_, index) => (
-                        <Grid item xs={12} sm={6} md={4} key={`skeleton-${index}`} {...({} as any)}>
-                            <SkeletonCard />
-                        </Grid>
-                    ))}
-                </Grid>
+                <>
+                    {/* Loading header with progress info */}
+                    <Box sx={{ 
+                        textAlign: 'center', 
+                        mb: 4,
+                        p: 3,
+                        backgroundColor: 'rgba(167, 169, 172, 0.1)',
+                        borderRadius: 2,
+                        border: '1px solid rgba(167, 169, 172, 0.3)'
+                    }}>
+                        <CircularProgress size={32} sx={{ color: '#A7A9AC', mb: 2 }} />
+                        <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
+                            Loading Skateparks
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            Finding the best spots near you...
+                        </Typography>
+                    </Box>
+                    
+                    <Grid container spacing={4}>
+                        {/* Show skeleton cards while loading */}
+                        {Array.from({ length: limit }).map((_, index) => (
+                            <Grid item xs={12} sm={6} md={4} key={`skeleton-${index}`} {...({} as any)}>
+                                <SkeletonCard />
+                            </Grid>
+                        ))}
+                    </Grid>
+                </>
             ) : (
                 <>
+                    {/* Top: Page info and quick navigation */}
+                    <Box sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center', 
+                        mb: 3,
+                        p: 2,
+                        backgroundColor: 'rgba(167, 169, 172, 0.1)',
+                        borderRadius: 2,
+                        border: '1px solid rgba(167, 169, 172, 0.3)'
+                    }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                Page {page} of {totalPages} • {parksWithDistance.length} spots
+                            </Typography>
+                            
+                            {/* Back to First button when not on page 1 */}
+                            {page > 1 && (
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    onClick={() => setPage(1)}
+                                    sx={{
+                                        textTransform: 'none',
+                                        fontSize: '0.75rem',
+                                        py: 0.5,
+                                        px: 1.5,
+                                        borderColor: '#A7A9AC',
+                                        color: '#A7A9AC',
+                                        '&:hover': {
+                                            borderColor: '#8A8A8A',
+                                            backgroundColor: 'rgba(167, 169, 172, 0.1)',
+                                            transform: 'translateY(-1px)'
+                                        },
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                >
+                                    ← Back to First
+                                </Button>
+                            )}
+                        </Box>
+                        
+                        {/* Quick page jump for power users */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                                Jump to:
+                            </Typography>
+                            <TextField
+                                size="small"
+                                type="number"
+                                value={page}
+                                onChange={(e) => {
+                                    const newPage = parseInt(e.target.value);
+                                    if (newPage >= 1 && newPage <= totalPages) {
+                                        setPage(newPage);
+                                    }
+                                }}
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        const target = e.target as HTMLInputElement;
+                                        const newPage = parseInt(target.value);
+                                        if (newPage >= 1 && newPage <= totalPages) {
+                                            setPage(newPage);
+                                        }
+                                    }
+                                }}
+                                sx={{
+                                    width: 70,
+                                    '& .MuiOutlinedInput-root': {
+                                        fontSize: '0.875rem',
+                                        height: 32,
+                                        '& input': {
+                                            padding: '6px 8px',
+                                            textAlign: 'center'
+                                        }
+                                    }
+                                }}
+                            />
+                            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                                of {totalPages}
+                            </Typography>
+                        </Box>
+                    </Box>
+
                     <Grid container spacing={4}>
                         {/* Show actual skatepark cards */}
                         {parksWithDistance.map((park) => (
@@ -262,31 +420,83 @@ export default function HomePage() {
                         ))}
                     </Grid>
 
-
-                    <Box display="flex" justifyContent="center" alignItems="center" mt={4} gap={2}>
-                        <Pagination
-                            count={totalPages}
-                            page={page}
-                            onChange={(_, value) => {
-                                if (backgroundDataLoaded) {
-                                    // console.log(`⚡ Instant page ${value} from background data`);
-                                } else {
-                                    // console.log(`🔄 Loading page ${value} from server`);
-                                }
-                                setPage(value);
-                            }}
-                            color="primary"
-                        />
-                        
-                        {/* Background loading indicator */}
-                        {isBackgroundLoading && (
-                            <Box display="flex" alignItems="center" gap={1}>
-                                <CircularProgress size={16} />
-                                <Typography variant="caption" color="text.secondary">
-                                    Preloading pages...
-                                </Typography>
-                            </Box>
-                        )}
+                    {/* Bottom: Enhanced pagination controls */}
+                    <Box sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        alignItems: 'center', 
+                        mt: 6, 
+                        mb: 4,
+                        p: 3,
+                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                        borderRadius: 3,
+                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+                        border: '1px solid rgba(167, 169, 172, 0.2)'
+                    }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                            {/* Enhanced Pagination */}
+                            <Pagination
+                                count={totalPages}
+                                page={page}
+                                onChange={(_, value) => {
+                                    if (backgroundDataLoaded) {
+                                        // console.log(`⚡ Instant page ${value} from background data`);
+                                    } else {
+                                        // console.log(`🔄 Loading page ${value} from server`);
+                                    }
+                                    setPage(value);
+                                }}
+                                color="primary"
+                                size="large"
+                                showFirstButton
+                                showLastButton
+                                sx={{
+                                    '& .MuiPaginationItem-root': {
+                                        fontSize: '1rem',
+                                        fontWeight: 600,
+                                        minWidth: 44,
+                                        height: 44,
+                                        borderRadius: 2,
+                                        border: '1px solid rgba(167, 169, 172, 0.3)',
+                                        color: '#2F2F2F',
+                                        transition: 'all 0.2s ease',
+                                        '&:hover': {
+                                            backgroundColor: 'rgba(167, 169, 172, 0.1)',
+                                            transform: 'translateY(-1px)',
+                                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                                        },
+                                        '&.Mui-selected': {
+                                            backgroundColor: '#A7A9AC',
+                                            color: '#fff',
+                                            borderColor: '#A7A9AC',
+                                            boxShadow: '0 4px 12px rgba(167, 169, 172, 0.4)',
+                                            '&:hover': {
+                                                backgroundColor: '#8A8A8A',
+                                                transform: 'translateY(-1px)',
+                                            }
+                                        }
+                                    }
+                                }}
+                            />
+                            
+                            {/* Background loading indicator with enhanced styling */}
+                            {isBackgroundLoading && (
+                                <Box sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: 1.5,
+                                    p: 1.5,
+                                    backgroundColor: 'rgba(167, 169, 172, 0.1)',
+                                    borderRadius: 2,
+                                    border: '1px solid rgba(167, 169, 172, 0.2)'
+                                }}>
+                                    <CircularProgress size={20} sx={{ color: '#A7A9AC' }} />
+                                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                        Preloading pages...
+                                    </Typography>
+                                </Box>
+                            )}
+                        </Box>
                     </Box>
                 </>
             )}

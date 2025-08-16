@@ -82,96 +82,120 @@ const SkateparkCard = memo(function SkateparkCard({
 
     return (
         <>
-            <Box onClick={() => setOpen(true)} sx={{ cursor: 'pointer' }}>
-                <Card
-                    sx={{
-                        width: 345,
-                        height: 420,
-                        boxShadow: 5,
-                        borderRadius: 2,
-                        backgroundColor: '#A7A9AC',
-                        color: '#2F2F2F',
-                        display: 'flex',
-                        flexDirection: 'column'
-                    }}
-                >
-                    {/* Fast custom carousel - replaces heavy react-material-ui-carousel */}
-                    <FastCarousel 
-                        images={hasPhotos ? photoNames : ["https://res.cloudinary.com/dcncqacrd/image/upload/v1747566727/skateparks/default-skatepark.png"]} 
-                        alt={title}
-                        height={200}
-                    />
-                    <CardContent sx={{ flexGrow: 1 }}>
-                        <Typography gutterBottom variant="h6" component="div">
-                            {title}
-                        </Typography>
-                        <Rating value={avgRating} precision={0.5} readOnly size="small" sx={{ mb: 1 }} /><Typography variant="caption" sx={{ color: '#2F2F2F', fontStyle: 'italic', mb: 1 }}>
-                            {getRatingWord(avgRating)}
-                        </Typography>
+            <Card
+                onClick={() => setOpen(true)}
+                sx={{
+                    width: 345,
+                    height: 420,
+                    boxShadow: 5,
+                    borderRadius: 2,
+                    backgroundColor: '#A7A9AC',
+                    color: '#2F2F2F',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                        transform: 'translateY(-6px)',
+                        boxShadow: 12,
+                        backgroundColor: '#B8B9BC',
+                    },
+                    '&:active': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: 8,
+                    }
+                }}
+            >
+                {/* Fast custom carousel - replaces heavy react-material-ui-carousel */}
+                <FastCarousel 
+                    images={hasPhotos ? photoNames : ["https://res.cloudinary.com/dcncqacrd/image/upload/v1747566727/skateparks/default-skatepark.png"]} 
+                    alt={title}
+                    height={200}
+                />
+                <CardContent sx={{ flexGrow: 1 }}>
+                    <Typography gutterBottom variant="h6" component="div">
+                        {title}
+                    </Typography>
+                    <Rating value={avgRating} precision={0.5} readOnly size="small" sx={{ mb: 1 }} /><Typography variant="caption" sx={{ color: '#2F2F2F', fontStyle: 'italic', mb: 1 }}>
+                        {getRatingWord(avgRating)}
+                    </Typography>
 
-                        <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mb: 1 }}>
-                            {tags.slice(0, 4).map((tag, idx) => (
-                                <Chip
-                                    key={idx}
-                                    label={tag}
-                                    size="small"
-                                    sx={{ backgroundColor: '#6E7763', color: '#fff' }}
-                                />
-                            ))}
-                        </Stack>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                            {distanceKm.toFixed(1)} km from your location
-                        </Typography>
-                        <Stack direction="row" spacing={1} mt={1}>
-                            <Button
-                                variant="contained"
+                    <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mb: 1 }}>
+                        {tags.slice(0, 4).map((tag, idx) => (
+                            <Chip
+                                key={idx}
+                                label={tag}
                                 size="small"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    openInMaps();
-                                }}
-                                sx={{
-                                    backgroundColor: '#2F2F2F',
-                                    color: '#fff',
-                                    '&:hover': {
-                                        backgroundColor: '#1c1c1c'
-                                    }
-                                }}
-                            >
-                                Show on Map
-                            </Button>
+                                sx={{ backgroundColor: '#6E7763', color: '#fff' }}
+                            />
+                        ))}
+                    </Stack>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                        {distanceKm.toFixed(1)} km from your location
+                    </Typography>
+                    
+                    {/* Navigation buttons - kept for useful functionality */}
+                    <Stack direction="row" spacing={1} mt={1}>
+                        <Button
+                            variant="contained"
+                            size="small"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                openInMaps();
+                            }}
+                            sx={{
+                                backgroundColor: '#2F2F2F',
+                                color: '#fff',
+                                '&:hover': {
+                                    backgroundColor: '#1c1c1c'
+                                }
+                            }}
+                        >
+                            Show on Map
+                        </Button>
 
-                            <Button
-                                variant="outlined"
-                                size="small"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    const wazeUrl = `https://waze.com/ul?ll=${coordinates.lat},${coordinates.lng}&navigate=yes`;
-                                    window.open(wazeUrl, '_blank');
-                                }}
-                                sx={{
-                                    borderColor: '#2F2F2F',
-                                    color: '#2F2F2F',
-                                    fontWeight: 'bold',
-                                    '&:hover': {
-                                        borderColor: '#1c1c1c',
-                                        color: '#1c1c1c'
-                                    }
-                                }}
-                            >
-                                <Image
-                                    src="/waze.png"
-                                    alt="Waze"
-                                    width={16}
-                                    height={16}
-                                    style={{ marginRight: 6 }}
-                                />
-                                Waze
-                            </Button>
-                        </Stack>
-                    </CardContent>
-                </Card>
-            </Box>
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const wazeUrl = `https://waze.com/ul?ll=${coordinates.lat},${coordinates.lng}&navigate=yes`;
+                                window.open(wazeUrl, '_blank');
+                            }}
+                            sx={{
+                                borderColor: '#2F2F2F',
+                                color: '#2F2F2F',
+                                fontWeight: 'bold',
+                                '&:hover': {
+                                    borderColor: '#1c1c1c',
+                                    color: '#1c1c1c'
+                                }
+                            }}
+                        >
+                            <Image
+                                src="/waze.png"
+                                alt="Waze"
+                                width={16}
+                                height={16}
+                                style={{ marginRight: 6 }}
+                            />
+                            Waze
+                        </Button>
+                    </Stack>
+                    
+                    {/* Click hint */}
+                    <Box sx={{ 
+                        mt: 1, 
+                        textAlign: 'center',
+                        py: 0.5,
+                        color: 'rgba(47, 47, 47, 0.7)',
+                        fontSize: '0.75rem',
+                        fontStyle: 'italic'
+                    }}>
+                        Click card to view details
+                    </Box>
+                </CardContent>
+            </Card>
 
                             <SkateparkModal
                     _id={_id}
