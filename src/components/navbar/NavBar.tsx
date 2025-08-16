@@ -12,7 +12,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import Container from '@mui/material/Container';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { DEFAULT_AVATAR_URL } from '@/types/constants';
 import { useToast } from '@/context/ToastContext';
 import { useUser } from '@/context/UserContext';
@@ -23,6 +23,7 @@ export default function NavBar() {
     const { showToast } = useToast();
     const { user, logout, isLoading } = useUser();
     const router = useRouter();
+    const pathname = usePathname();
 
     const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorElNav(event.currentTarget);
@@ -37,6 +38,14 @@ export default function NavBar() {
         logout();
         showToast('Logged out successfully', 'success');
         setTimeout(() => router.push('/login'), 1000);
+    };
+
+    const handleLogoClick = () => {
+        if (pathname === '/') {
+            window.dispatchEvent(new CustomEvent('resetToPageOne'));
+        } else {
+            router.push('/');
+        }
     };
 
     return (
@@ -56,7 +65,7 @@ export default function NavBar() {
                     <Typography
                         variant="h6"
                         noWrap
-                        onClick={() => router.push('/')}
+                        onClick={handleLogoClick}
                         sx={{
                             mr: 2,
                             fontWeight: 700,
@@ -64,6 +73,11 @@ export default function NavBar() {
                             cursor: 'pointer',
                             fontSize: { xs: '1rem', md: '1.25rem' },
                             flexShrink: 0,
+                            transition: 'all 0.2s ease',
+                            '&:hover': {
+                                transform: 'scale(1.05)',
+                                color: '#1a1a1a'
+                            }
                         }}
                     >
                         SkateGuide🛹
