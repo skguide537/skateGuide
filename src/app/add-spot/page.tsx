@@ -222,7 +222,7 @@ export default function AddSpotPage() {
 
     // Autocomplete functions
     const fetchStreetSuggestions = useCallback(async (query: string) => {
-        if (query.length < 3) return;
+        if (query.length < 2) return;
         
         setIsLoadingStreet(true);
         try {
@@ -361,36 +361,37 @@ export default function AddSpotPage() {
             {/* Address Fields */}
             <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>Location</Typography>
             
-            <Autocomplete
-                freeSolo
-                options={streetSuggestions}
-                value={street}
-                onChange={(_, newValue) => setStreet(newValue || '')}
-                onInputChange={(_, newInputValue) => {
-                    setStreet(newInputValue);
-                    fetchStreetSuggestions(newInputValue);
-                }}
-                renderInput={(params) => (
-                    <TextField
-                        {...params}
-                        label="Street Address *"
-                        placeholder="e.g., רחוב דיזנגוף 99 or 99 Dizengoff Street"
-                        required
-                        error={hasAttemptedSubmit && !street.trim()}
-                        helperText={hasAttemptedSubmit && !street.trim() ? "Street address is required" : ""}
-                        InputProps={{
-                            ...params.InputProps,
-                            endAdornment: (
-                                <>
-                                    {isLoadingStreet ? <CircularProgress color="inherit" size={20} /> : null}
-                                    {params.InputProps.endAdornment}
-                                </>
-                            ),
-                        }}
-                    />
-                )}
-                sx={{ mb: 2 }}
-            />
+                            <Autocomplete
+                    freeSolo
+                    options={streetSuggestions}
+                    value={street}
+                    onChange={(_, newValue) => setStreet(newValue || '')}
+                    onInputChange={(_, newInputValue) => {
+                        setStreet(newInputValue);
+                        // Small delay to avoid too many API calls while typing
+                        setTimeout(() => fetchStreetSuggestions(newInputValue), 300);
+                    }}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Street Address *"
+                            placeholder="e.g., רחוב דיזנגוף 99 or 99 Dizengoff Street"
+                            required
+                            error={hasAttemptedSubmit && !street.trim()}
+                            helperText={hasAttemptedSubmit && !street.trim() ? "Street address is required" : ""}
+                            InputProps={{
+                                ...params.InputProps,
+                                endAdornment: (
+                                    <>
+                                        {isLoadingStreet ? <CircularProgress color="inherit" size={20} /> : null}
+                                        {params.InputProps.endAdornment}
+                                    </>
+                                ),
+                            }}
+                        />
+                    )}
+                    sx={{ mb: 2 }}
+                />
             
             <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                 <Autocomplete
@@ -400,7 +401,8 @@ export default function AddSpotPage() {
                     onChange={(_, newValue) => setCity(newValue || '')}
                     onInputChange={(_, newInputValue) => {
                         setCity(newInputValue);
-                        fetchCitySuggestions(newInputValue);
+                        // Small delay to avoid too many API calls while typing
+                        setTimeout(() => fetchCitySuggestions(newInputValue), 300);
                     }}
                     renderInput={(params) => (
                         <TextField
@@ -421,6 +423,7 @@ export default function AddSpotPage() {
                             }}
                         />
                     )}
+                    sx={{ flex: 1 }}
                 />
                 <TextField 
                     fullWidth 
@@ -428,6 +431,7 @@ export default function AddSpotPage() {
                     value={state} 
                     onChange={e => setState(e.target.value)} 
                     placeholder="e.g., תל אביב or Tel Aviv District"
+                    sx={{ flex: 1 }}
                 />
             </Box>
             
@@ -438,7 +442,8 @@ export default function AddSpotPage() {
                 onChange={(_, newValue) => setCountry(newValue || '')}
                 onInputChange={(_, newInputValue) => {
                     setCountry(newInputValue);
-                    fetchCountrySuggestions(newInputValue);
+                    // Small delay to avoid too many API calls while typing
+                    setTimeout(() => fetchCountrySuggestions(newInputValue), 300);
                 }}
                 renderInput={(params) => (
                     <TextField
