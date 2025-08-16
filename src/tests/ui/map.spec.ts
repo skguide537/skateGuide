@@ -6,8 +6,9 @@ test.describe('Map Page', () => {
   });
 
   test('should display the map page', async ({ page }) => {
-    // Check if the page loads without errors - use the map-specific main element
-    await expect(page.locator('main').nth(1)).toBeVisible();
+    // Check if the page loads without errors - our new structure uses Box with height: 100vh
+    // Wait for either the map to load or an error message to appear
+    await expect(page.locator('div[style*="height: 100vh"]')).toBeVisible({ timeout: 15000 });
     
     // The page should load without errors
     await expect(page).toHaveURL('/map');
@@ -50,8 +51,8 @@ test.describe('Map Page', () => {
     // and geolocation is available
     await expect(page).toHaveURL('/map');
     
-    // Verify the page structure is intact
-    await expect(page.locator('main').nth(1)).toBeVisible();
+    // Verify the page structure is intact - look for our Box container
+    await expect(page.locator('div[style*="height: 100vh"]')).toBeVisible({ timeout: 15000 });
     
     // The geolocation mock is set up, so the page should handle it gracefully
     // without causing errors
@@ -117,8 +118,8 @@ test.describe('Map Page', () => {
     // Reload page
     await page.reload();
     
-    // Wait for map to load
-    await page.waitForSelector('.leaflet-container', { timeout: 10000 });
+    // Wait for map to load (increased timeout for lazy loading)
+    await page.waitForSelector('.leaflet-container', { timeout: 15000 });
     
     // Should show map container
     await expect(page.locator('.leaflet-container')).toBeVisible();
@@ -147,8 +148,8 @@ test.describe('Map Page', () => {
     // Reload page
     await page.reload();
     
-    // Wait for map to load
-    await page.waitForSelector('.leaflet-container', { timeout: 10000 });
+    // Wait for map to load (increased timeout for lazy loading)
+    await page.waitForSelector('.leaflet-container', { timeout: 15000 });
     
     // Should be able to interact with map
     const mapContainer = page.locator('.leaflet-container');
@@ -183,8 +184,8 @@ test.describe('Map Page', () => {
     // and geolocation is available
     await expect(page).toHaveURL('/map');
     
-    // Verify the page structure is intact
-    await expect(page.locator('main').nth(1)).toBeVisible();
+    // Verify the page structure is intact - look for our Box container
+    await expect(page.locator('div[style*="height: 100vh"]')).toBeVisible({ timeout: 15000 });
     
     // The geolocation mock is set up, so the page should handle it gracefully
     // without causing errors
@@ -217,22 +218,22 @@ test.describe('Map Page', () => {
     // and that it's responsive on mobile
     await expect(page).toHaveURL('/map');
     
-    // Verify the page structure is intact
-    await expect(page.locator('main').nth(1)).toBeVisible();
+    // Verify the page structure is intact - look for our Box container
+    await expect(page.locator('div[style*="height: 100vh"]')).toBeVisible({ timeout: 15000 });
     
-    // Check if the page maintains mobile layout - verify the main element has mobile-friendly classes
-    const mainElement = page.locator('main').nth(1);
-    const hasMobileClass = await mainElement.evaluate(el => 
-      el.className.includes('h-screen') || 
-      el.className.includes('min-h-screen') ||
+    // Check if the page maintains mobile layout - verify the Box element has mobile-friendly styles
+    const boxElement = page.locator('div[style*="height: 100vh"]');
+    const hasMobileStyle = await boxElement.evaluate(el => 
       el.style.height === '100vh' ||
-      el.style.height === '100%'
+      el.style.width === '100%' ||
+      el.className.includes('h-screen') || 
+      el.className.includes('min-h-screen')
     );
     
-    // If no specific mobile class, just verify the element is visible and the page loads
-    if (!hasMobileClass) {
-      await expect(mainElement).toBeVisible();
-      // The page should still be functional on mobile even without specific mobile classes
+    // If no specific mobile style, just verify the element is visible and the page loads
+    if (!hasMobileStyle) {
+      await expect(boxElement).toBeVisible();
+      // The page should still be functional on mobile even without specific mobile styles
     }
   });
 
@@ -271,8 +272,8 @@ test.describe('Map Page', () => {
     // Reload page
     await page.reload();
     
-    // Wait for map to load
-    await page.waitForSelector('.leaflet-container', { timeout: 10000 });
+    // Wait for map to load (increased timeout for lazy loading)
+    await page.waitForSelector('.leaflet-container', { timeout: 15000 });
     
     // Should show zoom controls
     await expect(page.locator('.leaflet-control-zoom-in')).toBeVisible();

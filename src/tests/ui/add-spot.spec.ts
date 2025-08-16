@@ -6,8 +6,8 @@ test.describe('Add Spot Page', () => {
   });
 
   test('should display the add spot form', async ({ page }) => {
-    // Check if the form is visible
-    await expect(page.getByRole('heading', { name: /add new skate spot/i })).toBeVisible();
+    // Wait for the lazy-loaded form to render (increased timeout for Suspense)
+    await expect(page.getByRole('heading', { name: /add new spot/i })).toBeVisible({ timeout: 15000 });
     
     // Check if all form fields are present
     await expect(page.getByLabel(/title/i)).toBeVisible();
@@ -25,6 +25,9 @@ test.describe('Add Spot Page', () => {
   });
 
   test('should allow user to fill out the form', async ({ page }) => {
+    // Wait for form to be fully loaded
+    await expect(page.getByLabel(/title/i)).toBeVisible({ timeout: 15000 });
+    
     // Fill out the form
     await page.getByLabel(/title/i).fill('Test Skate Spot');
     await page.getByLabel(/description/i).fill('A great place to skate');
@@ -41,17 +44,24 @@ test.describe('Add Spot Page', () => {
   });
 
   test('should show map when choose on map is clicked', async ({ page }) => {
+    // Wait for form to be fully loaded
+    await expect(page.getByLabel(/title/i)).toBeVisible({ timeout: 15000 });
+    
     // Initially map should be hidden (no coords set)
+    // The map is now lazy-loaded, so we need to wait for it to be available
     await expect(page.locator('.leaflet-container')).not.toBeVisible();
     
     // Click choose on map button
     await page.getByRole('button', { name: /choose on map/i }).click();
     
-    // Map should now be visible
-    await expect(page.locator('.leaflet-container')).toBeVisible();
+    // Map should now be visible (increased timeout for lazy loading)
+    await expect(page.locator('.leaflet-container')).toBeVisible({ timeout: 15000 });
   });
 
   test('should validate required fields', async ({ page }) => {
+    // Wait for form to be fully loaded
+    await expect(page.getByLabel(/title/i)).toBeVisible({ timeout: 15000 });
+    
     // Initially, no validation errors should be visible
     await expect(page.getByText(/Title is required/i)).not.toBeVisible();
     await expect(page.getByText(/Size is required/i)).not.toBeVisible();
@@ -74,6 +84,9 @@ test.describe('Add Spot Page', () => {
   });
 
   test('should handle address search', async ({ page }) => {
+    // Wait for form to be fully loaded
+    await expect(page.getByLabel(/street address/i)).toBeVisible({ timeout: 15000 });
+    
     // Fill address fields
     await page.getByLabel(/street address/i).fill('Dizengoff Street');
     await page.getByLabel(/city/i).fill('Tel Aviv');
@@ -88,6 +101,9 @@ test.describe('Add Spot Page', () => {
   });
 
   test('should be responsive on mobile', async ({ page }) => {
+    // Wait for form to be fully loaded
+    await expect(page.getByLabel(/title/i)).toBeVisible({ timeout: 15000 });
+    
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
     
