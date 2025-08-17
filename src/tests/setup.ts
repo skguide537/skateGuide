@@ -1,8 +1,13 @@
 import '@testing-library/jest-dom';
+
 import { config } from 'dotenv';
 
-// Load environment variables
-config();
+// Load environment variables with minimal logging
+config({ 
+  debug: false,
+  
+    // Disable debug logging
+});
 
 // Add TextEncoder polyfill for Node.js environment
 if (typeof global.TextEncoder === 'undefined') {

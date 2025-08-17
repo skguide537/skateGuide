@@ -15,9 +15,9 @@ const MapLoading = () => (
     justifyContent: 'center', 
     minHeight: '60vh',
     gap: 3
-  }}>
+  }} id="map-loading-container">
     <CircularProgress size={48} sx={{ color: '#A7A9AC' }} />
-    <Typography variant="h6" color="text.secondary">
+    <Typography variant="h6" color="text.secondary" id="map-loading-text">
       Loading Interactive Map...
     </Typography>
   </Box>
@@ -51,8 +51,8 @@ export default function MapPage() {
         justifyContent: 'center', 
         height: '100vh',
         color: 'error.main'
-      }}>
-        <Typography variant="h6">{error}</Typography>
+      }} id="map-error-container">
+        <Typography variant="h6" id="map-error-text">{error}</Typography>
       </Box>
     );
   }
@@ -62,7 +62,7 @@ export default function MapPage() {
   }
 
   return (
-    <Box sx={{ height: '100vh', width: '100%' }}>
+    <Box sx={{ height: '100vh', width: '100%' }} id="map-container">
       <Suspense fallback={<MapLoading />}>
         <EnhancedMap userLocation={userLocation} />
       </Suspense>

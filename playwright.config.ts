@@ -7,7 +7,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 1, // Add retries for flaky tests
-  workers: process.env.CI ? 1 : 2, // Reduce workers to avoid overwhelming the server
+  workers: process.env.CI ? 1 : 4, // In CI, 1 worker. locally, 4
   reporter: 'list', // Minimal console output, no HTML files
   timeout: process.env.CI ? 120000 : 60000, // Increase global timeout to 2 minutes in CI
   expect: {
