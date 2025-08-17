@@ -61,7 +61,6 @@ test.describe('Home Page', () => {
     // Check pagination info is displayed
     await expect(page.getByText(/page \d+ of \d+/i)).toBeVisible();
     
-    console.log(`✓ Found ${cardCount} skatepark cards with real data`);
   });
 
   test('should handle empty state', async ({ page }) => {

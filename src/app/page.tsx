@@ -158,7 +158,7 @@ export default function HomePage() {
             setBackgroundDataLoaded(false);
             setAllParks([]);
         }
-    }, [pathname]); // Only depend on pathname, not allParks.length
+    }, [pathname, allParks.length]); // Include allParks.length dependency
 
     // Handle URL changes (e.g., when logo is clicked)
     useEffect(() => {
@@ -176,7 +176,7 @@ export default function HomePage() {
         return () => {
             window.removeEventListener('popstate', handleRouteChange);
         };
-    }, []); // Remove allParks.length dependency
+    }, [allParks.length]); // Include allParks.length dependency
 
     // Listen for navbar logo click when on home page
     useEffect(() => {
