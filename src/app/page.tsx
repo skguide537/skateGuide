@@ -48,7 +48,7 @@ export default function HomePage() {
     const router = useRouter();
     const pathname = usePathname();
     const [parks, setParks] = useState<Skatepark[]>([]);
-    const [allParks, setAllParks] = useState<Skatepark[]>([]); // Store all parks for background loading
+    const [allParks, setAllParks] = useState<Skatepark[]>([]); 
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const limit = 4; // Adjust as needed
@@ -253,15 +253,16 @@ export default function HomePage() {
     return (
         <Container maxWidth="lg" sx={{ mt: 6 }}>
             <Box textAlign="center" mb={6}>
-                <Typography variant="h2" fontWeight="bold" color="#2F2F2F" gutterBottom>
+                <Typography variant="h2" fontWeight="bold" color="#2F2F2F" gutterBottom id="home-welcome-heading">
                     Welcome to SkateGuide
                 </Typography>
-                <Typography variant="h6" sx={{ mb: 4, color: '#6E7763' }}>
+                <Typography variant="h6" sx={{ mb: 4, color: '#6E7763' }} id="home-subtitle">
                     Discover, rate, and share skateparks around the city — from wooden ramps to metallic rails.
                 </Typography>
                 <Button
                     variant="contained"
                     onClick={() => router.push('/map')}
+                    id="home-explore-map-btn"
                     sx={{
                         backgroundColor: '#A7A9AC',
                         color: '#fff',
@@ -398,7 +399,7 @@ export default function HomePage() {
                         </Box>
                     </Box>
 
-                    <Grid container spacing={4}>
+                    <Grid container spacing={4} id="skatepark-cards-container">
                         {/* Show actual skatepark cards */}
                         {parksWithDistance.map((park) => (
                             <Grid item xs={12} sm={6} md={4} key={park._id} {...({} as any)}>
