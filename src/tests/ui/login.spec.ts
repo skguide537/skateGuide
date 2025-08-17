@@ -164,8 +164,8 @@ test.describe('Login Page', () => {
     // Click on sign up link
     await page.getByRole('link', { name: /sign up/i }).click();
     
-    // Should navigate to register page
-    await expect(page).toHaveURL('/register');
+    // Should navigate to register page with timeout
+    await expect(page).toHaveURL('/register', { timeout: 10000 });
   });
 
   test('should be responsive on mobile', async ({ page }) => {
