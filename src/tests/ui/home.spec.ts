@@ -16,74 +16,52 @@ test.describe('Home Page', () => {
     await expect(page.getByRole('button', { name: /explore the map/i })).toBeVisible();
   });
 
-  test('should display skatepark cards', async ({ page }) => {
-    // Mock skatepark data with better error handling
-    await page.route('/api/skateparks?page=1&limit=4', async route => {
-      try {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            data: [
-              {
-                _id: 'park-1',
-                title: 'Central Park Skate Spot',
-                description: 'A great place to skate',
-                tags: ['street', 'beginner'],
-                photoNames: ['photo1.jpg'],
-                location: { coordinates: [32.073, 34.789] },
-                isPark: false,
-                size: 'medium',
-                level: 'beginner',
-                avgRating: 4.5
+  test('should display skatepark cards with real data', async ({ page }) => {
+    // Mock geolocation to work properly
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'geolocation', {
+        value: {
+          getCurrentPosition: (success: any) => {
+            success({
+              coords: {
+                latitude: 32.073,
+                longitude: 34.789,
+                accuracy: 10,
+                altitude: null,
+                altitudeAccuracy: null,
+                heading: null,
+                speed: null
               },
-              {
-                _id: 'park-2',
-                title: 'Downtown Skatepark',
-                description: 'Professional skatepark',
-                tags: ['park', 'advanced'],
-                photoNames: ['photo2.jpg'],
-                location: { coordinates: [32.074, 34.790] },
-                isPark: true,
-                size: 'large',
-                level: 'advanced',
-                avgRating: 4.8
-              }
-            ],
-            totalCount: 2
-          })
-        });
-      } catch (error) {
-        console.error('Route fulfillment error:', error);
-        await route.continue();
-      }
+              timestamp: Date.now()
+            });
+          }
+        },
+        configurable: true
+      });
     });
 
-    // Wait for content to load with shorter timeout and more flexible approach
-    await page.waitForTimeout(2000); // Give time for content to load
+    // Navigate to page (no mocking - use real API and database)
+    await page.goto('/');
     
-    // Check if skatepark cards are displayed - use more flexible selectors
-    try {
-      await expect(page.getByText(/central park skate spot/i)).toBeVisible({ timeout: 5000 });
-      await expect(page.getByText(/downtown skatepark/i)).toBeVisible({ timeout: 5000 });
-      
-      // Check if ratings are displayed
-      await expect(page.getByText(/4\.5/i)).toBeVisible();
-      await expect(page.getByText(/4\.8/i)).toBeVisible();
-    } catch (error) {
-      // If cards don't load, at least verify the page structure is intact
-      await expect(page.getByRole('heading', { name: /welcome to skateguide/i })).toBeVisible();
-      await expect(page.getByRole('button', { name: /explore the map/i })).toBeVisible();
-      
-      // Log the actual page content for debugging
-      const pageContent = await page.content();
-      console.log('Page content:', pageContent.substring(0, 1000));
-      
-      // Instead of skipping, just verify the page loads gracefully
-      // This is still a valid test - the page should handle API failures gracefully
-      await expect(page).toHaveURL('/');
-      await expect(page.locator('body')).toBeVisible();
-    }
+    // Wait for the page to load
+    await expect(page.locator('#home-welcome-heading')).toBeVisible({ timeout: 10000 });
+    
+    // Wait for the cards container to appear (real data integration test)
+    await expect(page.locator('#skatepark-cards-container')).toBeVisible({ timeout: 15000 });
+    
+    // Verify that skatepark cards are displayed (flexible - works with any real data)
+    const cardCount = await page.locator('#skatepark-cards-container > div').count();
+    expect(cardCount).toBeGreaterThan(0); // Should have at least 1 card
+    
+    // Check that basic card elements exist
+    await expect(page.locator('text=/\\d+\\.\\d+/').first()).toBeVisible(); // Some rating (0.0, 3.0, etc.)
+    await expect(page.getByText(/distance:/i).first()).toBeVisible(); // Distance info
+    await expect(page.getByText(/click to view details/i).first()).toBeVisible(); // Card action
+    
+    // Check pagination info is displayed
+    await expect(page.getByText(/page \d+ of \d+/i)).toBeVisible();
+    
+    console.log(`✓ Found ${cardCount} skatepark cards with real data`);
   });
 
   test('should handle empty state', async ({ page }) => {

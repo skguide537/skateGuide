@@ -52,7 +52,7 @@ describe('Skatepark API Routes', () => {
       const mockResponse = { status: 200, json: () => Promise.resolve(mockSkateparks) };
       (MockGET as jest.Mock).mockResolvedValue(mockResponse);
 
-      const response = await GET();
+      const response = await GET(mockRequest('GET'));
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -68,7 +68,7 @@ describe('Skatepark API Routes', () => {
       const mockResponse = { status: 200, json: () => Promise.resolve(mockSkateparks) };
       (MockGET as jest.Mock).mockResolvedValue(mockResponse);
 
-      const response = await GET();
+      const response = await GET(mockRequest('GET'));
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -83,7 +83,7 @@ describe('Skatepark API Routes', () => {
       const mockResponse = { status: 200, json: () => Promise.resolve(mockSkateparks) };
       (MockGET as jest.Mock).mockResolvedValue(mockResponse);
 
-      const response = await GET();
+      const response = await GET(mockRequest('GET'));
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -98,7 +98,7 @@ describe('Skatepark API Routes', () => {
       const mockResponse = { status: 200, json: () => Promise.resolve(mockSkateparks) };
       (MockGET as jest.Mock).mockResolvedValue(mockResponse);
 
-      const response = await GET();
+      const response = await GET(mockRequest('GET'));
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -113,7 +113,7 @@ describe('Skatepark API Routes', () => {
       const mockResponse = { status: 200, json: () => Promise.resolve(mockSkateparks) };
       (MockGET as jest.Mock).mockResolvedValue(mockResponse);
 
-      const response = await GET();
+      const response = await GET(mockRequest('GET'));
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -128,7 +128,7 @@ describe('Skatepark API Routes', () => {
       const mockResponse = { status: 200, json: () => Promise.resolve(mockSkateparks) };
       (MockGET as jest.Mock).mockResolvedValue(mockResponse);
 
-      const response = await GET();
+      const response = await GET(mockRequest('GET'));
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -143,7 +143,7 @@ describe('Skatepark API Routes', () => {
       const mockResponse = { status: 200, json: () => Promise.resolve(mockSkateparks) };
       (MockGET as jest.Mock).mockResolvedValue(mockResponse);
 
-      const response = await GET();
+      const response = await GET(mockRequest('GET'));
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -154,7 +154,7 @@ describe('Skatepark API Routes', () => {
       const mockResponse = { status: 500, json: () => Promise.resolve({ error: 'Internal server error' }) };
       (MockGET as jest.Mock).mockResolvedValue(mockResponse);
 
-      const response = await GET();
+      const response = await GET(mockRequest('GET'));
       const data = await response.json();
 
       expect(response.status).toBe(500);
@@ -170,7 +170,7 @@ describe('Skatepark API Routes', () => {
       const mockResponse = { status: 200, json: () => Promise.resolve(mockSkateparks) };
       (MockGET as jest.Mock).mockResolvedValue(mockResponse);
 
-      const response = await GET();
+      const response = await GET(mockRequest('GET'));
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -185,7 +185,7 @@ describe('Skatepark API Routes', () => {
       const mockResponse = { status: 200, json: () => Promise.resolve(mockSkateparks) };
       (MockGET as jest.Mock).mockResolvedValue(mockResponse);
 
-      const response = await GET();
+      const response = await GET(mockRequest('GET'));
       const data = await response.json();
 
       expect(response.status).toBe(200);
