@@ -566,6 +566,9 @@ export default function EnhancedMap({ userLocation }: MapProps) {
                           ).toFixed(1)}km away
                         </Typography>
                       )}
+                      
+                      {/* Admin Delete Button */}
+                      {/* Removed admin delete button */}
                     </CardContent>
                   </Box>
                 </Card>
