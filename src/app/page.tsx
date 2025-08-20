@@ -13,6 +13,7 @@ import Grid from '@mui/material/Grid';
 import Pagination from '@mui/material/Pagination';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
+import { useCache } from '@/context/ToastContext';
 
 
 interface Skatepark {
@@ -48,7 +49,7 @@ function getDistanceKm(userLat: number, userLng: number, parkLat: number, parkLn
 export default function HomePage() {
     const router = useRouter();
     const pathname = usePathname();
-    const { showToast } = useToast();
+    const { showToast, invalidateCache } = useToast();
     const [parks, setParks] = useState<Skatepark[]>([]);
     const [allParks, setAllParks] = useState<Skatepark[]>([]); 
     const [page, setPage] = useState(1);
@@ -61,6 +62,68 @@ export default function HomePage() {
     const [backgroundDataLoaded, setBackgroundDataLoaded] = useState(false);
     const [deletedSpotIds, setDeletedSpotIds] = useState<Set<string>>(new Set());
     const [deletingSpotIds, setDeletingSpotIds] = useState<Set<string>>(new Set());
+
+    // Subscribe to cache invalidation events to refresh data when spots are added/deleted
+    useCache('skateparks', useCallback(() => {
+
+      const fetchParks = async () => {
+        try {
+
+          // Refresh current page data
+          const res = await fetch(`/api/skateparks?page=${page}&limit=${limit}`);
+          if (!res.ok) throw new Error('Failed to fetch parks');
+          const data = await res.json();
+
+          setParks(data.parks);
+          setTotalPages(data.totalPages);
+          
+          // Also refresh all parks for distance calculations
+          const allRes = await fetch(`/api/skateparks?limit=1000`);
+          if (allRes.ok) {
+            const allData = await allRes.json();
+
+            setAllParks(allData.parks);
+          }
+          
+          // Clear any deleted spot IDs since we're refreshing
+          setDeletedSpotIds(new Set());
+
+        } catch (err) {
+          console.error('Error refreshing parks:', err);
+        }
+      };
+
+      fetchParks();
+    }, [])); // Empty dependency array to prevent infinite loops
+
+    // Check for newly added spots when component mounts (only once)
+    useEffect(() => {
+      const checkForNewSpots = () => {
+        const spotJustAdded = localStorage.getItem('spotJustAdded');
+        const spotAddedAt = localStorage.getItem('spotAddedAt');
+        
+        if (spotJustAdded === 'true' && spotAddedAt) {
+          const timeSinceAdded = Date.now() - parseInt(spotAddedAt);
+          // Only refresh if the spot was added in the last 10 seconds
+                  if (timeSinceAdded < 10000) {
+          // Clear the flag
+          localStorage.removeItem('spotJustAdded');
+          localStorage.removeItem('spotAddedAt');
+          // Force a refresh after a short delay
+          setTimeout(() => {
+            fetchParks(page, false);
+            fetchAllParksBackground();
+          }, 1000);
+        }
+        }
+      };
+
+      // Check immediately and also after a delay
+      checkForNewSpots();
+      const timer = setTimeout(checkForNewSpots, 2000);
+      
+      return () => clearTimeout(timer);
+    }, []); // Empty dependency array - only run once on mount
 
     const fetchParks = useCallback(async (pageNumber: number = 1, isBackground: boolean = false) => {
         try {
@@ -137,14 +200,14 @@ export default function HomePage() {
 
     // Get current page parks from background data or fallback to paginated data
     const getCurrentPageParks = useCallback((pageNum: number) => {
-        if (backgroundDataLoaded && allParks.length > 0) {
+        if (backgroundDataLoaded && allParks && allParks.length > 0) {
             // Use background data for instant pagination
             const startIndex = (pageNum - 1) * limit;
             const endIndex = startIndex + limit;
             return allParks.slice(startIndex, endIndex);
         }
         // Fallback to current paginated data
-        return parks;
+        return parks || [];
     }, [backgroundDataLoaded, allParks, parks, limit]);
 
     // Handle spot deletion with optimistic updates
@@ -195,13 +258,18 @@ export default function HomePage() {
             // Show success toast
             showToast(`"${spotTitle}" deleted successfully!`, 'success');
             
+            // Invalidate relevant caches to ensure data consistency
+            invalidateCache('skateparks');
+            invalidateCache('spots');
+            invalidateCache('map-markers');
+            
             // Remove from local state
             setParks(prev => prev.filter(park => park._id !== spotId));
             setAllParks(prev => prev.filter(park => park._id !== spotId));
             
             // Handle pagination edge case: if current page is empty, go to previous page
             const currentPageParks = getCurrentPageParks(page);
-            if (currentPageParks.length === 1 && page > 1) {
+            if (currentPageParks && currentPageParks.length === 1 && page > 1) {
                 setPage(page - 1);
             }
             
@@ -221,7 +289,7 @@ export default function HomePage() {
             // Show error to user (we'll add toast later)
             showToast(`Failed to delete spot: ${error.message}`, 'error');
         }
-    }, [page, getCurrentPageParks, showToast, parks, allParks]);
+    }, [page, getCurrentPageParks, showToast, parks, allParks, invalidateCache]);
 
 
     useEffect(() => {
@@ -250,7 +318,7 @@ export default function HomePage() {
     useEffect(() => {
         const handleRouteChange = () => {
             setPage(1);
-            if (allParks.length > 0) {
+            if (allParks && allParks.length > 0) {
                 setBackgroundDataLoaded(false);
                 setAllParks([]);
             }
@@ -262,14 +330,14 @@ export default function HomePage() {
         return () => {
             window.removeEventListener('popstate', handleRouteChange);
         };
-    }, [allParks.length]); // Include allParks.length dependency
+    }, []); // Remove allParks.length dependency to prevent infinite loops
 
     // Listen for navbar logo click when on home page
     useEffect(() => {
         const handleLogoClick = () => {
             setPage(1);
             // Reset background data when logo is clicked
-            if (allParks.length > 0) {
+            if (allParks && allParks.length > 0) {
                 setBackgroundDataLoaded(false);
                 setAllParks([]);
             }
@@ -281,7 +349,7 @@ export default function HomePage() {
         return () => {
             window.removeEventListener('resetToPageOne', handleLogoClick);
         };
-    }, [allParks.length]);
+    }, []); // Remove allParks.length dependency to prevent infinite loops
 
     // Fetch parks when user coordinates are available
     useEffect(() => {
@@ -306,11 +374,13 @@ export default function HomePage() {
         if (!userCoords) return [];
         
         const currentParks = getCurrentPageParks(page);
-        if (!Array.isArray(currentParks)) return [];
+        if (!Array.isArray(currentParks) || !currentParks) return [];
         
         return currentParks
-            .filter(park => !deletedSpotIds.has(park._id)) // Filter out deleted spots
+            .filter(park => park && !deletedSpotIds.has(park._id)) // Filter out deleted spots and null parks
             .map((park) => {
+                if (!park || !park.location || !park.location.coordinates) return null;
+                
                 const parkCoords = {
                     lat: park.location.coordinates[1],
                     lng: park.location.coordinates[0],
@@ -328,7 +398,8 @@ export default function HomePage() {
                     distanceKm,
                     isDeleting: deletingSpotIds.has(park._id), // Track deletion state
                 };
-            });
+            })
+            .filter(Boolean); // Remove any null entries
     }, [getCurrentPageParks, page, userCoords, deletedSpotIds, deletingSpotIds]);
 
     // Update total pages when background data is loaded

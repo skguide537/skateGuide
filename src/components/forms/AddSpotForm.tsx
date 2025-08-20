@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Chip, FormControl, FormLabel, InputLabel, MenuItem, OutlinedInput, Select, Switch, TextField, Typography, Autocomplete, CircularProgress } from '@mui/material';
 import { useToast } from '@/context/ToastContext';
 import { useUser } from '@/context/UserContext';
 import { Size, Tag, SkaterLevel } from '@/types/enums';
+import AddSpotMap from '@/components/map/AddSpotMap';
 
 const sizes = Object.values(Size);
 const tags = Object.values(Tag);
@@ -47,7 +48,7 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
     const [isLoadingCountry, setIsLoadingCountry] = useState(false);
 
     const { user } = useUser();
-    const { showToast } = useToast();
+    const { showToast, invalidateCache } = useToast();
     const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -115,6 +116,15 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
             }
 
             showToast('Skatepark added!', 'success');
+                      // Invalidate relevant caches to ensure new spot appears immediately
+          invalidateCache('skateparks');
+          invalidateCache('spots');
+          invalidateCache('map-markers');
+            
+            // Set a flag that the home page can check
+            localStorage.setItem('spotJustAdded', 'true');
+            localStorage.setItem('spotAddedAt', Date.now().toString());
+            
             setTimeout(() => router.push('/'), 1000);
         } catch (err: any) {
             showToast(err.message || 'Unexpected error', 'error');
@@ -131,6 +141,12 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                     const lng = pos.coords.longitude;
                     if (setValidatedCoords(lat, lng)) {
                         setLocationMethod('gps');
+                        // Clear address fields when using GPS
+                        setStreet('');
+                        setCity('');
+                        setState('');
+                        setCountry('');
+                        setShowMap(false);
                         showToast(`Location set: ${lat.toFixed(4)}, ${lng.toFixed(4)}`, 'success');
                     }
                 },
@@ -288,7 +304,39 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
     const handleMapClick = (coords: { lat: number; lng: number }) => {
         if (setValidatedCoords(coords.lat, coords.lng)) {
             setLocationMethod('map');
+            // Clear address fields when using map selection
+            setStreet('');
+            setCity('');
+            setState('');
+            setCountry('');
             showToast(`Location selected on map: ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`, 'success');
+        }
+    };
+
+    // Handle address field changes - switch to address method
+    const handleAddressChange = (field: 'street' | 'city' | 'state' | 'country', value: string) => {
+        // If user starts typing in address fields, switch to address method
+        if (locationMethod !== 'address') {
+            setLocationMethod('address');
+            // Clear coordinates when switching to address method
+            // Note: We can't set coords to null, so we'll just update the location method
+            // The coordinates will be cleared when a new address is searched
+        }
+        
+        // Update the specific field
+        switch (field) {
+            case 'street':
+                setStreet(value);
+                break;
+            case 'city':
+                setCity(value);
+                break;
+            case 'state':
+                setState(value);
+                break;
+            case 'country':
+                setCountry(value);
+                break;
         }
     };
 
@@ -355,12 +403,13 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                 freeSolo
                 options={streetSuggestions}
                 value={street}
-                onChange={(_, newValue) => setStreet(newValue || '')}
+                onChange={(_, newValue) => handleAddressChange('street', newValue || '')}
                 onInputChange={(_, newInputValue) => {
-                    setStreet(newInputValue);
+                    handleAddressChange('street', newInputValue);
                     // Small delay to avoid too many API calls while typing
                     setTimeout(() => fetchStreetSuggestions(newInputValue), 300);
                 }}
+                disabled={locationMethod === 'gps' || locationMethod === 'map'}
                 renderInput={(params) => (
                     <TextField
                         {...params}
@@ -368,7 +417,11 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                         placeholder="e.g., רחוב דיזנגוף 99 or 99 Dizengoff Street"
                         required
                         error={hasAttemptedSubmit && !street.trim()}
-                        helperText={hasAttemptedSubmit && !street.trim() ? "Street address is required" : ""}
+                        helperText={
+                            hasAttemptedSubmit && !street.trim() ? "Street address is required" : 
+                            locationMethod === 'gps' ? "Disabled when using GPS location" :
+                            locationMethod === 'map' ? "Disabled when using map selection" : ""
+                        }
                         InputProps={{
                             ...params.InputProps,
                             endAdornment: (
@@ -388,12 +441,13 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                     freeSolo
                     options={citySuggestions}
                     value={city}
-                    onChange={(_, newValue) => setCity(newValue || '')}
+                    onChange={(_, newValue) => handleAddressChange('city', newValue || '')}
                     onInputChange={(_, newInputValue) => {
-                        setCity(newInputValue);
+                        handleAddressChange('city', newInputValue);
                         // Small delay to avoid too many API calls while typing
                         setTimeout(() => fetchCitySuggestions(newInputValue), 300);
                     }}
+                    disabled={locationMethod === 'gps' || locationMethod === 'map'}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -401,7 +455,11 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                             placeholder="e.g., תל אביב or Tel Aviv"
                             required
                             error={hasAttemptedSubmit && !city.trim()}
-                            helperText={hasAttemptedSubmit && !city.trim() ? "City is required" : ""}
+                            helperText={
+                                hasAttemptedSubmit && !city.trim() ? "City is required" : 
+                                locationMethod === 'gps' ? "Disabled when using GPS location" :
+                                locationMethod === 'map' ? "Disabled when using map selection" : ""
+                            }
                             InputProps={{
                                 ...params.InputProps,
                                 endAdornment: (
@@ -419,8 +477,9 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                     fullWidth 
                     label="State/Province" 
                     value={state} 
-                    onChange={e => setState(e.target.value)} 
+                    onChange={e => handleAddressChange('state', e.target.value)} 
                     placeholder="e.g., תל אביב or Tel Aviv District"
+                    disabled={locationMethod === 'gps' || locationMethod === 'map'}
                     sx={{ flex: 1 }}
                 />
             </Box>
@@ -429,12 +488,13 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                 freeSolo
                 options={countrySuggestions}
                 value={country}
-                onChange={(_, newValue) => setCountry(newValue || '')}
+                onChange={(_, newValue) => handleAddressChange('country', newValue || '')}
                 onInputChange={(_, newInputValue) => {
-                    setCountry(newInputValue);
+                    handleAddressChange('country', newInputValue);
                     // Small delay to avoid too many API calls while typing
                     setTimeout(() => fetchCountrySuggestions(newInputValue), 300);
                 }}
+                disabled={locationMethod === 'gps' || locationMethod === 'map'}
                 renderInput={(params) => (
                     <TextField
                         {...params}
@@ -471,11 +531,36 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                 </Box>
             )}
 
+            {/* Location Method Instructions */}
+            {!coords && (
+                <Box sx={{ 
+                    p: 2, 
+                    bgcolor: 'info.light', 
+                    borderRadius: 1, 
+                    mb: 2,
+                    border: '1px solid',
+                    borderColor: 'info.main'
+                }}>
+                    <Typography variant="body2" color="info.contrastText" sx={{ mb: 1 }}>
+                        📍 Choose ONE location method:
+                    </Typography>
+                    <Typography variant="caption" color="info.contrastText" display="block">
+                        • <strong>Address Search:</strong> Type street and city, then click "Search Address"
+                    </Typography>
+                    <Typography variant="caption" color="info.contrastText" display="block">
+                        • <strong>Use My Location:</strong> Automatically get your current GPS coordinates
+                    </Typography>
+                    <Typography variant="caption" color="info.contrastText" display="block">
+                        • <strong>Choose on Map:</strong> Click on the map to select a location
+                    </Typography>
+                </Box>
+            )}
+
             <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                 <Button
                     variant="contained"
                     onClick={searchAddress}
-                    disabled={!street || !city || isGeocoding}
+                    disabled={!street || !city || isGeocoding || locationMethod === 'gps' || locationMethod === 'map'}
                 >
                     {isGeocoding ? 'Searching...' : 'Search Address'}
                 </Button>
@@ -493,6 +578,7 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                 variant="outlined"
                 sx={{ mb: 2 }}
                 onClick={getMyLocation}
+                disabled={locationMethod === 'address' || locationMethod === 'map'}
             >
                 Use My Location
             </Button>
@@ -500,7 +586,19 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
             {/* Map - conditionally visible */}
             {showMap && (
                 <Box sx={{ height: '300px', width: '100%', my: 2 }}>
-                    {/* Map will be rendered by parent component */}
+                    <AddSpotMap 
+                        coords={coords}
+                        setCoords={setCoords}
+                        onMapClick={(newCoords) => {
+                            setCoords(newCoords);
+                            setLocationMethod('map');
+                            // Clear address fields when using map selection
+                            setStreet('');
+                            setCity('');
+                            setState('');
+                            setCountry('');
+                        }}
+                    />
                 </Box>
             )}
 

@@ -1,11 +1,12 @@
 'use client';
 
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Map } from 'leaflet';
-import { Box } from '@mui/material';
+import { Box, CircularProgress, Typography } from '@mui/material';
+import { useCache } from '@/context/ToastContext';
 import SkateparkModal from '../modals/SkateparkModal';
 
 
@@ -80,6 +81,22 @@ export default function MapComponent({ userLocation }: MapProps) {
 
         fetchSpots();
     }, []);
+
+    // Subscribe to cache invalidation events to refresh data when spots are added/deleted
+    useCache('skateparks', useCallback(() => {
+        const fetchSpots = async () => {
+            try {
+                const response = await fetch('/api/skateparks');
+                if (!response.ok) throw new Error('Failed to fetch skateparks');
+                const data = await response.json();
+                setSpots(data);
+            } catch (err) {
+                console.error('Error refreshing spots:', err);
+            }
+        };
+
+        fetchSpots();
+    }, []));
 
     useEffect(() => {
         if (mapRef.current) {
