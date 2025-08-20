@@ -14,6 +14,7 @@ import Image from 'next/image';
 import SkateparkModal from '../modals/SkateparkModal';
 import FastCarousel from '../ui/FastCarousel';
 import { useUser } from '@/context/UserContext';
+import DeleteConfirmationDialog from '../modals/DeleteConfirmationDialog';
 
 interface LightSkateparkCardProps {
     _id: string;
@@ -49,6 +50,7 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
     onDelete
 }: LightSkateparkCardProps) {
     const [open, setOpen] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const { user } = useUser();
     const isAdmin = user?.role === 'admin';
 
@@ -63,13 +65,7 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
     const handleDelete = async (e: React.MouseEvent) => {
         e.stopPropagation();
         
-        if (!confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
-            return;
-        }
-
-        if (onDelete) {
-            onDelete(_id);
-        }
+        setDeleteDialogOpen(true);
     };
 
     return (
@@ -195,6 +191,28 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
                 tags={tags}
                 coordinates={coordinates}
                 externalLinks={externalLinks}
+            />
+
+            <DeleteConfirmationDialog
+                open={deleteDialogOpen}
+                onClose={() => setDeleteDialogOpen(false)}
+                onConfirm={() => {
+                    if (onDelete) {
+                        onDelete(_id);
+                    }
+                    setDeleteDialogOpen(false);
+                }}
+                spot={{
+                    _id,
+                    title,
+                    description,
+                    photoNames,
+                    isPark,
+                    size,
+                    level,
+                    tags
+                }}
+                isDeleting={isDeleting}
             />
         </>
     );

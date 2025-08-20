@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import SkateparkCard from '@/components/skateparkCard/LightSkateparkCard';
 import SkeletonCard from '@/components/loading/SkeletonCard';
+import { useToast } from '@/context/ToastContext';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -47,6 +48,7 @@ function getDistanceKm(userLat: number, userLng: number, parkLat: number, parkLn
 export default function HomePage() {
     const router = useRouter();
     const pathname = usePathname();
+    const { showToast } = useToast();
     const [parks, setParks] = useState<Skatepark[]>([]);
     const [allParks, setAllParks] = useState<Skatepark[]>([]); 
     const [page, setPage] = useState(1);
@@ -186,6 +188,13 @@ export default function HomePage() {
                 return newSet;
             });
             
+            // Get spot title for better toast message
+            const deletedSpot = parks.find(park => park._id === spotId) || allParks.find(park => park._id === spotId);
+            const spotTitle = deletedSpot?.title || 'Spot';
+            
+            // Show success toast
+            showToast(`"${spotTitle}" deleted successfully!`, 'success');
+            
             // Remove from local state
             setParks(prev => prev.filter(park => park._id !== spotId));
             setAllParks(prev => prev.filter(park => park._id !== spotId));
@@ -210,9 +219,9 @@ export default function HomePage() {
             });
             
             // Show error to user (we'll add toast later)
-            alert(`Failed to delete spot: ${error.message}`);
+            showToast(`Failed to delete spot: ${error.message}`, 'error');
         }
-    }, [page, getCurrentPageParks]);
+    }, [page, getCurrentPageParks, showToast, parks, allParks]);
 
 
     useEffect(() => {
