@@ -2,12 +2,10 @@
 
 import { Suspense, lazy, useState } from 'react';
 import { Box, Typography, CircularProgress } from '@mui/material';
-import Loading from '@/components/loading/Loading';
 import dynamic from 'next/dynamic';
 
 // Lazy load heavy components with no SSR to avoid window reference issues
 const AddSpotForm = dynamic(() => import('@/components/forms/AddSpotForm'), { ssr: false });
-const AddSpotMap = dynamic(() => import('@/components/map/AddSpotMap'), { ssr: false });
 
 // Loading component for the page
 const AddSpotLoading = () => (
@@ -29,10 +27,6 @@ const AddSpotLoading = () => (
 export default function AddSpotPage() {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
-  const handleMapClick = (newCoords: { lat: number; lng: number }) => {
-    setCoords(newCoords);
-  };
-
   return (
     <Box sx={{ 
       maxWidth: 'lg', 
@@ -52,19 +46,6 @@ export default function AddSpotPage() {
       <Suspense fallback={<AddSpotLoading />}>
         <AddSpotForm coords={coords} setCoords={setCoords} />
       </Suspense>
-      
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h5" gutterBottom sx={{ mb: 2, color: '#6E7763' }}>
-          Select Location
-        </Typography>
-        <Suspense fallback={<Loading />}>
-          <AddSpotMap 
-            coords={coords} 
-            setCoords={setCoords} 
-            onMapClick={handleMapClick}
-          />
-        </Suspense>
-      </Box>
     </Box>
   );
 }
