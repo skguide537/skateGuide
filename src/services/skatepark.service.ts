@@ -40,6 +40,15 @@ class SkateparkService {
         return match ? match[1] : null;
     }
 
+    private isDefaultImage(url: string): boolean {
+        // Check if the URL contains any default/fallback image patterns
+        return url.includes("default-skatepark") || 
+               url.includes("default-skatepark.jpg") || 
+               url.includes("default-skatepark.png") ||
+               url.includes("default-user") ||
+               !url.includes("cloudinary.com"); // Don't delete non-Cloudinary images
+    }
+
 
     // 2. GETs:
 
@@ -229,11 +238,15 @@ class SkateparkService {
         await SkateparkModel.findByIdAndDelete(_id);
 
         for (const url of photoNames) {
-            if (!url.includes("default-skatepark.jpg")) {
+            // Don't delete default/fallback images from Cloudinary
+            if (!this.isDefaultImage(url)) {
                 const publicId = this.extractCloudinaryPublicId(url);
                 if (publicId) {
+                    console.log(`Deleting image from Cloudinary: ${publicId}`);
                     await cloudinary.uploader.destroy(publicId);
                 }
+            } else {
+                console.log(`Protecting default/fallback image: ${url}`);
             }
         }
 
@@ -248,11 +261,15 @@ class SkateparkService {
             await SkateparkModel.findByIdAndDelete(_id);
 
             for (const url of photoUrls) {
-                if (!url.includes("default-skatepark.jpg")) {
+                // Don't delete default/fallback images from Cloudinary
+                if (!this.isDefaultImage(url)) {
                     const publicId = this.extractCloudinaryPublicId(url);
                     if (publicId) {
+                        console.log(`Deleting image from Cloudinary: ${publicId}`);
                         await cloudinary.uploader.destroy(publicId);
                     }
+                } else {
+                    console.log(`Protecting default/fallback image: ${url}`);
                 }
             }
         }

@@ -7,6 +7,7 @@ export interface User {
     email: string;
     name?: string;
     photoUrl?: string;
+    role?: string; // Add role field for admin checking
 }
 
 interface UserContextType {
@@ -24,11 +25,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         const restoreSession = async () => {
-            // Only check auth if we don't already have user data
-            if (user) {
-                return;
-            }
-
             setIsLoading(true);
             try {
                 const res = await fetch('/api/auth/me');
@@ -55,7 +51,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         };
 
         restoreSession();
-    }, [user]); // Only run when user changes
+    }, []); // Remove user dependency to always check auth
 
     const logout = async () => {
         try {

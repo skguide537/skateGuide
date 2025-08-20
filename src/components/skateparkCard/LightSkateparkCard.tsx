@@ -13,6 +13,7 @@ import { useState, memo } from 'react';
 import Image from 'next/image';
 import SkateparkModal from '../modals/SkateparkModal';
 import FastCarousel from '../ui/FastCarousel';
+import { useUser } from '@/context/UserContext';
 
 interface LightSkateparkCardProps {
     _id: string;
@@ -27,6 +28,8 @@ interface LightSkateparkCardProps {
     avgRating: number;
     distanceKm: number;
     externalLinks: any[];
+    isDeleting?: boolean;
+    onDelete?: (spotId: string) => void;
 }
 
 const LightSkateparkCard = memo(function LightSkateparkCard({
@@ -41,9 +44,13 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
     level,
     avgRating,
     distanceKm,
-    externalLinks
+    externalLinks,
+    isDeleting,
+    onDelete
 }: LightSkateparkCardProps) {
     const [open, setOpen] = useState(false);
+    const { user } = useUser();
+    const isAdmin = user?.role === 'admin';
 
     const formatSrc = (src: string) => {
         if (src.startsWith('http')) return src;
@@ -53,10 +60,22 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
     const hasPhotos = photoNames && photoNames.length > 0;
     const imagesToShow = hasPhotos ? photoNames : ["https://res.cloudinary.com/dcncqacrd/image/upload/v1747566727/skateparks/default-skatepark.png"];
 
+    const handleDelete = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        
+        if (!confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
+            return;
+        }
+
+        if (onDelete) {
+            onDelete(_id);
+        }
+    };
+
     return (
         <>
             <Card
-                onClick={() => setOpen(true)}
+                onClick={() => !isDeleting && setOpen(true)}
                 sx={{
                     width: 345,
                     height: 420,
@@ -66,19 +85,60 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
                     color: '#2F2F2F',
                     display: 'flex',
                     flexDirection: 'column',
-                    cursor: 'pointer',
+                    cursor: isDeleting ? 'not-allowed' : 'pointer',
                     transition: 'all 0.2s ease',
+                    opacity: isDeleting ? 0.6 : 1,
+                    position: 'relative',
                     '&:hover': {
-                        transform: 'translateY(-6px)',
-                        boxShadow: 12,
-                        backgroundColor: '#B8B9BC',
+                        transform: isDeleting ? 'none' : 'translateY(-6px)',
+                        boxShadow: isDeleting ? 5 : 12,
+                        backgroundColor: isDeleting ? '#A7A9AC' : '#B8B9BC',
                     },
                     '&:active': {
-                        transform: 'translateY(-2px)',
-                        boxShadow: 8,
+                        transform: isDeleting ? 'none' : 'translateY(-2px)',
+                        boxShadow: isDeleting ? 5 : 8,
                     }
                 }}
             >
+                {/* Admin Delete Button - Top Right */}
+                {isAdmin && (
+                    <Box
+                        sx={{
+                            position: 'absolute',
+                            top: 8,
+                            right: 8,
+                            zIndex: 10,
+                        }}
+                    >
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                            sx={{
+                                minWidth: 32,
+                                width: 32,
+                                height: 32,
+                                borderRadius: '50%',
+                                borderColor: '#dc3545',
+                                color: '#dc3545',
+                                p: 0,
+                                '&:hover': {
+                                    borderColor: '#c82333',
+                                    backgroundColor: '#c82333',
+                                    color: '#fff'
+                                },
+                                '&:disabled': {
+                                    borderColor: '#6c757d',
+                                    color: '#6c757d'
+                                }
+                            }}
+                        >
+                            ✕
+                        </Button>
+                    </Box>
+                )}
+
                 {/* Fast custom carousel - much lighter than react-material-ui-carousel */}
                 <FastCarousel 
                     images={imagesToShow} 
@@ -117,7 +177,7 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
                         fontSize: '0.8rem',
                         fontStyle: 'italic'
                     }}>
-                        Click to view details
+                        {isDeleting ? 'Deleting...' : 'Click to view details'}
                     </Box>
                 </CardContent>
             </Card>

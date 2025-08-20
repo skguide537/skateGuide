@@ -13,6 +13,7 @@ import { useEffect, useState, memo } from 'react';
 import Image from 'next/image';
 import SkateparkModal from '../modals/SkateparkModal';
 import FastCarousel from '../ui/FastCarousel';
+import { useUser } from '@/context/UserContext';
 
 
 interface SkateparkCardProps {
@@ -45,14 +46,43 @@ const SkateparkCard = memo(function SkateparkCard({
     externalLinks
 }: SkateparkCardProps) {
     const [open, setOpen] = useState(false);
-
+    const [isDeleting, setIsDeleting] = useState(false);
+    const { user } = useUser();
+    const isAdmin = user?.role === 'admin';
     
-
-
-
     const openInMaps = () => {
         const url = `https://www.google.com/maps/search/?api=1&query=${coordinates.lat},${coordinates.lng}`;
         window.open(url, '_blank');
+    };
+
+    const handleDelete = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        
+        if (!confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
+            return;
+        }
+
+        setIsDeleting(true);
+        try {
+            const response = await fetch(`/api/skateparks/${_id}`, {
+                method: 'DELETE',
+                headers: {
+                    'x-user-id': user?._id || '',
+                },
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to delete skatepark');
+            }
+
+            // Refresh the page or remove from list
+            window.location.reload();
+        } catch (error: any) {
+            alert(`Error deleting skatepark: ${error.message}`);
+        } finally {
+            setIsDeleting(false);
+        }
     };
 
     const hasPhotos = photoNames && photoNames.length > 0;
@@ -181,6 +211,31 @@ const SkateparkCard = memo(function SkateparkCard({
                             />
                             Waze
                         </Button>
+                        
+                        {/* Admin Delete Button */}
+                        {isAdmin && (
+                            <Button
+                                variant="outlined"
+                                size="small"
+                                onClick={handleDelete}
+                                disabled={isDeleting}
+                                sx={{
+                                    borderColor: '#dc3545',
+                                    color: '#dc3545',
+                                    '&:hover': {
+                                        borderColor: '#c82333',
+                                        backgroundColor: '#c82333',
+                                        color: '#fff'
+                                    },
+                                    '&:disabled': {
+                                        borderColor: '#6c757d',
+                                        color: '#6c757d'
+                                    }
+                                }}
+                            >
+                                {isDeleting ? 'Deleting...' : 'Delete'}
+                            </Button>
+                        )}
                     </Stack>
                     
                     {/* Click hint */}
