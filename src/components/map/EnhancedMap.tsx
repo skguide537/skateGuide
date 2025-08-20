@@ -3,8 +3,9 @@
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { Map } from 'leaflet';
+import { useCache } from '@/context/ToastContext';
 import { 
   Box, 
   IconButton, 
@@ -241,6 +242,22 @@ export default function EnhancedMap({ userLocation }: MapProps) {
 
     fetchSpots();
   }, []);
+
+  // Subscribe to cache invalidation events to refresh data when spots are deleted
+  useCache('skateparks', useCallback(() => {
+    const fetchSpots = async () => {
+      try {
+        const response = await fetch('/api/skateparks');
+        if (!response.ok) throw new Error('Failed to fetch skateparks');
+        const data = await response.json();
+        setSpots(data);
+      } catch (err) {
+        console.error('Error refreshing spots:', err);
+      }
+    };
+
+    fetchSpots();
+  }, []));
 
   // Force map refresh when user location changes
   useEffect(() => {

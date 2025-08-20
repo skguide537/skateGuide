@@ -4,9 +4,10 @@ import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-lea
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useState } from 'react';
 import L from 'leaflet';
-import { Box, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Box, ToggleButton, ToggleButtonGroup, Typography, Fab, Tooltip } from '@mui/material';
 import MapIcon from '@mui/icons-material/Map';
 import SatelliteIcon from '@mui/icons-material/Satellite';
+import MyLocationIcon from '@mui/icons-material/MyLocation';
 
 // 🎯 Custom hook to recenter map when coords change
 function RecenterMap({ coords }: { coords: { lat: number; lng: number } | null }) {
@@ -27,6 +28,95 @@ export function LocationPicker({ onSelect }: { onSelect: (coords: { lat: number;
     }
   });
   return null;
+}
+
+// 🎯 Component to center map on user's current location
+function CenterOnLocation() {
+  const map = useMap();
+  const [myLocation, setMyLocation] = useState<{ lat: number; lng: number } | null>(null);
+  
+  const centerOnMyLocation = () => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          const location = { lat, lng };
+          
+          setMyLocation(location);
+          map.setView([lat, lng], 16);
+        },
+        (err) => {
+          console.error('Error getting location:', err);
+        }
+      );
+    }
+  };
+
+  return (
+    <>
+      {/* Current location marker */}
+      {myLocation && (
+        <Marker 
+          position={[myLocation.lat, myLocation.lng]}
+          icon={L.divIcon({
+            className: 'my-location-marker',
+            html: `
+              <div style="
+                width: 20px; 
+                height: 20px; 
+                background: #2196F3; 
+                border: 3px solid #fff; 
+                border-radius: 50%; 
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                position: relative;
+              ">
+                <div style="
+                  width: 8px; 
+                  height: 8px; 
+                  background: #fff; 
+                  border-radius: 50%; 
+                  position: absolute; 
+                  top: 50%; 
+                  left: 50%; 
+                  transform: translate(-50%, -50%);
+                "></div>
+              </div>
+            `,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+          })}
+        />
+      )}
+      
+      {/* Centering button */}
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 20,
+          right: 20,
+          zIndex: 1000,
+        }}
+      >
+        <Tooltip title="Center on my location" placement="left">
+          <Fab
+            size="medium"
+            color="primary"
+            onClick={centerOnMyLocation}
+            sx={{
+              backgroundColor: '#A7A9AC',
+              '&:hover': {
+                backgroundColor: '#8A8A8A',
+              },
+              boxShadow: 3,
+            }}
+          >
+            <MyLocationIcon />
+          </Fab>
+        </Tooltip>
+      </Box>
+    </>
+  );
 }
 
 // 🗺️ Map Style Controller Component
@@ -149,6 +239,9 @@ export default function AddSpotMap({
         <LocationPicker onSelect={onMapClick || setCoords} />
 
         {coords && <Marker position={[coords.lat, coords.lng]} />}
+        
+        {/* Center on location button - must be inside MapContainer to use useMap */}
+        <CenterOnLocation />
       </MapContainer>
       
       <MapStyleController onStyleChange={handleMapStyleChange} />
