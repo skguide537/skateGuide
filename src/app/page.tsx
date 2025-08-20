@@ -57,6 +57,8 @@ export default function HomePage() {
     const [isBackgroundLoading, setIsBackgroundLoading] = useState(false);
     const [prefetchedPages, setPrefetchedPages] = useState<Set<number>>(new Set());
     const [backgroundDataLoaded, setBackgroundDataLoaded] = useState(false);
+    const [deletedSpotIds, setDeletedSpotIds] = useState<Set<string>>(new Set());
+    const [deletingSpotIds, setDeletingSpotIds] = useState<Set<string>>(new Set());
 
     const fetchParks = useCallback(async (pageNumber: number = 1, isBackground: boolean = false) => {
         try {
@@ -105,6 +107,8 @@ export default function HomePage() {
         }
     }, []);
 
+
+
     const prefetchNextPages = useCallback(async () => {
         if (page >= totalPages) return;
         
@@ -141,6 +145,75 @@ export default function HomePage() {
         return parks;
     }, [backgroundDataLoaded, allParks, parks, limit]);
 
+    // Handle spot deletion with optimistic updates
+    const handleSpotDelete = useCallback(async (spotId: string) => {
+        // Optimistically mark as deleting
+        setDeletingSpotIds(prev => new Set([...prev, spotId]));
+        
+        // Create a timeout promise - increased to 10 seconds
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Delete operation timed out')), 10000);
+        });
+        
+        try {
+            // Get user ID from localStorage or context (you'll need to implement this)
+            const userResponse = await fetch('/api/auth/me');
+            if (!userResponse.ok) {
+                throw new Error('User not authenticated');
+            }
+            const userData = await userResponse.json();
+            
+            // Delete from backend with timeout
+            const deletePromise = fetch(`/api/skateparks/${spotId}`, {
+                method: 'DELETE',
+                headers: {
+                    'x-user-id': userData._id || '',
+                },
+            });
+            
+            const response = await Promise.race([deletePromise, timeoutPromise]) as Response;
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP ${response.status}: Failed to delete spot`);
+            }
+
+            // Success - mark as deleted and remove from state
+            setDeletedSpotIds(prev => new Set([...prev, spotId]));
+            setDeletingSpotIds(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(spotId);
+                return newSet;
+            });
+            
+            // Remove from local state
+            setParks(prev => prev.filter(park => park._id !== spotId));
+            setAllParks(prev => prev.filter(park => park._id !== spotId));
+            
+            // Handle pagination edge case: if current page is empty, go to previous page
+            const currentPageParks = getCurrentPageParks(page);
+            if (currentPageParks.length === 1 && page > 1) {
+                setPage(page - 1);
+            }
+            
+            // Update total pages
+            setTotalPages(prev => Math.max(1, prev - 1));
+            
+        } catch (error: any) {
+            console.error('Delete failed:', error);
+            
+            // Remove from deleting state
+            setDeletingSpotIds(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(spotId);
+                return newSet;
+            });
+            
+            // Show error to user (we'll add toast later)
+            alert(`Failed to delete spot: ${error.message}`);
+        }
+    }, [page, getCurrentPageParks]);
+
 
     useEffect(() => {
         navigator.geolocation.getCurrentPosition(
@@ -152,13 +225,17 @@ export default function HomePage() {
 
     // Reset to page 1 when component mounts or when pathname changes
     useEffect(() => {
-        setPage(1);
-        // Reset background data when coming back to home
-        if (allParks.length > 0) {
-            setBackgroundDataLoaded(false);
-            setAllParks([]);
+        // Only reset to page 1 when actually navigating to a different route
+        // Don't reset when just the component re-renders
+        if (pathname !== '/') {
+            setPage(1);
+            // Reset background data when coming back to home
+            if (allParks.length > 0) {
+                setBackgroundDataLoaded(false);
+                setAllParks([]);
+            }
         }
-    }, [pathname, allParks.length]); // Include allParks.length dependency
+    }, [pathname]); // Remove allParks.length dependency to prevent unnecessary resets
 
     // Handle URL changes (e.g., when logo is clicked)
     useEffect(() => {
@@ -222,25 +299,28 @@ export default function HomePage() {
         const currentParks = getCurrentPageParks(page);
         if (!Array.isArray(currentParks)) return [];
         
-        return currentParks.map((park) => {
-            const parkCoords = {
-                lat: park.location.coordinates[1],
-                lng: park.location.coordinates[0],
-            };
-            const distanceKm = getDistanceKm(
-                userCoords.lat,
-                userCoords.lng,
-                parkCoords.lat,
-                parkCoords.lng
-            );
+        return currentParks
+            .filter(park => !deletedSpotIds.has(park._id)) // Filter out deleted spots
+            .map((park) => {
+                const parkCoords = {
+                    lat: park.location.coordinates[1],
+                    lng: park.location.coordinates[0],
+                };
+                const distanceKm = getDistanceKm(
+                    userCoords.lat,
+                    userCoords.lng,
+                    parkCoords.lat,
+                    parkCoords.lng
+                );
 
-            return {
-                ...park,
-                coordinates: parkCoords,
-                distanceKm,
-            };
-        });
-    }, [getCurrentPageParks, page, userCoords]);
+                return {
+                    ...park,
+                    coordinates: parkCoords,
+                    distanceKm,
+                    isDeleting: deletingSpotIds.has(park._id), // Track deletion state
+                };
+            });
+    }, [getCurrentPageParks, page, userCoords, deletedSpotIds, deletingSpotIds]);
 
     // Update total pages when background data is loaded
     useEffect(() => {
@@ -306,7 +386,7 @@ export default function HomePage() {
                     <Grid container spacing={4}>
                         {/* Show skeleton cards while loading */}
                         {Array.from({ length: limit }).map((_, index) => (
-                            <Grid item xs={12} sm={6} md={4} key={`skeleton-${index}`} {...({} as any)}>
+                            <Grid item xs={12} sm={6} md={4} key={`skeleton-${index}`}>
                                 <SkeletonCard />
                             </Grid>
                         ))}
@@ -402,7 +482,7 @@ export default function HomePage() {
                     <Grid container spacing={4} id="skatepark-cards-container">
                         {/* Show actual skatepark cards */}
                         {parksWithDistance.map((park) => (
-                            <Grid item xs={12} sm={6} md={4} key={park._id} {...({} as any)}>
+                            <Grid item xs={12} sm={6} md={4} key={park._id}>
                                 <SkateparkCard
                                     _id={park._id}
                                     title={park.title}
@@ -416,6 +496,8 @@ export default function HomePage() {
                                     level={park.level}
                                     avgRating={park.avgRating}
                                     externalLinks={park.externalLinks || []}
+                                    isDeleting={park.isDeleting}
+                                    onDelete={handleSpotDelete}
                                 />
                             </Grid>
                         ))}

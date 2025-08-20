@@ -32,7 +32,8 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({
             _id: user._id,
             name: user.name,
-            photoUrl: user.photoUrl
+            photoUrl: user.photoUrl,
+            role: user.role // Add role to response for admin checking
         });
     } catch (err) {
         console.error('GET /api/auth/me error:', err);

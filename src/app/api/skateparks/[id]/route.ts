@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { skateparkService } from "@/services/skatepark.service";
 import { convertToUploadedFile } from "@/lib/file-utils";
+import { connectToDatabase } from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
 
 // GET one skatepark
 export async function GET(
@@ -47,6 +49,21 @@ export async function DELETE(
         const userId = request.headers.get("x-user-id");
         if (!userId) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        // Get user to check admin role
+        const { db } = await connectToDatabase();
+        if (!db) {
+            return NextResponse.json({ error: "Database connection failed" }, { status: 500 });
+        }
+        
+        const user = await db.collection('users').findOne(
+            { _id: new ObjectId(userId) },
+            { projection: { role: 1 } }
+        );
+
+        if (!user || user.role !== 'admin') {
+            return NextResponse.json({ error: "Admin access required" }, { status: 403 });
         }
 
         const message = await skateparkService.deleteSkatepark(params.id);
