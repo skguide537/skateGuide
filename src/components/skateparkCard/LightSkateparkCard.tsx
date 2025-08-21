@@ -16,6 +16,9 @@ import FastCarousel from '../ui/FastCarousel';
 import { useUser } from '@/context/UserContext';
 import DeleteConfirmationDialog from '../modals/DeleteConfirmationDialog';
 import FavoriteButton from '../common/FavoriteButton';
+import IconButton from '@mui/material/IconButton';
+import DeleteIcon from '@mui/icons-material/Delete';
+import Star from '@mui/icons-material/Star';
 
 interface LightSkateparkCardProps {
     _id: string;
@@ -71,118 +74,288 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
 
     return (
         <>
-            <Card
+            <Card 
                 onClick={() => !isDeleting && setOpen(true)}
-                sx={{
+                sx={{ 
                     width: 345,
                     height: 420,
-                    boxShadow: 5,
-                    borderRadius: 2,
-                    backgroundColor: '#A7A9AC',
-                    color: '#2F2F2F',
                     display: 'flex',
                     flexDirection: 'column',
+                    boxShadow: 'var(--shadow-md)',
+                    borderRadius: 'var(--radius-lg)',
+                    backgroundColor: 'var(--color-surface-elevated)',
+                    color: 'var(--color-text-primary)',
+                    transition: 'all var(--transition-fast)',
+                    opacity: isDeleting ? 0.5 : 1,
+                    border: '1px solid var(--color-border)',
+                    overflow: 'hidden',
                     cursor: isDeleting ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.2s ease',
-                    opacity: isDeleting ? 0.6 : 1,
                     position: 'relative',
                     '&:hover': {
-                        transform: isDeleting ? 'none' : 'translateY(-6px)',
-                        boxShadow: isDeleting ? 5 : 12,
-                        backgroundColor: isDeleting ? '#A7A9AC' : '#B8B9BC',
+                        transform: isDeleting ? 'none' : 'translateY(-4px)',
+                        boxShadow: isDeleting ? 'var(--shadow-md)' : 'var(--shadow-xl)',
+                        backgroundColor: isDeleting ? 'var(--color-surface-elevated)' : 'var(--color-surface)',
                     },
                     '&:active': {
                         transform: isDeleting ? 'none' : 'translateY(-2px)',
-                        boxShadow: isDeleting ? 5 : 8,
                     }
                 }}
             >
-                {/* Admin Delete Button - Top Right */}
-                {isAdmin && (
-                    <Box
-                        sx={{
-                            position: 'absolute',
-                            top: 8,
-                            right: 8,
-                            zIndex: 10,
-                        }}
-                    >
-                        <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={handleDelete}
-                            disabled={isDeleting}
-                            sx={{
-                                minWidth: 32,
-                                width: 32,
-                                height: 32,
-                                borderRadius: '50%',
-                                borderColor: '#dc3545',
-                                color: '#dc3545',
-                                p: 0,
-                                '&:hover': {
-                                    borderColor: '#c82333',
-                                    backgroundColor: '#c82333',
-                                    color: '#fff'
-                                },
-                                '&:disabled': {
-                                    borderColor: '#6c757d',
-                                    color: '#6c757d'
-                                }
-                            }}
-                        >
-                            ✕
-                        </Button>
-                    </Box>
+                {/* Admin Delete Button */}
+                {user?.role === 'admin' && (
+                  <IconButton
+                    onClick={handleDelete}
+                    sx={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      backgroundColor: 'rgba(220, 53, 69, 0.9)',
+                      color: 'white',
+                      width: 32,
+                      height: 32,
+                      zIndex: 10,
+                      '&:hover': {
+                        backgroundColor: 'var(--color-error)',
+                        transform: 'scale(1.1)',
+                      },
+                      transition: 'all var(--transition-fast)',
+                    }}
+                  >
+                    <DeleteIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
                 )}
 
-                {/* Fast custom carousel - much lighter than react-material-ui-carousel */}
+                {/* Image Section */}
+                <Box sx={{ 
+                    position: 'relative', 
+                    height: 200, 
+                    overflow: 'hidden',
+                    borderBottom: '1px solid var(--color-border)'
+                }}>
                 <FastCarousel 
                     images={imagesToShow} 
                     alt={title}
+                    formatSrc={formatSrc}
                     height={200}
+                    showArrows={false}
+                    showDots={true}
+                    autoPlay={false}
                 />
+                    
+                    {/* Type Badge - Top Left */}
+                    <Box sx={{
+                        position: 'absolute',
+                        top: 8,
+                        left: 8,
+                        backgroundColor: isPark ? 'var(--color-accent-green)' : 'var(--color-accent-rust)',
+                        color: 'var(--color-surface-elevated)',
+                        px: 2,
+                        py: 0.5,
+                        borderRadius: 'var(--radius-md)',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        boxShadow: 'var(--shadow-sm)',
+                    }}>
+                        {isPark ? '🏞️ Park' : '🛣️ Street'}
+                    </Box>
 
-                <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
-                    <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', mb: 1, fontSize: '1.1rem' }}>
+                    {/* Distance Badge - Top Right */}
+                    <Box sx={{
+                        position: 'absolute',
+                        top: 8,
+                        right: user?.role === 'admin' ? 48 : 8,
+                        backgroundColor: 'rgba(52, 152, 219, 0.9)',
+                        color: 'var(--color-surface-elevated)',
+                        px: 2,
+                        py: 0.5,
+                        borderRadius: 'var(--radius-md)',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        boxShadow: 'var(--shadow-sm)',
+                    }}>
+                        📍 {distanceKm.toFixed(1)}km
+                    </Box>
+                </Box>
+
+                {/* Content Section */}
+                <CardContent sx={{ 
+                    flexGrow: 1, 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    p: 3,
+                    '&:last-child': { pb: 3 }
+                }}>
+                    {/* Title and Rating Row */}
+                    <Box sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'flex-start',
+                        mb: 2
+                    }}>
+                        <Typography 
+                            variant="h6" 
+                            component="h3" 
+                            sx={{ 
+                                fontWeight: 700,
+                                color: 'var(--color-text-primary)',
+                                lineHeight: 1.2,
+                                flex: 1,
+                                mr: 2
+                            }}
+                        >
                         {title}
                     </Typography>
 
-                    <Box display="flex" alignItems="center" gap={1} mb={1}>
-                        <Rating value={avgRating} readOnly size="small" />
-                        <Typography variant="body2" color="text.secondary">
-                            ({avgRating.toFixed(1)})
+                        {/* Rating Display */}
+                        <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 0.5,
+                            backgroundColor: 'var(--color-surface)',
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: 'var(--radius-md)',
+                            border: '1px solid var(--color-border)'
+                        }}>
+                            <Star sx={{ 
+                                fontSize: '1rem', 
+                                color: 'var(--color-accent-rust)' 
+                            }} />
+                            <Typography variant="body2" sx={{ 
+                                fontWeight: 600,
+                                color: 'var(--color-text-primary)'
+                            }}>
+                                {avgRating.toFixed(1)}
                         </Typography>
-                        <Box sx={{ ml: 'auto' }}>
-                            <FavoriteButton 
-                                spotId={_id} 
-                                size="small" 
-                                showCount
-                                variant="button"
-                            />
                         </Box>
                     </Box>
 
-                    <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mb: 1 }}>
-                        <Chip label={isPark ? 'Park' : 'Street'} size="small" color={isPark ? 'success' : 'warning'} />
-                        <Chip label={size} size="small" />
-                        <Chip label={level} size="small" />
-                    </Stack>
-
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        Distance: {distanceKm.toFixed(1)} km
+                    {/* Description */}
+                    <Typography 
+                        variant="body2" 
+                        color="var(--color-text-secondary)"
+                        sx={{ 
+                            mb: 3, 
+                            lineHeight: 1.5,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                        }}
+                    >
+                        {description || 'No description available'}
                     </Typography>
 
-                    {/* Click hint - subtle indication that card is clickable */}
+                    {/* Tags */}
+                    <Box sx={{ mb: 3 }}>
+                        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                            {tags.slice(0, 3).map((tag, index) => (
+                                <Chip
+                                    key={index}
+                                    label={tag}
+                                    size="small"
+                                    sx={{
+                                        backgroundColor: 'var(--color-accent-blue)',
+                                        color: 'var(--color-surface-elevated)',
+                                        fontWeight: 500,
+                                        fontSize: '0.7rem',
+                                        height: 24,
+                                        '& .MuiChip-label': {
+                                            px: 1,
+                                        }
+                                    }}
+                                />
+                            ))}
+                            {tags.length > 3 && (
+                                <Chip
+                                    label={`+${tags.length - 3}`}
+                                    size="small"
+                                    sx={{
+                                        backgroundColor: 'var(--color-surface)',
+                                        color: 'var(--color-text-secondary)',
+                                        fontWeight: 500,
+                                        fontSize: '0.7rem',
+                                        height: 24,
+                                        border: '1px solid var(--color-border)',
+                                        '& .MuiChip-label': {
+                                            px: 1,
+                                        }
+                                    }}
+                                />
+                            )}
+                        </Stack>
+                    </Box>
+
+                    {/* Bottom Row - Size, Level, and Actions */}
                     <Box sx={{ 
                         mt: 'auto', 
-                        textAlign: 'center',
-                        py: 1,
-                        color: 'rgba(47, 47, 47, 0.7)',
-                        fontSize: '0.8rem',
-                        fontStyle: 'italic'
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center'
                     }}>
-                        {isDeleting ? 'Deleting...' : 'Click to view details'}
+                        {/* Size and Level */}
+                        <Box sx={{ display: 'flex', gap: 2 }}>
+                            <Box sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: 0.5,
+                                backgroundColor: 'var(--color-surface)',
+                                px: 1.5,
+                                py: 0.5,
+                                borderRadius: 'var(--radius-md)',
+                                border: '1px solid var(--color-border)'
+                            }}>
+                                <Typography variant="caption" sx={{ 
+                                    fontWeight: 600,
+                                    color: 'var(--color-text-primary)',
+                                    textTransform: 'uppercase',
+                                    fontSize: '0.7rem'
+                                }}>
+                                    {size}
+                                </Typography>
+                            </Box>
+                            
+                            <Box sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: 0.5,
+                                backgroundColor: 'var(--color-surface)',
+                                px: 1.5,
+                                py: 0.5,
+                                borderRadius: 'var(--radius-md)',
+                                border: '1px solid var(--color-border)'
+                            }}>
+                                <Typography variant="caption" sx={{ 
+                                    fontWeight: 600,
+                                    color: 'var(--color-text-primary)',
+                                    textTransform: 'uppercase',
+                                    fontSize: '0.7rem'
+                                }}>
+                                    {level}
+                                </Typography>
+                            </Box>
+                        </Box>
+
+                        {/* Favorite Button */}
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 'auto' }}>
+                          <FavoriteButton 
+                            spotId={_id} 
+                            size="medium" 
+                            showCount={true}
+                            variant="icon"
+                            sx={{
+                              backgroundColor: 'var(--color-surface-elevated)',
+                              border: '1px solid var(--color-border)',
+                              '&:hover': {
+                                backgroundColor: 'var(--color-surface)',
+                                transform: 'scale(1.05)',
+                              }
+                            }}
+                          />
+                        </Box>
                     </Box>
                 </CardContent>
             </Card>

@@ -14,10 +14,18 @@ const MapLoading = () => (
     alignItems: 'center', 
     justifyContent: 'center', 
     minHeight: '60vh',
-    gap: 3
+    gap: 3,
+    p: 4,
+    backgroundColor: 'var(--color-surface-elevated)',
+    borderRadius: 'var(--radius-lg)',
+    border: '1px solid var(--color-border)',
+    boxShadow: 'var(--shadow-md)',
+    background: 'linear-gradient(135deg, var(--color-surface-elevated) 0%, var(--color-surface) 100%)',
+    mx: 2,
+    my: 2
   }} id="map-loading-container">
-    <CircularProgress size={48} sx={{ color: '#A7A9AC' }} />
-    <Typography variant="h6" color="text.secondary" id="map-loading-text">
+    <CircularProgress size={48} sx={{ color: 'var(--color-accent-green)' }} />
+    <Typography variant="h6" sx={{ color: 'var(--color-text-primary)', fontWeight: 600 }} id="map-loading-text">
       Loading Interactive Map...
     </Typography>
   </Box>
@@ -50,9 +58,16 @@ export default function MapPage() {
         alignItems: 'center', 
         justifyContent: 'center', 
         height: '100vh',
-        color: 'error.main'
+        p: 4,
+        backgroundColor: 'var(--color-surface-elevated)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--color-border)',
+        boxShadow: 'var(--shadow-md)',
+        background: 'linear-gradient(135deg, var(--color-surface-elevated) 0%, var(--color-surface) 100%)',
+        mx: 2,
+        my: 2
       }} id="map-error-container">
-        <Typography variant="h6" id="map-error-text">{error}</Typography>
+        <Typography variant="h6" sx={{ color: 'var(--color-error)', fontWeight: 600 }} id="map-error-text">{error}</Typography>
       </Box>
     );
   }

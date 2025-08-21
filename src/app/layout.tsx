@@ -5,6 +5,7 @@ import NavBar from '@/components/navbar/NavBar';
 import { UserProvider } from '@/context/UserContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { FavoritesProvider } from '@/context/FavoritesContext';
+import { ThemeProvider } from '@/context/ThemeContext';
 import Loading from '@/components/loading/Loading';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -22,16 +23,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <UserProvider>
-          <ToastProvider>
-            <FavoritesProvider>
-              <NavBar />
-              <Suspense fallback={<Loading />}>
-                {children}
-              </Suspense>
-            </FavoritesProvider>
-          </ToastProvider>
-        </UserProvider>
+        <ThemeProvider>
+          <UserProvider>
+            <ToastProvider>
+              <FavoritesProvider>
+                <NavBar />
+                <Suspense fallback={<Loading />}>
+                  {children}
+                </Suspense>
+              </FavoritesProvider>
+            </ToastProvider>
+          </UserProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

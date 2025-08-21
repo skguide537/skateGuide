@@ -1,29 +1,165 @@
+/* SkateGuide Design System - Skatepark Inspired Colors */
 
 :root {
-    --color-canvas: #f5f5f5;
-    --color-cement: #b0b0b0;
-    --color-cement-dark: #8a8a8a;
-    --color-metal: #a7a9ac;
-    --color-wood: #d2b48c;
-    --color-urban-green: #6e7763;
-    --color-grip: #2f2f2f;
+  /* Light Theme Colors */
+  --color-primary: #2C3E50;      /* Concrete Gray - Primary */
+  --color-secondary: #34495E;     /* Steel Blue - Secondary */
+  --color-accent-wood: #8B4513;   /* Cedar Wood - Wooden obstacles */
+  --color-accent-rust: #E67E22;   /* Rust Orange - Graffiti/street art */
+  --color-accent-green: #27AE60;  /* Neon Green - Safety/energy */
+  --color-accent-blue: #3498DB;   /* Electric Blue - Modern urban */
   
-    --background: var(--color-canvas);
-    --foreground: var(--color-wood);
-  }
+  /* Neutral Colors */
+  --color-background: #FFFFFF;    /* Pure white background */
+  --color-surface: #E8E9EA;       /* Darker surface for better contrast */
+  --color-surface-elevated: #F1F2F3; /* Elevated surface - darker than before */
+  --color-text-primary: #1A1A1A;  /* Dark text */
+  --color-text-secondary: #6C757D; /* Secondary text */
+  --color-border: #E9ECEF;        /* Light borders */
+  --color-border-focus: #3498DB;  /* Focus border */
   
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --background: var(--color-grip);
-      --foreground: var(--color-canvas);
-    }
-  }
+  /* Semantic Colors */
+  --color-success: #27AE60;       /* Success states */
+  --color-warning: #F39C12;       /* Warning states */
+  --color-error: #E74C3C;         /* Error states */
+  --color-info: #3498DB;          /* Info states */
   
-  body {
-    color: var(--foreground);
-    background: var(--background);
-    font-family: Arial, Helvetica, sans-serif;
-  }
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+  
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+  --transition-slow: 0.35s ease;
+}
+
+[data-theme="dark"] {
+  /* Dark Theme Colors */
+  --color-primary: #1A1A1A;       /* Asphalt Black - Primary */
+  --color-secondary: #2C3E50;     /* Concrete Gray - Secondary */
+  --color-accent-wood: #A0522D;   /* Lighter wood for dark theme */
+  --color-accent-rust: #F39C12;   /* Brighter orange for dark theme */
+  --color-accent-green: #2ECC71;  /* Brighter green for dark theme */
+  --color-accent-blue: #5DADE2;   /* Lighter blue for dark theme */
+  
+  /* Neutral Colors */
+  --color-background: #0D1117;    /* Dark background */
+  --color-surface: #161B22;       /* Dark surface */
+  --color-surface-elevated: #21262D; /* Elevated dark surface */
+  --color-text-primary: #F0F6FC;  /* Light text */
+  --color-text-secondary: #8B949E; /* Secondary light text */
+  --color-border: #30363D;        /* Dark borders */
+  --color-border-focus: #5DADE2;  /* Focus border for dark theme */
+  
+  /* Semantic Colors - Adjusted for dark theme */
+  --color-success: #2ECC71;
+  --color-warning: #F39C12;
+  --color-error: #E74C3C;
+  --color-info: #5DADE2;
+  
+  /* Shadows - Adjusted for dark theme */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.6);
+}
+
+/* Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  transition: background-color var(--transition-normal), color var(--transition-normal);
+  line-height: 1.6;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-text-primary);
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+h1 { font-size: 2.5rem; }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.75rem; }
+h4 { font-size: 1.5rem; }
+h5 { font-size: 1.25rem; }
+h6 { font-size: 1rem; }
+
+p {
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+/* Button Base Styles */
+button {
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border-radius: var(--radius-md);
+}
+
+/* Link Styles */
+a {
+  color: var(--color-accent-blue);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--color-accent-blue);
+  text-decoration: underline;
+}
+
+/* Focus Styles */
+*:focus {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+}
 
 /* Enhanced Map Styles */
 .custom-marker-icon {
@@ -35,28 +171,30 @@
   filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
 }
 
-
-
 /* Map Controls Styling */
 .leaflet-control-zoom {
   border: none !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: var(--shadow-md) !important;
+  border-radius: var(--radius-md) !important;
 }
 
 .leaflet-control-zoom a {
-  background: white !important;
-  color: #333 !important;
-  border: 1px solid #ddd !important;
+  background: var(--color-surface-elevated) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border) !important;
+  transition: all var(--transition-fast) !important;
 }
 
 .leaflet-control-zoom a:hover {
-  background: #f5f5f5 !important;
+  background: var(--color-surface) !important;
+  transform: scale(1.05);
 }
 
 /* Popup Styling */
 .leaflet-popup-content-wrapper {
-  border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-lg) !important;
+  background: var(--color-surface-elevated) !important;
 }
 
 .leaflet-popup-content {
@@ -65,5 +203,24 @@
 }
 
 .leaflet-popup-tip {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: var(--shadow-lg) !important;
 }
+
+/* Utility Classes */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.font-bold { font-weight: 700; }
+.font-semibold { font-weight: 600; }
+.font-medium { font-weight: 500; }
+
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-md { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-xl { border-radius: var(--radius-xl); }
+
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+.shadow-xl { box-shadow: var(--shadow-xl); }

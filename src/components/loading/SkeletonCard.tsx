@@ -1,5 +1,8 @@
 import React from 'react';
-import { Card, CardContent, Box, Skeleton } from '@mui/material';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Skeleton from '@mui/material/Skeleton';
+import Box from '@mui/material/Box';
 
 export default function SkeletonCard() {
     return (
@@ -7,126 +10,192 @@ export default function SkeletonCard() {
             sx={{
                 width: 345,
                 height: 420,
-                borderRadius: 2,
-                backgroundColor: '#A7A9AC',
-                position: 'relative',
+                boxShadow: 'var(--shadow-md)',
+                borderRadius: 'var(--radius-lg)',
+                backgroundColor: 'var(--color-surface-elevated)',
+                border: '1px solid var(--color-border)',
                 overflow: 'hidden',
-                '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: '-100%',
-                    width: '100%',
-                    height: '100%',
-                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
-                    animation: 'shimmer 2.5s infinite',
-                    zIndex: 1
-                }
             }}
         >
-            {/* Image skeleton with rounded corners */}
-            <Box sx={{ position: 'relative', zIndex: 2 }}>
+            {/* Image Skeleton */}
+            <Box sx={{ 
+                position: 'relative', 
+                height: 200, 
+                backgroundColor: 'var(--color-surface)',
+                borderBottom: '1px solid var(--color-border)'
+            }}>
+                <Skeleton 
+                    variant="rectangular" 
+                    width="100%" 
+                    height="100%"
+                    sx={{ 
+                        backgroundColor: 'var(--color-border)',
+                        borderRadius: 0
+                    }}
+                />
+                
+                {/* Type Badge Skeleton */}
                 <Skeleton
                     variant="rectangular"
-                    width="100%"
-                    height={200}
+                    width={60}
+                    height={24}
                     sx={{
-                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                        borderRadius: '8px 8px 0 0',
-                        animation: 'pulse 2s ease-in-out infinite'
+                        position: 'absolute',
+                        top: 8,
+                        left: 8,
+                        borderRadius: 'var(--radius-md)',
+                        backgroundColor: 'var(--color-border)',
+                    }}
+                />
+                
+                {/* Distance Badge Skeleton */}
+                <Skeleton
+                    variant="rectangular"
+                    width={70}
+                    height={24}
+                    sx={{
+                        position: 'absolute',
+                        top: 8,
+                        right: 8,
+                        borderRadius: 'var(--radius-md)',
+                        backgroundColor: 'var(--color-border)',
                     }}
                 />
             </Box>
 
-            <CardContent sx={{ position: 'relative', zIndex: 2, p: 2 }}>
-                {/* Title skeleton */}
-                <Skeleton
-                    variant="text"
-                    width="80%"
-                    height={28}
-                    sx={{
-                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                        animation: 'pulse 2s ease-in-out infinite 0.1s'
-                    }}
-                />
-
-                {/* Rating skeleton */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <Skeleton
-                        variant="rectangular"
-                        width={80}
-                        height={20}
-                        sx={{
-                            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                            borderRadius: 1,
-                            animation: 'pulse 2s ease-in-out infinite 0.2s'
+            {/* Content Skeleton */}
+            <CardContent sx={{ 
+                flexGrow: 1, 
+                display: 'flex', 
+                flexDirection: 'column',
+                p: 3,
+                '&:last-child': { pb: 3 }
+            }}>
+                {/* Title and Rating Row */}
+                <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'flex-start',
+                    mb: 2
+                }}>
+                    <Skeleton 
+                        variant="text" 
+                        width="70%" 
+                        height={28}
+                        sx={{ 
+                            backgroundColor: 'var(--color-border)',
+                            borderRadius: 'var(--radius-sm)'
                         }}
                     />
+                    
+                    {/* Rating Skeleton */}
                     <Skeleton
-                        variant="text"
-                        width={40}
-                        height={16}
+                        variant="rectangular"
+                        width={50}
+                        height={24}
                         sx={{
-                            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                            animation: 'pulse 2s ease-in-out infinite 0.3s'
+                            borderRadius: 'var(--radius-md)',
+                            backgroundColor: 'var(--color-border)',
                         }}
                     />
                 </Box>
 
-                {/* Tags skeleton */}
-                <Box sx={{ display: 'flex', gap: 1, mb: 1, flexWrap: 'wrap' }}>
-                    {[1, 2, 3].map((i) => (
+                {/* Description Skeleton */}
+                <Box sx={{ mb: 3 }}>
+                    <Skeleton 
+                        variant="text" 
+                        width="100%" 
+                        height={20}
+                        sx={{ 
+                            backgroundColor: 'var(--color-border)',
+                            borderRadius: 'var(--radius-sm)',
+                            mb: 1
+                        }}
+                    />
+                    <Skeleton 
+                        variant="text" 
+                        width="80%" 
+                        height={20}
+                        sx={{ 
+                            backgroundColor: 'var(--color-border)',
+                            borderRadius: 'var(--radius-sm)'
+                        }}
+                    />
+                </Box>
+
+                {/* Tags Skeleton */}
+                <Box sx={{ mb: 3 }}>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                         <Skeleton
-                            key={i}
                             variant="rectangular"
                             width={60}
                             height={24}
                             sx={{
-                                backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                                borderRadius: 1,
-                                animation: `pulse 2s ease-in-out infinite ${0.4 + i * 0.1}s`
+                                borderRadius: 'var(--radius-md)',
+                                backgroundColor: 'var(--color-border)',
                             }}
                         />
-                    ))}
+                        <Skeleton
+                            variant="rectangular"
+                            width={50}
+                            height={24}
+                            sx={{
+                                borderRadius: 'var(--radius-md)',
+                                backgroundColor: 'var(--color-border)',
+                            }}
+                        />
+                        <Skeleton
+                            variant="rectangular"
+                            width={70}
+                            height={24}
+                            sx={{
+                                borderRadius: 'var(--radius-md)',
+                                backgroundColor: 'var(--color-border)',
+                            }}
+                        />
+                    </Box>
                 </Box>
 
-                {/* Distance skeleton */}
-                <Skeleton
-                    variant="text"
-                    width="60%"
-                    height={20}
-                    sx={{
-                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                        animation: 'pulse 2s ease-in-out infinite 0.7s'
-                    }}
-                />
+                {/* Bottom Row Skeleton */}
+                <Box sx={{ 
+                    mt: 'auto',
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center'
+                }}>
+                    {/* Size and Level Skeleton */}
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Skeleton
+                            variant="rectangular"
+                            width={50}
+                            height={24}
+                            sx={{
+                                borderRadius: 'var(--radius-md)',
+                                backgroundColor: 'var(--color-border)',
+                            }}
+                        />
+                        <Skeleton
+                            variant="rectangular"
+                            width={70}
+                            height={24}
+                            sx={{
+                                borderRadius: 'var(--radius-md)',
+                                backgroundColor: 'var(--color-border)',
+                            }}
+                        />
+                    </Box>
 
-                {/* Bottom spacing for consistent height */}
-                <Box sx={{ mt: 'auto', pt: 2 }}>
+                    {/* Favorite Button Skeleton */}
                     <Skeleton
-                        variant="rectangular"
-                        width="100%"
+                        variant="circular"
+                        width={32}
                         height={32}
                         sx={{
-                            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                            borderRadius: 1,
-                            animation: 'pulse 2s ease-in-out infinite 0.8s'
+                            backgroundColor: 'var(--color-border)',
                         }}
                     />
                 </Box>
             </CardContent>
-
-            <style jsx>{`
-                @keyframes shimmer {
-                    0% { left: -100%; }
-                    100% { left: 100%; }
-                }
-                
-                @keyframes pulse {
-                    0%, 100% { opacity: 0.6; }
-                    50% { opacity: 1; }
-                }
-            `}</style>
         </Card>
     );
 }
