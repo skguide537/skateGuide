@@ -151,7 +151,7 @@ function RichPopup({ spot, onViewDetails }: {
 }) {
   return (
     <div style={{ minWidth: '250px', maxWidth: '300px' }}>
-      <Typography variant="h6" gutterBottom>
+      <Typography variant="h6" gutterBottom sx={{ color: 'var(--color-text-primary)' }}>
         {spot.title}
       </Typography>
       
@@ -168,7 +168,7 @@ function RichPopup({ spot, onViewDetails }: {
       {spot.avgRating > 0 && (
         <Box display="flex" alignItems="center" gap={1} mb={1}>
           <Rating value={spot.avgRating} readOnly size="small" />
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)' }}>
             ({spot.avgRating.toFixed(1)})
           </Typography>
         </Box>
@@ -182,7 +182,7 @@ function RichPopup({ spot, onViewDetails }: {
         </Box>
       )}
       
-      <Typography variant="body2" color="text.secondary" mb={2}>
+      <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)', mb: 2 }}>
         {spot.description?.substring(0, 100)}
         {spot.description && spot.description.length > 100 && '...'}
       </Typography>
@@ -192,6 +192,14 @@ function RichPopup({ spot, onViewDetails }: {
         size="small" 
         fullWidth
         onClick={() => onViewDetails(spot)}
+        sx={{
+          backgroundColor: 'var(--color-accent-blue)',
+          color: 'var(--color-surface-elevated)',
+          '&:hover': {
+            backgroundColor: 'var(--color-accent-blue)',
+            transform: 'translateY(-1px)',
+          }
+        }}
       >
         View Details
       </Button>
@@ -627,7 +635,7 @@ export default function EnhancedMap({ userLocation }: MapProps) {
             {filteredSpots.map((spot, index) => (
               <Box key={spot._id}>
                 <ListItem 
-                  onClick={() => handleViewDetails(spot)}
+                  onClick={() => handleSpotClick(spot)}
                   sx={{ 
                     p: 2,
                     '&:hover': {
@@ -860,6 +868,11 @@ export default function EnhancedMap({ userLocation }: MapProps) {
             lng: selectedSpot.location.coordinates[0]
           }}
           externalLinks={selectedSpot.externalLinks}
+          avgRating={selectedSpot.avgRating}
+          distanceKm={userLocation ? calculateDistance(
+            userLocation[0], userLocation[1],
+            selectedSpot.location.coordinates[1], selectedSpot.location.coordinates[0]
+          ) : undefined}
         />
       )}
     </>

@@ -137,189 +137,209 @@ export default function SearchFilterBar({
                 background: 'linear-gradient(90deg, var(--color-accent-green) 0%, var(--color-accent-blue) 50%, var(--color-accent-rust) 100%)',
             }
         }}>
-            {/* Search Bar */}
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                mb: 2, 
-                color: 'var(--color-text-primary)', 
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1
-              }}
-            >
-              🔍 Search & Discover
-            </Typography>
-            
-            <TextField
-              fullWidth
-              placeholder="Search spots, tags, locations..."
-              value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
-              sx={{
-                mb: 2,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 'var(--radius-md)',
-                  backgroundColor: 'var(--color-surface)',
-                  border: '1px solid var(--color-border)',
-                  transition: 'all var(--transition-fast)',
-                  '&:hover': {
-                    borderColor: 'var(--color-accent-blue)',
-                    backgroundColor: 'var(--color-surface-elevated)',
-                  },
-                  '&.Mui-focused': {
-                    borderColor: 'var(--color-accent-blue)',
-                    boxShadow: '0 0 0 2px rgba(93, 173, 226, 0.2)',
-                  }
-                }
-              }}
-              InputProps={{
-                startAdornment: <Search sx={{ color: 'var(--color-accent-blue)', mr: 1 }} />,
-              }}
-            />
-
-            {/* Sort Options */}
-            <Typography 
-              variant="subtitle1" 
-              sx={{ 
-                mb: 1.5, 
-                color: 'var(--color-text-primary)', 
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1
-              }}
-            >
-              ☰ Sort by:
-            </Typography>
-            
+            {/* Compact Mode - Search and Sort Side by Side */}
             <Box sx={{ 
-              mb: 2,
-              display: 'flex', 
-              gap: 2, 
-              flexWrap: 'wrap',
-              p: 1.5,
-              backgroundColor: 'var(--color-surface)',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--color-border)'
+                display: 'flex', 
+                flexDirection: { xs: 'column', sm: 'row' }, 
+                gap: 2, 
+                alignItems: { xs: 'stretch', sm: 'center' },
+                mb: 2
             }}>
-              <FormControlLabel
-                control={
-                  <input
-                    type="radio"
-                    name="sortBy"
-                    value="default"
-                    checked={sortBy === 'default'}
-                    onChange={(e) => onSortByChange(e.target.value as any)}
-                    style={{ margin: 0 }}
-                  />
-                }
-                label={
-                  <Typography variant="body2" sx={{ color: 'var(--color-text-primary)', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
-                    <Sort sx={{ mr: 0.5, fontSize: '1em', color: 'var(--color-accent-green)' }} />
-                    Default
-                  </Typography>
-                }
-                sx={{ 
-                  margin: 0,
-                  '& .MuiFormControlLabel-label': { ml: 1 }
-                }}
-              />
-              <FormControlLabel
-                control={
-                  <input
-                    type="radio"
-                    name="sortBy"
-                    value="distance"
-                    checked={sortBy === 'distance'}
-                    onChange={(e) => onSortByChange(e.target.value as any)}
-                    style={{ margin: 0 }}
-                  />
-                }
-                label={
-                  <Typography variant="body2" sx={{ color: 'var(--color-text-primary)', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
-                    <LocationOn sx={{ mr: 0.5, fontSize: '1em', color: 'var(--color-accent-blue)' }} />
-                    Distance
-                  </Typography>
-                }
-                sx={{ 
-                  margin: 0,
-                  '& .MuiFormControlLabel-label': { ml: 1 }
-                }}
-              />
-              <FormControlLabel
-                control={
-                  <input
-                    type="radio"
-                    name="sortBy"
-                    value="rating"
-                    checked={sortBy === 'rating'}
-                    onChange={(e) => onSortByChange(e.target.value as any)}
-                    style={{ margin: 0 }}
-                  />
-                }
-                label={
-                  <Typography variant="body2" sx={{ color: 'var(--color-text-primary)', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
-                    <Star sx={{ mr: 0.5, fontSize: '1em', color: 'var(--color-accent-rust)' }} />
-                    Rating
-                  </Typography>
-                }
-                sx={{ 
-                  margin: 0,
-                  '& .MuiFormControlLabel-label': { ml: 1 }
-                }}
-              />
-              <FormControlLabel
-                control={
-                  <input
-                    type="radio"
-                    name="sortBy"
-                    value="recent"
-                    checked={sortBy === 'recent'}
-                    onChange={(e) => onSortByChange(e.target.value as any)}
-                    style={{ margin: 0 }}
-                  />
-                }
-                label={
-                  <Typography variant="body2" sx={{ color: 'var(--color-text-primary)', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
-                    <Schedule sx={{ mr: 0.5, fontSize: '1em', color: 'var(--color-accent-green)' }} />
-                    Recent
-                  </Typography>
-                }
-                sx={{ 
-                  margin: 0,
-                  '& .MuiFormControlLabel-label': { ml: 1 }
-                }}
-              />
+                {/* Search Section */}
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography 
+                        variant="h6" 
+                        sx={{ 
+                            mb: 1.5, 
+                            color: 'var(--color-text-primary)', 
+                            fontWeight: 600,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1
+                        }}
+                    >
+                        🔍 Search & Discover
+                    </Typography>
+                    
+                    <TextField
+                        placeholder="Search spots, tags, locations..."
+                        value={searchTerm}
+                        onChange={(e) => onSearchChange(e.target.value)}
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: 'var(--radius-md)',
+                                backgroundColor: 'var(--color-surface)',
+                                border: '1px solid var(--color-border)',
+                                transition: 'all var(--transition-fast)',
+                                '&:hover': {
+                                    borderColor: 'var(--color-accent-blue)',
+                                    backgroundColor: 'var(--color-surface-elevated)',
+                                },
+                                '&.Mui-focused': {
+                                    borderColor: 'var(--color-accent-blue)',
+                                    boxShadow: '0 0 0 2px rgba(93, 173, 226, 0.2)',
+                                }
+                            }
+                        }}
+                        InputProps={{
+                            startAdornment: <Search sx={{ color: 'var(--color-accent-blue)', mr: 1 }} />,
+                        }}
+                    />
+                </Box>
+
+                {/* Sort Section */}
+                <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    gap: 1,
+                    minWidth: { xs: '100%', sm: 'auto' }
+                }}>
+                    <Typography 
+                        variant="subtitle2" 
+                        sx={{ 
+                            color: 'var(--color-text-primary)', 
+                            fontWeight: 600,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1
+                        }}
+                    >
+                        ☰ Sort by:
+                    </Typography>
+                    
+                                        <Box sx={{ 
+                        display: 'flex', 
+                        gap: 1, 
+                        flexWrap: 'wrap',
+                        p: 1,
+                        backgroundColor: 'var(--color-surface)',
+                        borderRadius: 'var(--radius-md)',
+                        border: '1px solid var(--color-border)'
+                    }}>
+                        <FormControlLabel
+                            control={
+                                <input
+                                    type="radio"
+                                    name="sortBy"
+                                    value="default"
+                                    checked={sortBy === 'default'}
+                                    onChange={(e) => onSortByChange(e.target.value as any)}
+                                    style={{ margin: 0 }}
+                                />
+                            }
+                            label={
+                                <Typography variant="body2" sx={{ color: 'var(--color-text-primary)', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
+                                    <Sort sx={{ mr: 0.5, fontSize: '1em', color: 'var(--color-accent-green)' }} />
+                                    Default
+                                </Typography>
+                            }
+                            sx={{ 
+                                margin: 0,
+                                '& .MuiFormControlLabel-label': { ml: 1 }
+                            }}
+                        />
+                        <FormControlLabel
+                            control={
+                                <input
+                                    type="radio"
+                                    name="sortBy"
+                                    value="distance"
+                                    checked={sortBy === 'distance'}
+                                    onChange={(e) => onSortByChange(e.target.value as any)}
+                                    style={{ margin: 0 }}
+                                />
+                            }
+                            label={
+                                <Typography variant="body2" sx={{ color: 'var(--color-text-primary)', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
+                                    <LocationOn sx={{ mr: 0.5, fontSize: '1em', color: 'var(--color-accent-blue)' }} />
+                                    Distance
+                                </Typography>
+                            }
+                            sx={{ 
+                                margin: 0,
+                                '& .MuiFormControlLabel-label': { ml: 1 }
+                            }}
+                        />
+                        <FormControlLabel
+                            control={
+                                <input
+                                    type="radio"
+                                    name="sortBy"
+                                    value="rating"
+                                    checked={sortBy === 'rating'}
+                                    onChange={(e) => onSortByChange(e.target.value as any)}
+                                    style={{ margin: 0 }}
+                                />
+                            }
+                            label={
+                                <Typography variant="body2" sx={{ color: 'var(--color-text-primary)', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
+                                    <Star sx={{ mr: 0.5, fontSize: '1em', color: 'var(--color-accent-blue)' }} />
+                                    Rating
+                                </Typography>
+                            }
+                            sx={{ 
+                                margin: 0,
+                                '& .MuiFormControlLabel-label': { ml: 1 }
+                            }}
+                        />
+                        <FormControlLabel
+                            control={
+                                <input
+                                    type="radio"
+                                    name="sortBy"
+                                    value="recent"
+                                    checked={sortBy === 'recent'}
+                                    onChange={(e) => onSortByChange(e.target.value as any)}
+                                    style={{ margin: 0 }}
+                                />
+                            }
+                            label={
+                                <Typography variant="body2" sx={{ color: 'var(--color-text-primary)', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
+                                    <Schedule sx={{ mr: 0.5, fontSize: '1em', color: 'var(--color-accent-green)' }} />
+                                    Recent
+                                </Typography>
+                            }
+                            sx={{ 
+                                margin: 0,
+                                '& .MuiFormControlLabel-label': { ml: 1 }
+                            }}
+                        />
+                    </Box>
+                </Box>
             </Box>
 
             {/* Filter Toggle Button */}
-            <Box sx={{ textAlign: 'center', mb: 2 }}>
-              <Button
-                variant="contained"
-                onClick={() => setShowFilters(!showFilters)}
-                sx={{
-                  backgroundColor: 'var(--color-accent-blue)',
-                  color: 'var(--color-surface-elevated)',
-                  fontWeight: 'bold',
-                  borderRadius: 'var(--radius-md)',
-                  boxShadow: 'var(--shadow-md)',
-                  transition: 'all var(--transition-fast)',
-                  textTransform: 'none',
-                  px: 3,
-                  py: 1,
-                  '&:hover': {
-                    backgroundColor: 'var(--color-accent-blue)',
-                    transform: 'translateY(-2px)',
-                    boxShadow: 'var(--shadow-lg)',
-                  }
-                }}
-                startIcon={<FilterList />}
-                endIcon={showFilters ? <ExpandLess /> : <ExpandMore />}
-              >
-                {showFilters ? 'Hide Filters' : 'Show Filters'}
-              </Button>
+            <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                mb: 2,
+                mt: 1
+            }}>
+                <Button
+                    variant="outlined"
+                    onClick={() => setShowFilters(!showFilters)}
+                    sx={{
+                        borderColor: 'var(--color-accent-blue)',
+                        color: 'var(--color-accent-blue)',
+                        fontWeight: 600,
+                        borderRadius: 'var(--radius-md)',
+                        transition: 'all var(--transition-fast)',
+                        textTransform: 'none',
+                        px: 2,
+                        py: 0.75,
+                        fontSize: '0.875rem',
+                        '&:hover': {
+                            backgroundColor: 'var(--color-accent-blue)',
+                            color: 'var(--color-surface-elevated)',
+                            transform: 'translateY(-1px)',
+                            boxShadow: 'var(--shadow-sm)',
+                        }
+                    }}
+                    startIcon={<FilterList />}
+                    endIcon={showFilters ? <ExpandLess /> : <ExpandMore />}
+                >
+                    {showFilters ? 'Hide Advanced Filters' : 'More Filters'}
+                </Button>
             </Box>
 
             {/* Collapsible Filters */}

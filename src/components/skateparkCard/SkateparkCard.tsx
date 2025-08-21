@@ -265,6 +265,7 @@ const SkateparkCard = memo(function SkateparkCard({
                     tags={tags}
                     coordinates={coordinates}
                     externalLinks={externalLinks}
+                    distanceKm={distanceKm}
                 />
         </>
     );

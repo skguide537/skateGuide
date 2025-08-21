@@ -16,7 +16,9 @@ import Grid from '@mui/material/Grid';
 import Pagination from '@mui/material/Pagination';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
+import { useMediaQuery, useTheme as useMuiTheme, IconButton } from '@mui/material';
 import { useCache } from '@/context/ToastContext';
+import CloseIcon from '@mui/icons-material/Close';
 
 
 interface Skatepark {
@@ -67,11 +69,27 @@ export default function HomePage() {
     const { showToast, invalidateCache } = useToast();
     const { favorites } = useFavorites();
     const { theme } = useTheme();
+
+    // Responsive breakpoints
+    const muiTheme = useMuiTheme();
+    const isXs = useMediaQuery(muiTheme.breakpoints.only('xs')); // Mobile
+    const isSm = useMediaQuery(muiTheme.breakpoints.only('sm')); // Small tablet
+    const isMd = useMediaQuery(muiTheme.breakpoints.only('md')); // Medium tablet
+    const isLg = useMediaQuery(muiTheme.breakpoints.up('lg'));  // Desktop and up
+
+    // Responsive limit calculation
+    const limit = useMemo(() => {
+        if (isXs) return 4;  // Mobile: 4 cards (2x2 grid)
+        if (isSm) return 6;  // Small tablet: 6 cards (2x3 or 3x2 grid)
+        if (isMd) return 8;  // Medium tablet: 8 cards (2x4 or 4x2 grid)
+        if (isLg) return 9;  // Desktop: 9 cards (3x3 grid)
+        return 6; // Default fallback
+    }, [isXs, isSm, isMd, isLg]);
+
     const [parks, setParks] = useState<Skatepark[]>([]);
     const [allParks, setAllParks] = useState<Skatepark[]>([]); 
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const limit = 4; // Adjust as needed
     const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isBackgroundLoading, setIsBackgroundLoading] = useState(false);
@@ -92,6 +110,7 @@ export default function HomePage() {
     const [ratingFilter, setRatingFilter] = useState<number[]>([0, 5]);
     const [sortBy, setSortBy] = useState<'default' | 'distance' | 'rating' | 'recent'>('default');
     const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+    const [showHero, setShowHero] = useState(true);
 
     // Subscribe to cache invalidation events to refresh data when spots are added/deleted
     const refreshParks = useCallback(async () => {
@@ -150,7 +169,7 @@ export default function HomePage() {
             if (document.visibilityState === 'visible') {
                 refreshParks();
                 // Show a subtle toast to indicate background refresh
-                showToast('Data refreshed in background', 'info', 2000);
+                showToast('Data refreshed in background', 'info');
             }
         }, refreshInterval);
 
@@ -411,6 +430,14 @@ export default function HomePage() {
         };
     }, [allParks]); // Include allParks dependency
 
+    // Reset page to 1 when limit changes (responsive breakpoint change)
+    useEffect(() => {
+        setPage(1);
+        setAllParks([]); // Clear cached data since limit changed
+        setPrefetchedPages(new Set()); // Clear prefetch cache
+        setBackgroundDataLoaded(false); // Reset background loading state
+    }, [limit]);
+
     // Fetch parks when user coordinates are available
     useEffect(() => {
         // Always fetch first page immediately for fast initial load
@@ -433,11 +460,15 @@ export default function HomePage() {
     const parksWithDistance = useMemo(() => {
         if (!userCoords) return [];
         
-        const currentParks = getCurrentPageParks(page);
-        // Add robust null checks to prevent crashes
-        if (!Array.isArray(currentParks) || !currentParks || currentParks.length === 0) return [];
+        // For sorting, we need to use all parks data, not just current page
+        // This ensures proper sorting across all data
+        const shouldUseAllParks = sortBy !== 'default' && backgroundDataLoaded && allParks.length > 0;
+        const sourceParks = shouldUseAllParks ? allParks : getCurrentPageParks(page);
         
-        let filtered = currentParks
+        // Add robust null checks to prevent crashes
+        if (!Array.isArray(sourceParks) || !sourceParks || sourceParks.length === 0) return [];
+        
+        let filtered = sourceParks
             .filter(park => park && park._id && !deletedSpotIds.has(park._id)) // Filter out deleted spots and null parks
             .filter(park => {
                 if (!park) return false;
@@ -537,6 +568,13 @@ export default function HomePage() {
         }
         // For 'default' without distance filter, maintain original order
 
+        // If we used all parks for sorting, we need to paginate the results
+        if (shouldUseAllParks) {
+            const startIndex = (page - 1) * limit;
+            const endIndex = startIndex + limit;
+            filtered = filtered.slice(startIndex, endIndex);
+        }
+
         return filtered;
     }, [
         getCurrentPageParks, 
@@ -554,55 +592,166 @@ export default function HomePage() {
         distanceFilterEnabled,
         distanceFilter,
         ratingFilter,
-        sortBy
+        sortBy,
+        backgroundDataLoaded,
+        allParks,
+        limit
+    ]);
+
+    // Calculate total pages based on filtered results when sorting/filtering is applied
+    const totalFilteredParks = useMemo(() => {
+        if (!userCoords) return 0;
+        
+        // When sorting/filtering, we need to count all filtered results, not just current page
+        const shouldUseAllParks = sortBy !== 'default' && backgroundDataLoaded && allParks.length > 0;
+        if (!shouldUseAllParks) return allParks.length;
+        
+        const sourceParks = allParks;
+        if (!Array.isArray(sourceParks) || sourceParks.length === 0) return 0;
+        
+        // Apply the same filtering logic as in parksWithDistance but just count
+        let filtered = sourceParks
+            .filter(park => park && park._id && !deletedSpotIds.has(park._id))
+            .filter(park => {
+                if (!park) return false;
+
+                // Search filter
+                if (searchTerm) {
+                    const searchLower = searchTerm.toLowerCase();
+                    const matchesSearch = 
+                        park.title.toLowerCase().includes(searchLower) ||
+                        park.description.toLowerCase().includes(searchLower) ||
+                        park.tags.some(tag => tag.toLowerCase().includes(searchLower));
+                    if (!matchesSearch) return false;
+                }
+
+                // Type filter
+                if (typeFilter !== 'all') {
+                    if (typeFilter === 'park' && !park.isPark) return false;
+                    if (typeFilter === 'street' && park.isPark) return false;
+                }
+
+                // Size filter
+                if (sizeFilter.length > 0 && !sizeFilter.includes(park.size)) return false;
+
+                // Level filter
+                if (levelFilter.length > 0 && !levelFilter.includes(park.level)) return false;
+
+                // Tag filter
+                if (tagFilter.length > 0) {
+                    const hasMatchingTag = tagFilter.some(tag => park.tags.includes(tag));
+                    if (!hasMatchingTag) return false;
+                }
+
+                // Distance filter
+                if (distanceFilterEnabled) {
+                    const distance = getDistanceKm(
+                        userCoords.lat,
+                        userCoords.lng,
+                        park.location.coordinates[1],
+                        park.location.coordinates[0]
+                    );
+                    if (distance > distanceFilter) return false;
+                }
+
+                // Rating filter
+                if (park.avgRating < ratingFilter[0] || park.avgRating > ratingFilter[1]) return false;
+
+                // Favorites filter
+                if (showOnlyFavorites) {
+                    if (!favorites.includes(park._id)) return false;
+                }
+
+                return true;
+            });
+        
+        return filtered.length;
+    }, [
+        userCoords,
+        sortBy,
+        backgroundDataLoaded,
+        allParks,
+        deletedSpotIds,
+        searchTerm,
+        typeFilter,
+        sizeFilter,
+        levelFilter,
+        tagFilter,
+        distanceFilterEnabled,
+        distanceFilter,
+        ratingFilter,
+        showOnlyFavorites,
+        favorites
     ]);
 
     // Update total pages when background data is loaded
     useEffect(() => {
         if (backgroundDataLoaded && allParks.length > 0) {
-            const newTotalPages = Math.ceil(allParks.length / limit);
+            const shouldUseAllParks = sortBy !== 'default';
+            const totalCount = shouldUseAllParks ? totalFilteredParks : allParks.length;
+            const newTotalPages = Math.ceil(totalCount / limit);
             setTotalPages(newTotalPages);
         }
-    }, [backgroundDataLoaded, allParks.length, limit]);
+    }, [backgroundDataLoaded, allParks.length, limit, sortBy, totalFilteredParks]);
 
     return (
         <Container maxWidth="lg" sx={{ mt: 6 }}>
             {/* Hero Section */}
-            <Box 
-                textAlign="center" 
-                mb={8}
-                sx={{
-                    p: 6,
-                    background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%)',
-                    borderRadius: 'var(--radius-xl)',
-                    boxShadow: 'var(--shadow-xl)',
-                    border: '1px solid var(--color-border)',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.05\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-                        opacity: 0.1,
-                    },
-                    '&::after': {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: theme === 'dark'
-                            ? 'linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.1) 100%)'
-                            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
-                        pointerEvents: 'none',
-                    }
-                }}
-            >
+            {showHero && (
+                <Box 
+                    textAlign="center" 
+                    mb={8}
+                    sx={{
+                        p: 6,
+                        background: theme === 'dark' 
+                            ? 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%)'
+                            : 'linear-gradient(135deg, rgba(52, 152, 219, 0.3) 0%, rgba(46, 204, 113, 0.3) 100%)',
+                        borderRadius: 'var(--radius-xl)',
+                        boxShadow: 'var(--shadow-xl)',
+                        border: '1px solid var(--color-border)',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        '&::before': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.05\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                            opacity: 0.1,
+                        },
+                        '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: theme === 'dark'
+                                ? 'linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.1) 100%)'
+                                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
+                            pointerEvents: 'none',
+                        }
+                    }}
+                >
+                    {/* Close Button */}
+                    <IconButton
+                        onClick={() => setShowHero(false)}
+                        sx={{
+                            position: 'absolute',
+                            top: 16,
+                            right: 16,
+                            zIndex: 10,
+                            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                            color: 'white',
+                            '&:hover': {
+                                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                            }
+                        }}
+                    >
+                        <CloseIcon />
+                    </IconButton>
                 <Typography 
                     variant="h1" 
                     fontWeight="800" 
@@ -622,7 +771,7 @@ export default function HomePage() {
                         zIndex: 2
                     }}
                 >
-                    🛹 WELCOME TO SKATEGUIDE
+                    WELCOME TO SKATEGUIDE 🛹
                 </Typography>
                 <Typography 
                     variant="h5" 
@@ -672,7 +821,8 @@ export default function HomePage() {
                 >
                     Explore the Map
                 </Button>
-            </Box>
+                </Box>
+            )}
 
             {!userCoords ? (
                 <Box display="flex" justifyContent="center" mt={4}>
@@ -715,7 +865,7 @@ export default function HomePage() {
                     <Grid container spacing={4}>
                         {/* Show skeleton cards while loading */}
                         {Array.from({ length: limit }).map((_, index) => (
-                            <Grid item xs={12} sm={6} md={4} key={`skeleton-${index}`}>
+                            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={`skeleton-${index}`}>
                                 <SkeletonCard />
                             </Grid>
                         ))}
@@ -737,9 +887,9 @@ export default function HomePage() {
                         background: 'linear-gradient(135deg, var(--color-surface-elevated) 0%, var(--color-surface) 100%)'
                     }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Typography variant="body1" color="var(--color-text-secondary)" sx={{ fontWeight: 500 }}>
-                                 Page {page} of {totalPages} • {allParks.length} total spots • {parksWithDistance.length} filtered
-                             </Typography>
+                                                         <Typography variant="body1" color="var(--color-text-secondary)" sx={{ fontWeight: 500 }}>
+                                  Page {page} of {totalPages} • {allParks.length} total spots
+                              </Typography>
                             
                             {/* Back to First button when not on page 1 */}
                             {page > 1 && (
@@ -856,8 +1006,8 @@ export default function HomePage() {
 
                     <Grid container spacing={4} id="skatepark-cards-container">
                         {/* Show actual skatepark cards */}
-                        {parksWithDistance.map((park) => (
-                            <Grid item xs={12} sm={6} md={4} key={park._id}>
+                        {parksWithDistance.map((park) => park && (
+                            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={park._id}>
                                 <SkateparkCard
                                     _id={park._id}
                                     title={park.title}

@@ -544,8 +544,8 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                 </FormControl>
 
                 <FormControl sx={{ mb: 3 }}>
-                    <FormLabel sx={{ color: 'var(--color-text-primary)', mb: 1 }}>Park Type</FormLabel>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <FormLabel sx={{ color: 'var(--color-text-primary)', mb: 1, textAlign: 'center' }}>Park Type</FormLabel>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
                         <Switch 
                             checked={isPark} 
                             onChange={e => setIsPark(e.target.checked)}
@@ -561,7 +561,7 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                         <Typography 
                             variant="body2" 
                             sx={{ 
-                                color: 'var(--color-text-secondary)',
+                                color: 'var(--color-text-primary)',
                                 fontWeight: 500
                             }}
                         >
@@ -633,6 +633,10 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                                     borderColor: 'var(--color-accent-blue)',
                                     boxShadow: '0 0 0 2px rgba(93, 173, 226, 0.2)',
                                 }
+                            },
+                            '& .MuiInputBase-input::placeholder': {
+                                color: 'var(--color-text-secondary)',
+                                opacity: 1
                             }
                         }}
                     />
@@ -685,6 +689,10 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                                     borderColor: 'var(--color-accent-blue)',
                                     boxShadow: '0 0 0 2px rgba(93, 173, 226, 0.2)',
                                 }
+                            },
+                            '& .MuiInputBase-input::placeholder': {
+                                color: 'var(--color-text-secondary)',
+                                opacity: 1
                             }
                         }}
                     />
@@ -712,6 +720,10 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                             borderColor: 'var(--color-accent-blue)',
                             boxShadow: '0 0 0 2px rgba(93, 173, 226, 0.2)',
                         }
+                    },
+                    '& .MuiInputBase-input::placeholder': {
+                        color: 'var(--color-text-secondary)',
+                        opacity: 1
                     }
                 }} 
             />
@@ -762,6 +774,10 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                                     borderColor: 'var(--color-accent-blue)',
                                     boxShadow: '0 0 0 2px rgba(93, 173, 226, 0.2)',
                                 }
+                            },
+                            '& .MuiInputBase-input::placeholder': {
+                                color: 'var(--color-text-secondary)',
+                                opacity: 1
                             }
                         }}
                     />
