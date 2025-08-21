@@ -6,6 +6,8 @@ import SkateparkCard from '@/components/skateparkCard/LightSkateparkCard';
 import SkeletonCard from '@/components/loading/SkeletonCard';
 import { useToast } from '@/context/ToastContext';
 import Box from '@mui/material/Box';
+import SearchFilterBar from '@/components/search/SearchFilterBar';
+import { useFavorites } from '@/hooks/useFavorites';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Container from '@mui/material/Container';
@@ -50,6 +52,7 @@ export default function HomePage() {
     const router = useRouter();
     const pathname = usePathname();
     const { showToast, invalidateCache } = useToast();
+    const { favorites } = useFavorites();
     const [parks, setParks] = useState<Skatepark[]>([]);
     const [allParks, setAllParks] = useState<Skatepark[]>([]); 
     const [page, setPage] = useState(1);
@@ -63,8 +66,19 @@ export default function HomePage() {
     const [deletedSpotIds, setDeletedSpotIds] = useState<Set<string>>(new Set());
     const [deletingSpotIds, setDeletingSpotIds] = useState<Set<string>>(new Set());
 
+    // Search and filter state
+    const [searchTerm, setSearchTerm] = useState('');
+    const [typeFilter, setTypeFilter] = useState<'all' | 'park' | 'street'>('all');
+    const [sizeFilter, setSizeFilter] = useState<string[]>([]);
+    const [levelFilter, setLevelFilter] = useState<string[]>([]);
+    const [tagFilter, setTagFilter] = useState<string[]>([]);
+    const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
+    const [distanceFilterEnabled, setDistanceFilterEnabled] = useState(false);
+    const [distanceFilter, setDistanceFilter] = useState<number>(10);
+    const [ratingFilter, setRatingFilter] = useState<number[]>([0, 5]);
+
     // Subscribe to cache invalidation events to refresh data when spots are added/deleted
-    useCache('skateparks', useCallback(() => {
+    const refreshParks = useCallback(async () => {
       const fetchParks = async () => {
         try {
 
@@ -105,7 +119,9 @@ export default function HomePage() {
       };
 
       fetchParks();
-    }, [page, limit])); // Include page and limit dependencies for accurate data
+    }, [page, limit]); // Include page and limit dependencies for accurate data
+
+    useCache('skateparks', refreshParks);
 
 
 
@@ -378,7 +394,7 @@ export default function HomePage() {
         }
     }, [isLoading, userCoords, backgroundDataLoaded, fetchAllParksBackground]);
 
-    // Memoize parks with distance calculation to prevent unnecessary re-renders
+    // Memoize parks with distance calculation and filtering to prevent unnecessary re-renders
     const parksWithDistance = useMemo(() => {
         if (!userCoords) return [];
         
@@ -386,8 +402,60 @@ export default function HomePage() {
         // Add robust null checks to prevent crashes
         if (!Array.isArray(currentParks) || !currentParks || currentParks.length === 0) return [];
         
-        return currentParks
+        let filtered = currentParks
             .filter(park => park && park._id && !deletedSpotIds.has(park._id)) // Filter out deleted spots and null parks
+            .filter(park => {
+                if (!park) return false;
+
+                // Search filter
+                if (searchTerm) {
+                    const searchLower = searchTerm.toLowerCase();
+                    const matchesSearch = 
+                        park.title.toLowerCase().includes(searchLower) ||
+                        park.description.toLowerCase().includes(searchLower) ||
+                        park.tags.some(tag => tag.toLowerCase().includes(searchLower));
+                    if (!matchesSearch) return false;
+                }
+
+                // Type filter
+                if (typeFilter !== 'all') {
+                    if (typeFilter === 'park' && !park.isPark) return false;
+                    if (typeFilter === 'street' && park.isPark) return false;
+                }
+
+                // Size filter
+                if (sizeFilter.length > 0 && !sizeFilter.includes(park.size)) return false;
+
+                // Level filter
+                if (levelFilter.length > 0 && !levelFilter.includes(park.level)) return false;
+
+                // Tag filter
+                if (tagFilter.length > 0) {
+                    const hasMatchingTag = tagFilter.some(tag => park.tags.includes(tag));
+                    if (!hasMatchingTag) return false;
+                }
+
+                // Distance filter
+                if (distanceFilterEnabled) {
+                    const distance = getDistanceKm(
+                        userCoords.lat,
+                        userCoords.lng,
+                        park.location.coordinates[1],
+                        park.location.coordinates[0]
+                    );
+                    if (distance > distanceFilter) return false;
+                }
+
+                // Rating filter
+                if (park.avgRating < ratingFilter[0] || park.avgRating > ratingFilter[1]) return false;
+
+                // Favorites filter (only if user is logged in and filter is enabled)
+                if (showOnlyFavorites) {
+                    if (!favorites.includes(park._id)) return false;
+                }
+
+                return true;
+            })
             .map((park) => {
                 if (!park || !park.location || !park.location.coordinates) return null;
                 
@@ -410,7 +478,33 @@ export default function HomePage() {
                 };
             })
             .filter(Boolean); // Remove any null entries
-    }, [getCurrentPageParks, page, userCoords, deletedSpotIds, deletingSpotIds]);
+
+        // Sort by distance if distance filter is enabled
+        if (distanceFilterEnabled) {
+            filtered = filtered.sort((a, b) => {
+                if (!a || !b) return 0;
+                return a.distanceKm - b.distanceKm;
+            });
+        }
+
+        return filtered;
+    }, [
+        getCurrentPageParks, 
+        page, 
+        userCoords, 
+        deletedSpotIds, 
+        deletingSpotIds,
+        searchTerm,
+        typeFilter,
+        sizeFilter,
+        levelFilter,
+        tagFilter,
+        showOnlyFavorites,
+        favorites,
+        distanceFilterEnabled,
+        distanceFilter,
+        ratingFilter
+    ]);
 
     // Update total pages when background data is loaded
     useEffect(() => {
@@ -496,9 +590,9 @@ export default function HomePage() {
                         border: '1px solid rgba(167, 169, 172, 0.3)'
                     }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-                                Page {page} of {totalPages} • {parksWithDistance.length} spots
-                            </Typography>
+                                                         <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                 Page {page} of {totalPages} • {allParks.length} total spots • {parksWithDistance.length} filtered
+                             </Typography>
                             
                             {/* Back to First button when not on page 1 */}
                             {page > 1 && (
@@ -568,6 +662,31 @@ export default function HomePage() {
                             </Typography>
                         </Box>
                     </Box>
+
+                    {/* Search and Filter Bar */}
+                    <SearchFilterBar
+                        searchTerm={searchTerm}
+                        onSearchChange={setSearchTerm}
+                        typeFilter={typeFilter}
+                        onTypeFilterChange={setTypeFilter}
+                        sizeFilter={sizeFilter}
+                        onSizeFilterChange={setSizeFilter}
+                        levelFilter={levelFilter}
+                        onLevelFilterChange={setLevelFilter}
+                        tagFilter={tagFilter}
+                        onTagFilterChange={setTagFilter}
+                        showOnlyFavorites={showOnlyFavorites}
+                        onShowOnlyFavoritesChange={setShowOnlyFavorites}
+                        distanceFilterEnabled={distanceFilterEnabled}
+                        onDistanceFilterEnabledChange={setDistanceFilterEnabled}
+                        distanceFilter={distanceFilter}
+                        onDistanceFilterChange={setDistanceFilter}
+                        ratingFilter={ratingFilter}
+                        onRatingFilterChange={setRatingFilter}
+                        filteredCount={parksWithDistance.length}
+                        totalCount={allParks.length}
+                        userLocation={userCoords}
+                    />
 
                     <Grid container spacing={4} id="skatepark-cards-container">
                         {/* Show actual skatepark cards */}

@@ -9,6 +9,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { useToast } from '@/context/ToastContext';
 import { useUser } from '@/context/UserContext';
+import FavoriteButton from '../common/FavoriteButton';
 
 interface SkateparkModalProps {
   open: boolean;
@@ -100,6 +101,16 @@ export default function SkateparkModal({
             />
           ))}
         </Stack>
+
+        {/* Favorites Button */}
+        <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <FavoriteButton 
+            spotId={_id} 
+            size="medium" 
+            showCount={true}
+            variant="button"
+          />
+        </Box>
 
         {externalLinks && externalLinks.length > 0 && (
           <Box sx={{ mt: 3, overflowX: 'auto' }}>
