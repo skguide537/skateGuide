@@ -39,6 +39,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: 'users/default-user',
     },
+    favorites: {
+        type: [mongoose.Schema.Types.ObjectId],
+        ref: 'Skatepark',
+        default: [],
+    },
 
 });
 
