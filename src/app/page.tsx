@@ -107,34 +107,7 @@ export default function HomePage() {
       fetchParks();
     }, [page, limit])); // Include page and limit dependencies for accurate data
 
-    // Check for newly added spots when component mounts (only once)
-    useEffect(() => {
-      const checkForNewSpots = () => {
-        const spotJustAdded = localStorage.getItem('spotJustAdded');
-        const spotAddedAt = localStorage.getItem('spotAddedAt');
-        
-        if (spotJustAdded === 'true' && spotAddedAt) {
-          const timeSinceAdded = Date.now() - parseInt(spotAddedAt);
-          // Only refresh if the spot was added in the last 10 seconds
-                  if (timeSinceAdded < 10000) {
-          // Clear the flag
-          localStorage.removeItem('spotJustAdded');
-          localStorage.removeItem('spotAddedAt');
-          // Force a refresh after a short delay
-          setTimeout(() => {
-            fetchParks(page, false);
-            fetchAllParksBackground();
-          }, 1000);
-        }
-        }
-      };
 
-      // Check immediately and also after a delay
-      checkForNewSpots();
-      const timer = setTimeout(checkForNewSpots, 2000);
-      
-      return () => clearTimeout(timer);
-    }, []); // Empty dependency array - only run once on mount
 
     const fetchParks = useCallback(async (pageNumber: number = 1, isBackground: boolean = false) => {
         try {
@@ -305,6 +278,28 @@ export default function HomePage() {
         }
     }, [page, getCurrentPageParks, showToast, parks, allParks, invalidateCache]);
 
+    // Check for newly added spots when component mounts (only once)
+    useEffect(() => {
+        const checkForNewSpots = () => {
+            const spotJustAdded = localStorage.getItem('spotJustAdded');
+            const spotAddedAt = localStorage.getItem('spotAddedAt');
+            
+            if (spotJustAdded === 'true' && spotAddedAt) {
+                const timeSinceAdded = Date.now() - parseInt(spotAddedAt);
+                if (timeSinceAdded < 10000) {
+                    localStorage.removeItem('spotJustAdded');
+                    localStorage.removeItem('spotAddedAt');
+                    setTimeout(() => {
+                        fetchParks(page, false);
+                        fetchAllParksBackground();
+                    }, 1000);
+                }
+            }
+        };
+        checkForNewSpots();
+        const timer = setTimeout(checkForNewSpots, 2000);
+        return () => clearTimeout(timer);
+    }, [fetchParks, fetchAllParksBackground, page]);
 
     useEffect(() => {
         navigator.geolocation.getCurrentPosition(
@@ -326,7 +321,7 @@ export default function HomePage() {
                 setAllParks([]);
             }
         }
-    }, [pathname]); // Remove allParks.length dependency to prevent unnecessary resets
+    }, [pathname, allParks.length]); // Include allParks.length dependency
 
     // Handle URL changes (e.g., when logo is clicked)
     useEffect(() => {
@@ -344,7 +339,7 @@ export default function HomePage() {
         return () => {
             window.removeEventListener('popstate', handleRouteChange);
         };
-    }, []); // Remove allParks.length dependency to prevent infinite loops
+    }, [allParks]); // Include allParks dependency
 
     // Listen for navbar logo click when on home page
     useEffect(() => {
@@ -363,7 +358,7 @@ export default function HomePage() {
         return () => {
             window.removeEventListener('resetToPageOne', handleLogoClick);
         };
-    }, []); // Remove allParks.length dependency to prevent infinite loops
+    }, [allParks]); // Include allParks dependency
 
     // Fetch parks when user coordinates are available
     useEffect(() => {

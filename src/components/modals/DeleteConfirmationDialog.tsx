@@ -75,7 +75,7 @@ export default function DeleteConfirmationDialog({
             <DialogContent sx={{ pt: 1 }}>
                 <Box sx={{ mb: 3 }}>
                     <Typography variant="body1" sx={{ mb: 2, color: '#2F2F2F' }}>
-                        Are you sure you want to delete <strong>"{spot.title}"</strong>? 
+                        Are you sure you want to delete <strong>&quot;{spot.title}&quot;</strong>? 
                         This action cannot be undone.
                     </Typography>
                 </Box>
