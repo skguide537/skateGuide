@@ -30,6 +30,8 @@ interface SkateparkModalProps {
   size: string;
   level: string;
   _id: string;
+  avgRating?: number;
+  distanceKm?: number;
 }
 
 function getRatingWord(rating: number): string {
@@ -53,7 +55,9 @@ export default function SkateparkModal({
   size,
   level,
   _id,
-  externalLinks
+  externalLinks,
+  avgRating,
+  distanceKm
 }: SkateparkModalProps) {
   // All hooks must be called at the top level, before any conditional returns
   const [userRating, setUserRating] = useState<number | null>(null);
@@ -182,6 +186,34 @@ export default function SkateparkModal({
         >
           {description}
         </Typography>
+
+        {/* Distance Display */}
+        {distanceKm !== undefined && (
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1,
+            mb: 3,
+            px: 2,
+            py: 1.5,
+            backgroundColor: 'var(--color-surface-elevated)',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--color-border)',
+            alignSelf: 'flex-start'
+          }}>
+            <LocationOn sx={{ 
+              fontSize: '1.2rem', 
+              color: 'var(--color-accent-blue)' 
+            }} />
+            <Typography variant="body2" sx={{ 
+              fontWeight: 600,
+              color: 'var(--color-text-primary)',
+              fontSize: '0.9rem'
+            }}>
+              {distanceKm.toFixed(1)}km away
+            </Typography>
+          </Box>
+        )}
 
         {/* Spot Info */}
         <Box sx={{ 
@@ -408,6 +440,46 @@ export default function SkateparkModal({
           >
             ⭐ Rate this spot
           </Typography>
+          
+          {/* Current Average Rating Display */}
+          {avgRating && avgRating > 0 && (
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 1, 
+              mb: 2,
+              p: 1.5,
+              backgroundColor: 'var(--color-surface)',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--color-border)'
+            }}>
+              <Rating 
+                value={avgRating} 
+                readOnly 
+                size="small"
+                sx={{
+                  '& .MuiRating-iconFilled': {
+                    color: '#FFD700', // Gold color for filled stars
+                  },
+                  '& .MuiRating-iconEmpty': {
+                    color: theme === 'dark' ? 'var(--color-border)' : '#000000',
+                  }
+                }}
+              />
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  color: 'var(--color-text-primary)',
+                  fontWeight: 600,
+                  ml: 1
+                }}
+              >
+                ({avgRating.toFixed(1)})
+              </Typography>
+            </Box>
+          )}
+          
+          {/* User Rating Input */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Rating
               name="user-rating"
@@ -442,7 +514,7 @@ export default function SkateparkModal({
                   color: 'var(--color-accent-rust)',
                 },
                 '& .MuiRating-iconEmpty': {
-                  color: 'var(--color-border)',
+                  color: theme === 'dark' ? 'var(--color-border)' : '#000000',
                 }
               }}
             />
