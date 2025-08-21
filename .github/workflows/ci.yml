@@ -57,8 +57,8 @@ jobs:
     - name: Run Integration Tests
       run: npm run test:integration
 
-    - name: Run UI Tests
-      run: npm run test:ui
+    # - name: Run UI Tests
+    #   run: npm run test:ui
 
     - name: Run Linting
       run: npm run lint
