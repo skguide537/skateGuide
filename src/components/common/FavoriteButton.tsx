@@ -80,27 +80,43 @@ export default function FavoriteButton({
 
     return (
         <Tooltip title={isFavoritedByUser ? 'Remove from favorites' : 'Add to favorites'}>
-            <IconButton
-                onClick={handleClick}
-                size={size}
-                sx={{
-                    color: isFavoritedByUser ? '#d32f2f' : '#A7A9AC',
-                    '&:hover': {
-                        backgroundColor: isFavoritedByUser 
-                            ? 'rgba(211, 47, 47, 0.1)' 
-                            : 'rgba(167, 169, 172, 0.1)',
-                        transform: 'scale(1.1)',
-                    },
-                    transition: 'all 0.2s ease',
-                    ...sx
-                }}
-            >
-                {isFavoritedByUser ? (
-                    <Favorite sx={{ fontSize: iconSize }} />
-                ) : (
-                    <FavoriteBorder sx={{ fontSize: iconSize }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <IconButton
+                    onClick={handleClick}
+                    size={size}
+                    sx={{
+                        color: isFavoritedByUser ? '#d32f2f' : '#A7A9AC',
+                        '&:hover': {
+                            backgroundColor: isFavoritedByUser 
+                                ? 'rgba(211, 47, 47, 0.1)' 
+                                : 'rgba(167, 169, 172, 0.1)',
+                            transform: 'scale(1.1)',
+                        },
+                        transition: 'all 0.2s ease',
+                        ...sx
+                    }}
+                >
+                    {isFavoritedByUser ? (
+                        <Favorite sx={{ fontSize: iconSize }} />
+                    ) : (
+                        <FavoriteBorder sx={{ fontSize: iconSize }} />
+                    )}
+                </IconButton>
+                {showCount && (
+                    <Typography 
+                        variant="caption" 
+                        sx={{ 
+                            color: isFavoritedByUser ? '#d32f2f' : '#A7A9AC',
+                            fontWeight: isFavoritedByUser ? 600 : 400,
+                            fontSize: '0.75rem',
+                            minWidth: '16px',
+                            textAlign: 'center'
+                        }}
+                    >
+                        {typeof computedCount === 'number' ? computedCount : favoritesCount}
+                    </Typography>
                 )}
-            </IconButton>
+            </Box>
         </Tooltip>
     );
 }

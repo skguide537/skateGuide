@@ -19,6 +19,7 @@ import FavoriteButton from '../common/FavoriteButton';
 import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Star from '@mui/icons-material/Star';
+import LocationOn from '@mui/icons-material/LocationOn';
 
 interface LightSkateparkCardProps {
     _id: string;
@@ -232,6 +233,34 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
                         </Box>
                     </Box>
 
+                    {/* Distance Display */}
+                    {distanceKm !== undefined && (
+                        <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 1,
+                            mb: 2,
+                            px: 1.5,
+                            py: 0.5,
+                            backgroundColor: 'var(--color-surface)',
+                            borderRadius: 'var(--radius-md)',
+                            border: '1px solid var(--color-border)',
+                            alignSelf: 'flex-start'
+                        }}>
+                            <LocationOn sx={{ 
+                                fontSize: '1rem', 
+                                color: 'var(--color-accent-blue)' 
+                            }} />
+                            <Typography variant="body2" sx={{ 
+                                fontWeight: 600,
+                                color: 'var(--color-text-primary)',
+                                fontSize: '0.8rem'
+                            }}>
+                                {distanceKm.toFixed(1)}km away
+                            </Typography>
+                        </Box>
+                    )}
+
                     {/* Description */}
                     <Typography 
                         variant="body2" 
@@ -373,6 +402,7 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
                 tags={tags}
                 coordinates={coordinates}
                 externalLinks={externalLinks}
+                distanceKm={distanceKm}
             />
 
             <DeleteConfirmationDialog

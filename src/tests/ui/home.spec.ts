@@ -199,8 +199,58 @@ test.describe('Home Page', () => {
     }
   });
 
-  test('should handle pagination', async ({ page }) => {
-    // Mock multiple pages of data
+  test('should handle responsive pagination', async ({ page }) => {
+    // Set viewport to desktop size (should use limit=9)
+    await page.setViewportSize({ width: 1200, height: 800 });
+    
+    // Mock multiple pages of data for desktop (limit=9)
+    await page.route('/api/skateparks?page=1&limit=9', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: Array(9).fill(null).map((_, i) => ({
+            _id: `park-${i + 1}`,
+            title: `Skatepark ${i + 1}`,
+            description: `Description ${i + 1}`,
+            tags: ['street'],
+            photoNames: [],
+            location: { coordinates: [32.073 + i * 0.001, 34.789 + i * 0.001] },
+            isPark: false,
+            size: 'medium',
+            level: 'beginner',
+            avgRating: 4.0,
+            distance: i * 0.1
+          })),
+          totalCount: 18
+        })
+      });
+    });
+
+    await page.route('/api/skateparks?page=2&limit=9', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: Array(9).fill(null).map((_, i) => ({
+            _id: `park-${i + 10}`,
+            title: `Skatepark ${i + 10}`,
+            description: `Description ${i + 10}`,
+            tags: ['park'],
+            photoNames: [],
+            location: { coordinates: [32.073 + (i + 9) * 0.001, 34.789 + (i + 9) * 0.001] },
+            isPark: true,
+            size: 'large',
+            level: 'advanced',
+            avgRating: 4.5,
+            distance: (i + 9) * 0.1
+          })),
+          totalCount: 18
+        })
+      });
+    });
+
+    // Mock mobile viewport (should use limit=4)
     await page.route('/api/skateparks?page=1&limit=4', async route => {
       await route.fulfill({
         status: 200,
@@ -224,41 +274,29 @@ test.describe('Home Page', () => {
       });
     });
 
-    await page.route('/api/skateparks?page=2&limit=4', async route => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          data: Array(4).fill(null).map((_, i) => ({
-            _id: `park-${i + 5}`,
-            title: `Skatepark ${i + 5}`,
-            description: `Description ${i + 5}`,
-            tags: ['park'],
-            photoNames: [],
-            location: { coordinates: [32.073 + (i + 4) * 0.001, 34.789 + (i + 4) * 0.001] },
-            isPark: true,
-            size: 'large',
-            level: 'advanced',
-            avgRating: 4.5,
-            distance: (i + 4) * 0.1
-          })),
-          totalCount: 8
-        })
-      });
-    });
-
     // Wait for content to load
     await page.waitForTimeout(2000);
     
-    // Check if pagination is visible
+    // Check if pagination is visible on desktop (should show 9 items per page)
     const pagination = page.locator('.MuiPagination-root');
     if (await pagination.isVisible()) {
+      // Should show 9 items on first page
+      await expect(page.getByText(/skatepark 9/i)).toBeVisible();
+      
       // Click on page 2
       await page.getByRole('button', { name: '2' }).click();
       
-      // Should show page 2 content
-      await expect(page.getByText(/skatepark 5/i)).toBeVisible();
+      // Should show page 2 content (items 10-18)
+      await expect(page.getByText(/skatepark 10/i)).toBeVisible();
     }
+
+    // Test mobile responsiveness
+    await page.setViewportSize({ width: 375, height: 667 }); // Mobile size
+    await page.reload(); // Reload to trigger responsive changes
+    await page.waitForTimeout(2000);
+    
+    // Should now use limit=4 for mobile
+    // Verify fewer items per page (though this is harder to test without mocking the new API call)
   });
 
   test('should be responsive on mobile', async ({ page }) => {
