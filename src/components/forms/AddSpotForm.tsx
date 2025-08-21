@@ -117,11 +117,9 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
 
             showToast('Skatepark added!', 'success');
                       // Invalidate relevant caches to ensure new spot appears immediately
-          console.log('🔄 Invalidating caches after spot creation...');
           invalidateCache('skateparks');
           invalidateCache('spots');
           invalidateCache('map-markers');
-          console.log('✅ Cache invalidation completed');
             
             // Set a flag that the home page can check
             localStorage.setItem('spotJustAdded', 'true');

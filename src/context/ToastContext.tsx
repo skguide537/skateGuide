@@ -49,13 +49,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const invalidateCache = useCallback((cacheKey: string) => {
-    console.log(`🔄 ToastContext: Invalidating cache: ${cacheKey}`);
     const subscribers = cacheSubscribers.get(cacheKey);
     if (subscribers) {
-      console.log(`📢 ToastContext: Notifying ${subscribers.size} subscribers for cache: ${cacheKey}`);
       subscribers.forEach(callback => callback());
-    } else {
-      console.log(`⚠️ ToastContext: No subscribers found for cache: ${cacheKey}`);
     }
   }, [cacheSubscribers]);
 
@@ -69,7 +65,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       const subscribers = newMap.get(cacheKey)!;
       if (!subscribers.has(callback)) {
         subscribers.add(callback);
-        console.log(`✅ ToastContext: Subscribed to cache: ${cacheKey}, total subscribers: ${subscribers.size}`);
       }
       return newMap;
     });
