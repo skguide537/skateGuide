@@ -26,7 +26,7 @@ export const useCache = (cacheKey: string, refreshCallback: () => void) => {
   useEffect(() => {
     const unsubscribe = subscribeToCache(cacheKey, refreshCallback);
     return unsubscribe;
-  }, [cacheKey, subscribeToCache]); // Remove refreshCallback from dependencies to prevent loops
+  }, [cacheKey, subscribeToCache, refreshCallback]); // Include refreshCallback dependency
 };
 
 const SlideTransition = React.forwardRef(function Transition(
