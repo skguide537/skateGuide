@@ -15,6 +15,7 @@ import SkateparkModal from '../modals/SkateparkModal';
 import FastCarousel from '../ui/FastCarousel';
 import { useUser } from '@/context/UserContext';
 import DeleteConfirmationDialog from '../modals/DeleteConfirmationDialog';
+import FavoriteButton from '../common/FavoriteButton';
 
 interface LightSkateparkCardProps {
     _id: string;
@@ -152,6 +153,14 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
                         <Typography variant="body2" color="text.secondary">
                             ({avgRating.toFixed(1)})
                         </Typography>
+                        <Box sx={{ ml: 'auto' }}>
+                            <FavoriteButton 
+                                spotId={_id} 
+                                size="small" 
+                                showCount
+                                variant="button"
+                            />
+                        </Box>
                     </Box>
 
                     <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mb: 1 }}>

@@ -56,7 +56,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, [cacheSubscribers]);
 
   const subscribeToCache = useCallback((cacheKey: string, callback: () => void) => {
-    console.log(`🔔 ToastContext: Subscribing to cache: ${cacheKey}`);
     setCacheSubscribers(prev => {
       const newMap = new Map(prev);
       if (!newMap.has(cacheKey)) {
@@ -71,7 +70,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
     // Return unsubscribe function
     return () => {
-      console.log(`🔕 ToastContext: Unsubscribing from cache: ${cacheKey}`);
       setCacheSubscribers(prev => {
         const newMap = new Map(prev);
         const subscribers = newMap.get(cacheKey);
