@@ -545,7 +545,7 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                         📍 Choose ONE location method:
                     </Typography>
                     <Typography variant="caption" color="info.contrastText" display="block">
-                        • <strong>Address Search:</strong> Type street and city, then click "Search Address"
+                        • <strong>Address Search:</strong> Type street and city, then click &quot;Search Address&quot;
                     </Typography>
                     <Typography variant="caption" color="info.contrastText" display="block">
                         • <strong>Use My Location:</strong> Automatically get your current GPS coordinates
