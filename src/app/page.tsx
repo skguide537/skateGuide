@@ -65,7 +65,8 @@ export default function HomePage() {
 
     // Subscribe to cache invalidation events to refresh data when spots are added/deleted
     useCache('skateparks', useCallback(() => {
-
+      console.log('🔄 Cache invalidation triggered - refreshing parks data immediately');
+      
       const fetchParks = async () => {
         try {
 
@@ -74,27 +75,48 @@ export default function HomePage() {
           if (!res.ok) throw new Error('Failed to fetch parks');
           const data = await res.json();
 
-          setParks(data.parks);
-          setTotalPages(data.totalPages);
+          // Add robust null checks to prevent crashes
+          const parksData = Array.isArray(data?.parks) ? data.parks : [];
+          const totalPagesData = data?.totalPages || 1;
+          
+          console.log('✅ Fresh parks data received:', parksData.length, 'parks');
+          
+          // Only update if we got valid data, otherwise keep existing data
+          if (parksData.length > 0) {
+            setParks(parksData);
+            setTotalPages(totalPagesData);
+          } else {
+            console.log('⚠️ Received 0 parks, keeping existing data to prevent empty state');
+          }
           
           // Also refresh all parks for distance calculations
           const allRes = await fetch(`/api/skateparks?limit=1000`);
           if (allRes.ok) {
             const allData = await allRes.json();
-
-            setAllParks(allData.parks);
+            const allParksData = Array.isArray(allData?.parks) ? allData.parks : [];
+            console.log('✅ All parks data refreshed:', allParksData.length, 'total parks');
+            
+            // Only update if we got valid data, otherwise keep existing data
+            if (allParksData.length > 0) {
+              setAllParks(allParksData);
+            } else {
+              console.log('⚠️ Received 0 all parks, keeping existing data to prevent empty state');
+            }
           }
           
           // Clear any deleted spot IDs since we're refreshing
           setDeletedSpotIds(new Set());
+          console.log('🧹 Cleared deleted spot IDs');
 
         } catch (err) {
-          console.error('Error refreshing parks:', err);
+          console.error('❌ Error refreshing parks:', err);
+          // Don't clear existing data on error - keep what we have
+          console.log('⚠️ Keeping existing data due to refresh error');
         }
       };
 
       fetchParks();
-    }, [])); // Empty dependency array to prevent infinite loops
+    }, [page, limit])); // Include page and limit dependencies for accurate data
 
     // Check for newly added spots when component mounts (only once)
     useEffect(() => {
@@ -204,10 +226,11 @@ export default function HomePage() {
             // Use background data for instant pagination
             const startIndex = (pageNum - 1) * limit;
             const endIndex = startIndex + limit;
-            return allParks.slice(startIndex, endIndex);
+            const result = allParks.slice(startIndex, endIndex);
+            return Array.isArray(result) ? result : [];
         }
         // Fallback to current paginated data
-        return parks || [];
+        return Array.isArray(parks) ? parks : [];
     }, [backgroundDataLoaded, allParks, parks, limit]);
 
     // Handle spot deletion with optimistic updates
@@ -258,12 +281,7 @@ export default function HomePage() {
             // Show success toast
             showToast(`"${spotTitle}" deleted successfully!`, 'success');
             
-            // Invalidate relevant caches to ensure data consistency
-            invalidateCache('skateparks');
-            invalidateCache('spots');
-            invalidateCache('map-markers');
-            
-            // Remove from local state
+            // Remove from local state FIRST
             setParks(prev => prev.filter(park => park._id !== spotId));
             setAllParks(prev => prev.filter(park => park._id !== spotId));
             
@@ -275,6 +293,15 @@ export default function HomePage() {
             
             // Update total pages
             setTotalPages(prev => Math.max(1, prev - 1));
+            
+            // Invalidate caches AFTER state updates are complete to prevent race conditions
+            setTimeout(() => {
+                console.log('🔄 Invalidating caches after spot deletion (delayed)...');
+                invalidateCache('skateparks');
+                invalidateCache('spots');
+                invalidateCache('map-markers');
+                console.log('✅ Cache invalidation completed (delayed)');
+            }, 500); // Increased delay to ensure database transaction is committed
             
         } catch (error: any) {
             console.error('Delete failed:', error);
@@ -374,10 +401,11 @@ export default function HomePage() {
         if (!userCoords) return [];
         
         const currentParks = getCurrentPageParks(page);
-        if (!Array.isArray(currentParks) || !currentParks) return [];
+        // Add robust null checks to prevent crashes
+        if (!Array.isArray(currentParks) || !currentParks || currentParks.length === 0) return [];
         
         return currentParks
-            .filter(park => park && !deletedSpotIds.has(park._id)) // Filter out deleted spots and null parks
+            .filter(park => park && park._id && !deletedSpotIds.has(park._id)) // Filter out deleted spots and null parks
             .map((park) => {
                 if (!park || !park.location || !park.location.coordinates) return null;
                 

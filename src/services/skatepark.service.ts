@@ -36,8 +36,13 @@ class SkateparkService {
     }
 
     private extractCloudinaryPublicId(url: string): string | null {
-        const match = url.match(/\/v\d+\/(.+?)\.(jpg|jpeg|png|webp)/);
-        return match ? match[1] : null;
+        // Cloudinary URLs look like: https://res.cloudinary.com/cloud_name/image/upload/v1234567890/folder/image_name.jpg
+        // We need to extract: folder/image_name (without extension)
+        const match = url.match(/\/upload\/v\d+\/(.+?)\.(jpg|jpeg|png|webp|gif)$/);
+        if (match) {
+            return match[1]; // This gives us the public ID
+        }
+        return null;
     }
 
     private isDefaultImage(url: string): boolean {
@@ -235,15 +240,29 @@ class SkateparkService {
         const skatepark = await this.checkSkatepark(_id);
         const photoNames = skatepark.photoNames;
 
-        await SkateparkModel.findByIdAndDelete(_id);
+        console.log(`Deleting skatepark: ${skatepark.title} with ${photoNames.length} photos`);
 
+        // Delete from database first
+        await SkateparkModel.findByIdAndDelete(_id);
+        console.log(`Skatepark deleted from database`);
+
+        // Delete photos from Cloudinary
         for (const url of photoNames) {
+            console.log(`Processing photo URL: ${url}`);
+            
             // Don't delete default/fallback images from Cloudinary
             if (!this.isDefaultImage(url)) {
                 const publicId = this.extractCloudinaryPublicId(url);
                 if (publicId) {
-                    console.log(`Deleting image from Cloudinary: ${publicId}`);
-                    await cloudinary.uploader.destroy(publicId);
+                    try {
+                        console.log(`Attempting to delete from Cloudinary with public ID: ${publicId}`);
+                        const result = await cloudinary.uploader.destroy(publicId);
+                        console.log(`Cloudinary deletion result:`, result);
+                    } catch (error) {
+                        console.error(`Failed to delete image from Cloudinary: ${publicId}`, error);
+                    }
+                } else {
+                    console.log(`Could not extract public ID from URL: ${url}`);
                 }
             } else {
                 console.log(`Protecting default/fallback image: ${url}`);
@@ -258,15 +277,26 @@ class SkateparkService {
             const skatepark = await this.checkSkatepark(_id);
             const photoUrls = await this.getPhotoNames(_id);
 
+            console.log(`Deleting multiple skatepark: ${skatepark.title} with ${photoUrls.length} photos`);
+
             await SkateparkModel.findByIdAndDelete(_id);
 
             for (const url of photoUrls) {
+                console.log(`Processing photo URL: ${url}`);
+                
                 // Don't delete default/fallback images from Cloudinary
                 if (!this.isDefaultImage(url)) {
                     const publicId = this.extractCloudinaryPublicId(url);
                     if (publicId) {
-                        console.log(`Deleting image from Cloudinary: ${publicId}`);
-                        await cloudinary.uploader.destroy(publicId);
+                        try {
+                            console.log(`Attempting to delete from Cloudinary with public ID: ${publicId}`);
+                            const result = await cloudinary.uploader.destroy(publicId);
+                            console.log(`Cloudinary deletion result:`, result);
+                        } catch (error) {
+                            console.error(`Failed to delete image from Cloudinary: ${publicId}`, error);
+                        }
+                    } else {
+                        console.log(`Could not extract public ID from URL: ${url}`);
                     }
                 } else {
                     console.log(`Protecting default/fallback image: ${url}`);
