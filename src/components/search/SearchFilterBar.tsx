@@ -26,7 +26,11 @@ import {
     ExpandLess,
     ExpandMore,
     Favorite,
-    FavoriteBorder
+    FavoriteBorder,
+    Sort,
+    LocationOn,
+    Star,
+    Schedule
 } from '@mui/icons-material';
 import { useUser } from '@/context/UserContext';
 
@@ -49,6 +53,8 @@ interface SearchFilterBarProps {
     onDistanceFilterChange: (distance: number) => void;
     ratingFilter: number[];
     onRatingFilterChange: (rating: number[]) => void;
+    sortBy: 'default' | 'distance' | 'rating' | 'recent';
+    onSortByChange: (sort: 'default' | 'distance' | 'rating' | 'recent') => void;
     filteredCount: number;
     totalCount: number;
     userLocation: { lat: number; lng: number } | null;
@@ -73,6 +79,8 @@ export default function SearchFilterBar({
     onDistanceFilterChange,
     ratingFilter,
     onRatingFilterChange,
+    sortBy,
+    onSortByChange,
     filteredCount,
     totalCount,
     userLocation
@@ -94,6 +102,7 @@ export default function SearchFilterBar({
         onDistanceFilterChange(10);
         onRatingFilterChange([0, 5]);
         onShowOnlyFavoritesChange(false);
+        onSortByChange('default');
     };
 
     const hasActiveFilters = 
@@ -104,7 +113,8 @@ export default function SearchFilterBar({
         distanceFilterEnabled ||
         ratingFilter[0] !== 0 ||
         ratingFilter[1] !== 5 ||
-        showOnlyFavorites;
+        showOnlyFavorites ||
+        sortBy !== 'default';
 
     return (
         <Box sx={{ 
@@ -145,6 +155,104 @@ export default function SearchFilterBar({
                         }
                     }}
                 />
+            </Box>
+
+            {/* Sort Options - Always Visible */}
+            <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" sx={{ mb: 2, color: '#2F2F2F', fontWeight: 500 }}>
+                    <Sort sx={{ mr: 1, verticalAlign: 'middle', fontSize: '1.2em' }} />
+                    Sort by:
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                    <FormControlLabel
+                        control={
+                            <input
+                                type="radio"
+                                name="sortBy"
+                                value="default"
+                                checked={sortBy === 'default'}
+                                onChange={(e) => onSortByChange(e.target.value as any)}
+                                style={{ margin: 0 }}
+                            />
+                        }
+                        label={
+                            <Typography variant="body2" sx={{ color: '#2F2F2F', display: 'flex', alignItems: 'center' }}>
+                                <Sort sx={{ mr: 0.5, fontSize: '1em' }} />
+                                Default
+                            </Typography>
+                        }
+                        sx={{ 
+                            margin: 0,
+                            '& .MuiFormControlLabel-label': { ml: 1 }
+                        }}
+                    />
+                    <FormControlLabel
+                        control={
+                            <input
+                                type="radio"
+                                name="sortBy"
+                                value="distance"
+                                checked={sortBy === 'distance'}
+                                onChange={(e) => onSortByChange(e.target.value as any)}
+                                style={{ margin: 0 }}
+                            />
+                        }
+                        label={
+                            <Typography variant="body2" sx={{ color: '#2F2F2F', display: 'flex', alignItems: 'center' }}>
+                                <LocationOn sx={{ mr: 0.5, fontSize: '1em' }} />
+                                Distance
+                            </Typography>
+                        }
+                        sx={{ 
+                            margin: 0,
+                            '& .MuiFormControlLabel-label': { ml: 1 }
+                        }}
+                    />
+                    <FormControlLabel
+                        control={
+                            <input
+                                type="radio"
+                                name="sortBy"
+                                value="rating"
+                                checked={sortBy === 'rating'}
+                                onChange={(e) => onSortByChange(e.target.value as any)}
+                                style={{ margin: 0 }}
+                            />
+                        }
+                        label={
+                            <Typography variant="body2" sx={{ color: '#2F2F2F', display: 'flex', alignItems: 'center' }}>
+                                <Star sx={{ mr: 0.5, fontSize: '1em' }} />
+                                Top Rated
+                            </Typography>
+                        }
+                        sx={{ 
+                            margin: 0,
+                            '& .MuiFormControlLabel-label': { ml: 1 }
+                        }}
+                    />
+                    <FormControlLabel
+                        control={
+                            <input
+                                type="radio"
+                                name="sortBy"
+                                value="recent"
+                                checked={sortBy === 'recent'}
+                                onChange={(e) => onSortByChange(e.target.value as any)}
+                                style={{ margin: 0 }}
+                            />
+                        }
+                        label={
+                            <Typography variant="body2" sx={{ color: '#2F2F2F', display: 'flex', alignItems: 'center' }}>
+                                <Schedule sx={{ mr: 0.5, fontSize: '1em' }} />
+                                Recently Added
+                            </Typography>
+                        }
+                        sx={{ 
+                            margin: 0,
+                            '& .MuiFormControlLabel-label': { ml: 1 }
+                        }}
+                    />
+                </Box>
             </Box>
 
             {/* Filter Toggle Button */}

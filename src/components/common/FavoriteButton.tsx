@@ -34,6 +34,7 @@ export default function FavoriteButton({
             
             return () => clearTimeout(timer);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [spotId]); // Remove ensureCounts from dependencies to prevent infinite loops
 
     const handleClick = async (e: React.MouseEvent) => {
