@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Box, Button, Chip, FormControl, FormLabel, InputLabel, MenuItem, OutlinedInput, Select, Switch, TextField, Typography, Autocomplete, CircularProgress } from '@mui/material';
 import { useToast } from '@/context/ToastContext';
 import { useUser } from '@/context/UserContext';
+import { useTheme } from '@/context/ThemeContext';
 import { Size, Tag, SkaterLevel } from '@/types/enums';
 import AddSpotMap from '@/components/map/AddSpotMap';
 
@@ -49,6 +50,7 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
 
     const { user } = useUser();
     const { showToast, invalidateCache } = useToast();
+    const { theme } = useTheme();
     const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -341,63 +343,248 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
     };
 
     return (
-        <form onSubmit={handleSubmit}>
-            <TextField 
-                fullWidth 
-                label="Title *" 
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-                sx={{ mb: 2 }}
-                required
-                placeholder="e.g., Central Park Skate Spot"
-                error={hasAttemptedSubmit && !title.trim()}
-                helperText={hasAttemptedSubmit && !title.trim() ? "Title is required" : ""}
-            />
-            <TextField fullWidth multiline rows={4} label="Description" placeholder="More info to help get to the spot?" value={description} onChange={e => setDescription(e.target.value)} sx={{ mb: 2 }} />
+        <Box sx={{
+            p: 4,
+            backgroundColor: 'var(--color-surface-elevated)',
+            borderRadius: 'var(--radius-xl)',
+            boxShadow: 'var(--shadow-lg)',
+            border: '1px solid var(--color-border)',
+            background: 'linear-gradient(135deg, var(--color-surface-elevated) 0%, var(--color-surface) 100%)',
+            position: 'relative',
+            overflow: 'hidden',
+            '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '3px',
+                background: 'linear-gradient(90deg, var(--color-accent-green) 0%, var(--color-accent-blue) 50%, var(--color-accent-rust) 100%)',
+            }
+        }}>
+            <Typography 
+                variant="h4" 
+                sx={{ 
+                    mb: 4, 
+                    color: 'var(--color-text-primary)', 
+                    fontWeight: 700,
+                    textAlign: 'center',
+                    textShadow: theme === 'dark' 
+                        ? '0 2px 4px rgba(0, 0, 0, 0.5)'
+                        : '0 1px 2px rgba(0, 0, 0, 0.2)'
+                }}
+            >
+                🛹 Add New Skate Spot
+            </Typography>
+            
+            <form onSubmit={handleSubmit}>
+                <TextField 
+                    fullWidth 
+                    label="Title *" 
+                    value={title}
+                    onChange={e => setTitle(e.target.value)}
+                    sx={{ 
+                        mb: 3,
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: 'var(--radius-md)',
+                            backgroundColor: 'var(--color-surface)',
+                            border: '1px solid var(--color-border)',
+                            transition: 'all var(--transition-fast)',
+                            '&:hover': {
+                                borderColor: 'var(--color-accent-blue)',
+                                backgroundColor: 'var(--color-surface-elevated)',
+                            },
+                            '&.Mui-focused': {
+                                borderColor: 'var(--color-accent-blue)',
+                                boxShadow: '0 0 0 2px rgba(93, 173, 226, 0.2)',
+                            }
+                        }
+                    }}
+                    required
+                    placeholder="e.g., Central Park Skate Spot"
+                    error={hasAttemptedSubmit && !title.trim()}
+                    helperText={hasAttemptedSubmit && !title.trim() ? "Title is required" : ""}
+                />
+                
+                <TextField 
+                    fullWidth 
+                    multiline 
+                    rows={4} 
+                    label="Description" 
+                    placeholder="More info to help get to the spot?" 
+                    value={description} 
+                    onChange={e => setDescription(e.target.value)} 
+                    sx={{ 
+                        mb: 3,
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: 'var(--radius-md)',
+                            backgroundColor: 'var(--color-surface)',
+                            border: '1px solid var(--color-border)',
+                            transition: 'all var(--transition-fast)',
+                            '&:hover': {
+                                borderColor: 'var(--color-accent-blue)',
+                                backgroundColor: 'var(--color-surface-elevated)',
+                            },
+                            '&.Mui-focused': {
+                                borderColor: 'var(--color-accent-blue)',
+                                boxShadow: '0 0 0 2px rgba(93, 173, 226, 0.2)',
+                            }
+                        }
+                    }} 
+                />
 
-            <FormControl fullWidth sx={{ mb: 2 }} required error={hasAttemptedSubmit && !size}>
-                <InputLabel>Size *</InputLabel>
-                <Select value={size} label="Size *" onChange={e => setSize(e.target.value)}>
-                    <MenuItem value="">Select a size</MenuItem>
-                    {sizes.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
-                </Select>
-                {hasAttemptedSubmit && !size && <Typography variant="caption" color="error">Size is required</Typography>}
-            </FormControl>
+                <FormControl fullWidth sx={{ mb: 3 }} required error={hasAttemptedSubmit && !size}>
+                    <InputLabel sx={{ 
+                        color: 'var(--color-text-secondary)',
+                        '&.Mui-focused': {
+                            color: 'var(--color-accent-blue)'
+                        }
+                    }}>Size *</InputLabel>
+                    <Select 
+                        value={size} 
+                        label="Size *" 
+                        onChange={e => setSize(e.target.value)}
+                        sx={{
+                            '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'var(--color-border)',
+                            },
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'var(--color-accent-blue)',
+                            },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'var(--color-accent-blue)',
+                            },
+                            '& .MuiSelect-icon': {
+                                color: 'var(--color-text-secondary)'
+                            }
+                        }}
+                    >
+                        <MenuItem value="">Select a size</MenuItem>
+                        {sizes.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                    </Select>
+                    {hasAttemptedSubmit && !size && <Typography variant="caption" sx={{ color: 'var(--color-error)', mt: 1 }}>Size is required</Typography>}
+                </FormControl>
 
-            <FormControl fullWidth sx={{ mb: 2 }} required error={hasAttemptedSubmit && !level}>
-                <InputLabel>Level *</InputLabel>
-                <Select value={level} label="Level *" onChange={e => setLevel(e.target.value)}>
-                    <MenuItem value="">Select a level</MenuItem>
-                    {levels.map(l => <MenuItem key={l} value={l}>{l}</MenuItem>)}
-                </Select>
-                {hasAttemptedSubmit && !level && <Typography variant="caption" color="error">Level is required</Typography>}
-            </FormControl>
+                <FormControl fullWidth sx={{ mb: 3 }} required error={hasAttemptedSubmit && !level}>
+                    <InputLabel sx={{ 
+                        color: 'var(--color-text-secondary)',
+                        '&.Mui-focused': {
+                            color: 'var(--color-accent-blue)'
+                        }
+                    }}>Level *</InputLabel>
+                    <Select 
+                        value={level} 
+                        label="Level *" 
+                        onChange={e => setLevel(e.target.value)}
+                        sx={{
+                            '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'var(--color-border)',
+                            },
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'var(--color-accent-blue)',
+                            },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'var(--color-accent-blue)',
+                            },
+                            '& .MuiSelect-icon': {
+                                color: 'var(--color-text-secondary)'
+                            }
+                        }}
+                    >
+                        <MenuItem value="">Select a level</MenuItem>
+                        {levels.map(l => <MenuItem key={l} value={l}>{l}</MenuItem>)}
+                    </Select>
+                    {hasAttemptedSubmit && !level && <Typography variant="caption" sx={{ color: 'var(--color-error)', mt: 1 }}>Level is required</Typography>}
+                </FormControl>
 
-            <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Tags</InputLabel>
-                <Select
-                    multiple
-                    value={tagList}
-                    onChange={(e) => setTagList(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
-                    input={<OutlinedInput label="Tags" />}
-                    renderValue={(selected) => (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                            {selected.map((value) => <Chip key={value} label={value} />)}
-                        </Box>
-                    )}
+                <FormControl fullWidth sx={{ mb: 3 }}>
+                    <InputLabel sx={{ 
+                        color: 'var(--color-text-secondary)',
+                        '&.Mui-focused': {
+                            color: 'var(--color-accent-blue)'
+                        }
+                    }}>Tags</InputLabel>
+                    <Select
+                        multiple
+                        value={tagList}
+                        onChange={(e) => setTagList(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                        input={<OutlinedInput label="Tags" />}
+                        renderValue={(selected) => (
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                {selected.map((value) => (
+                                    <Chip 
+                                        key={value} 
+                                        label={value} 
+                                        sx={{
+                                            backgroundColor: 'var(--color-accent-green)',
+                                            color: 'var(--color-surface-elevated)',
+                                            fontWeight: 600
+                                        }}
+                                    />
+                                ))}
+                            </Box>
+                        )}
+                        sx={{
+                            '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'var(--color-border)',
+                            },
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'var(--color-accent-blue)',
+                            },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'var(--color-accent-blue)',
+                            },
+                            '& .MuiSelect-icon': {
+                                color: 'var(--color-text-secondary)'
+                            }
+                        }}
+                    >
+                        {tags.map(tag => <MenuItem key={tag} value={tag}>{tag}</MenuItem>)}
+                    </Select>
+                </FormControl>
+
+                <FormControl sx={{ mb: 3 }}>
+                    <FormLabel sx={{ color: 'var(--color-text-primary)', mb: 1 }}>Park Type</FormLabel>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Switch 
+                            checked={isPark} 
+                            onChange={e => setIsPark(e.target.checked)}
+                            sx={{
+                                '& .MuiSwitch-switchBase.Mui-checked': {
+                                    color: 'var(--color-accent-green)',
+                                },
+                                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                    backgroundColor: 'var(--color-accent-green)',
+                                }
+                            }}
+                        />
+                        <Typography 
+                            variant="body2" 
+                            sx={{ 
+                                color: 'var(--color-text-secondary)',
+                                fontWeight: 500
+                            }}
+                        >
+                            {isPark ? 'Park' : 'Street'}
+                        </Typography>
+                    </Box>
+                </FormControl>
+
+                {/* Address Fields */}
+                <Typography 
+                    variant="h6" 
+                    sx={{ 
+                        mt: 4, 
+                        mb: 3, 
+                        color: 'var(--color-text-primary)',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1
+                    }}
                 >
-                    {tags.map(tag => <MenuItem key={tag} value={tag}>{tag}</MenuItem>)}
-                </Select>
-            </FormControl>
-
-            <FormControl sx={{ mb: 2 }}>
-                <FormLabel>Park Type</FormLabel>
-                <Switch checked={isPark} onChange={e => setIsPark(e.target.checked)} />
-                <Typography variant="caption">{isPark ? 'Park' : 'Street'}</Typography>
-            </FormControl>
-
-            {/* Address Fields */}
-            <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>Location</Typography>
+                    📍 Location
+                </Typography>
             
             <Autocomplete
                 freeSolo
@@ -431,75 +618,126 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                                 </>
                             ),
                         }}
+                        sx={{
+                            mb: 2,
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: 'var(--radius-md)',
+                                backgroundColor: 'var(--color-surface)',
+                                border: '1px solid var(--color-border)',
+                                transition: 'all var(--transition-fast)',
+                                '&:hover': {
+                                    borderColor: 'var(--color-accent-blue)',
+                                    backgroundColor: 'var(--color-surface-elevated)',
+                                },
+                                '&.Mui-focused': {
+                                    borderColor: 'var(--color-accent-blue)',
+                                    boxShadow: '0 0 0 2px rgba(93, 173, 226, 0.2)',
+                                }
+                            }
+                        }}
                     />
                 )}
-                sx={{ mb: 2 }}
             />
             
-            <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                <Autocomplete
-                    freeSolo
-                    options={citySuggestions}
-                    value={city}
-                    onChange={(_, newValue) => handleAddressChange('city', newValue || '')}
-                    onInputChange={(_, newInputValue) => {
-                        handleAddressChange('city', newInputValue);
-                        // Small delay to avoid too many API calls while typing
-                        setTimeout(() => fetchCitySuggestions(newInputValue), 300);
-                    }}
-                    disabled={locationMethod === 'gps' || locationMethod === 'map'}
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="City *"
-                            placeholder="e.g., תל אביב or Tel Aviv"
-                            required
-                            error={hasAttemptedSubmit && !city.trim()}
-                            helperText={
-                                hasAttemptedSubmit && !city.trim() ? "City is required" : 
-                                locationMethod === 'gps' ? "Disabled when using GPS location" :
-                                locationMethod === 'map' ? "Disabled when using map selection" : ""
+            <Autocomplete
+                freeSolo
+                options={citySuggestions}
+                value={city}
+                onChange={(_, newValue) => handleAddressChange('city', newValue || '')}
+                onInputChange={(_, newInputValue) => {
+                    handleAddressChange('city', newInputValue);
+                    setTimeout(() => fetchCitySuggestions(newInputValue), 300);
+                }}
+                disabled={locationMethod === 'gps' || locationMethod === 'map'}
+                renderInput={(params) => (
+                    <TextField
+                        {...params}
+                        label="City *"
+                        placeholder="e.g., Tel Aviv"
+                        required
+                        error={hasAttemptedSubmit && !city.trim()}
+                        helperText={
+                            hasAttemptedSubmit && !city.trim() ? "City is required" : 
+                            locationMethod === 'gps' ? "Disabled when using GPS location" :
+                            locationMethod === 'map' ? "Disabled when using map selection" : ""
+                        }
+                        InputProps={{
+                            ...params.InputProps,
+                            endAdornment: (
+                                <>
+                                    {isLoadingCity ? <CircularProgress color="inherit" size={20} /> : null}
+                                    {params.InputProps.endAdornment}
+                                </>
+                            ),
+                        }}
+                        sx={{
+                            mb: 2,
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: 'var(--radius-md)',
+                                backgroundColor: 'var(--color-surface)',
+                                border: '1px solid var(--color-border)',
+                                transition: 'all var(--transition-fast)',
+                                '&:hover': {
+                                    borderColor: 'var(--color-accent-blue)',
+                                    backgroundColor: 'var(--color-surface-elevated)',
+                                },
+                                '&.Mui-focused': {
+                                    borderColor: 'var(--color-accent-blue)',
+                                    boxShadow: '0 0 0 2px rgba(93, 173, 226, 0.2)',
+                                }
                             }
-                            InputProps={{
-                                ...params.InputProps,
-                                endAdornment: (
-                                    <>
-                                        {isLoadingCity ? <CircularProgress color="inherit" size={20} /> : null}
-                                        {params.InputProps.endAdornment}
-                                    </>
-                                ),
-                            }}
-                        />
-                    )}
-                    sx={{ flex: 1 }}
-                />
-                <TextField 
-                    fullWidth 
-                    label="State/Province" 
-                    value={state} 
-                    onChange={e => handleAddressChange('state', e.target.value)} 
-                    placeholder="e.g., תל אביב or Tel Aviv District"
-                    disabled={locationMethod === 'gps' || locationMethod === 'map'}
-                    sx={{ flex: 1 }}
-                />
-            </Box>
+                        }}
+                    />
+                )}
+            />
+            
+            <TextField 
+                fullWidth 
+                label="State/Province" 
+                value={state} 
+                onChange={e => handleAddressChange('state', e.target.value)} 
+                placeholder="e.g., Tel Aviv District"
+                sx={{ 
+                    mb: 2,
+                    '& .MuiOutlinedInput-root': {
+                        borderRadius: 'var(--radius-md)',
+                        backgroundColor: 'var(--color-surface)',
+                        border: '1px solid var(--color-border)',
+                        transition: 'all var(--transition-fast)',
+                        '&:hover': {
+                            borderColor: 'var(--color-accent-blue)',
+                            backgroundColor: 'var(--color-surface-elevated)',
+                        },
+                        '&.Mui-focused': {
+                            borderColor: 'var(--color-accent-blue)',
+                            boxShadow: '0 0 0 2px rgba(93, 173, 226, 0.2)',
+                        }
+                    }
+                }} 
+            />
             
             <Autocomplete
                 freeSolo
                 options={countrySuggestions}
-                value={country}
+                value={country} 
                 onChange={(_, newValue) => handleAddressChange('country', newValue || '')}
                 onInputChange={(_, newInputValue) => {
                     handleAddressChange('country', newInputValue);
-                    // Small delay to avoid too many API calls while typing
                     setTimeout(() => fetchCountrySuggestions(newInputValue), 300);
                 }}
                 disabled={locationMethod === 'gps' || locationMethod === 'map'}
                 renderInput={(params) => (
                     <TextField
                         {...params}
-                        label="Country"
-                        placeholder="e.g., ישראל or Israel"
+                        label="Country *"
+                        placeholder="e.g., Israel"
+                        required
+                        error={hasAttemptedSubmit && !country.trim()}
+                        helperText={
+                            hasAttemptedSubmit && !country.trim() ? "Country is required" : 
+                            locationMethod === 'gps' ? "Disabled when using GPS location" :
+                            locationMethod === 'map' ? "Disabled when using map selection" : ""
+                        }
                         InputProps={{
                             ...params.InputProps,
                             endAdornment: (
@@ -509,9 +747,25 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                                 </>
                             ),
                         }}
+                        sx={{
+                            mb: 3,
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: 'var(--radius-md)',
+                                backgroundColor: 'var(--color-surface)',
+                                border: '1px solid var(--color-border)',
+                                transition: 'all var(--transition-fast)',
+                                '&:hover': {
+                                    borderColor: 'var(--color-accent-blue)',
+                                    backgroundColor: 'var(--color-surface-elevated)',
+                                },
+                                '&.Mui-focused': {
+                                    borderColor: 'var(--color-accent-blue)',
+                                    boxShadow: '0 0 0 2px rgba(93, 173, 226, 0.2)',
+                                }
+                            }
+                        }}
                     />
                 )}
-                sx={{ mb: 2 }}
             />
 
             {/* Location Status */}
@@ -534,33 +788,52 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
             {/* Location Method Instructions */}
             {!coords && (
                 <Box sx={{ 
-                    p: 2, 
-                    bgcolor: 'info.light', 
-                    borderRadius: 1, 
-                    mb: 2,
-                    border: '1px solid',
-                    borderColor: 'info.main'
+                    p: 3, 
+                    backgroundColor: 'rgba(93, 173, 226, 0.1)', 
+                    borderRadius: 'var(--radius-lg)', 
+                    mb: 3,
+                    border: '1px solid var(--color-accent-blue)',
+                    boxShadow: 'var(--shadow-sm)'
                 }}>
-                    <Typography variant="body2" color="info.contrastText" sx={{ mb: 1 }}>
+                    <Typography variant="body2" sx={{ color: 'var(--color-accent-blue)', mb: 1.5, fontWeight: 600 }}>
                         📍 Choose ONE location method:
                     </Typography>
-                    <Typography variant="caption" color="info.contrastText" display="block">
+                    <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)', display: 'block', mb: 0.5 }}>
                         • <strong>Address Search:</strong> Type street and city, then click &quot;Search Address&quot;
                     </Typography>
-                    <Typography variant="caption" color="info.contrastText" display="block">
+                    <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)', display: 'block', mb: 0.5 }}>
                         • <strong>Use My Location:</strong> Automatically get your current GPS coordinates
                     </Typography>
-                    <Typography variant="caption" color="info.contrastText" display="block">
+                    <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)', display: 'block' }}>
                         • <strong>Choose on Map:</strong> Click on the map to select a location
                     </Typography>
                 </Box>
             )}
 
-            <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
                 <Button
                     variant="contained"
                     onClick={searchAddress}
                     disabled={!street || !city || isGeocoding || locationMethod === 'gps' || locationMethod === 'map'}
+                    sx={{
+                        backgroundColor: 'var(--color-accent-blue)',
+                        color: 'var(--color-surface-elevated)',
+                        fontWeight: 'bold',
+                        borderRadius: 'var(--radius-md)',
+                        boxShadow: 'var(--shadow-md)',
+                        transition: 'all var(--transition-fast)',
+                        textTransform: 'none',
+                        '&:hover': {
+                            backgroundColor: 'var(--color-accent-blue)',
+                            transform: 'translateY(-2px)',
+                            boxShadow: 'var(--shadow-lg)',
+                        },
+                        '&:disabled': {
+                            backgroundColor: 'var(--color-border)',
+                            transform: 'none',
+                            boxShadow: 'none'
+                        }
+                    }}
                 >
                     {isGeocoding ? 'Searching...' : 'Search Address'}
                 </Button>
@@ -568,7 +841,19 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                 <Button
                     variant="outlined"
                     onClick={() => setShowMap(!showMap)}
-                    sx={{ flex: 1 }}
+                    sx={{ 
+                        flex: 1,
+                        borderColor: 'var(--color-accent-rust)',
+                        color: 'var(--color-accent-rust)',
+                        borderRadius: 'var(--radius-md)',
+                        transition: 'all var(--transition-fast)',
+                        textTransform: 'none',
+                        '&:hover': {
+                            backgroundColor: 'rgba(255, 107, 53, 0.1)',
+                            borderColor: 'var(--color-accent-rust)',
+                            transform: 'translateY(-1px)',
+                        }
+                    }}
                 >
                     {showMap ? 'Hide Map' : coords ? 'Show Map' : 'Choose on Map'}
                 </Button>
@@ -576,7 +861,24 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
 
             <Button
                 variant="outlined"
-                sx={{ mb: 2 }}
+                sx={{ 
+                    mb: 3,
+                    borderColor: 'var(--color-accent-green)',
+                    color: 'var(--color-accent-green)',
+                    borderRadius: 'var(--radius-md)',
+                    transition: 'all var(--transition-fast)',
+                    textTransform: 'none',
+                    '&:hover': {
+                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                        borderColor: 'var(--color-accent-green)',
+                        transform: 'translateY(-1px)',
+                    },
+                    '&:disabled': {
+                        borderColor: 'var(--color-border)',
+                        color: 'var(--color-text-secondary)',
+                        opacity: 0.5
+                    }
+                }}
                 onClick={getMyLocation}
                 disabled={locationMethod === 'address' || locationMethod === 'map'}
             >
@@ -585,7 +887,15 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
 
             {/* Map - conditionally visible */}
             {showMap && (
-                <Box sx={{ height: '300px', width: '100%', my: 2 }}>
+                <Box sx={{ 
+                    height: '300px', 
+                    width: '100%', 
+                    my: 3,
+                    borderRadius: 'var(--radius-lg)',
+                    overflow: 'hidden',
+                    boxShadow: 'var(--shadow-md)',
+                    border: '1px solid var(--color-border)'
+                }}>
                     <AddSpotMap 
                         coords={coords}
                         setCoords={setCoords}
@@ -602,30 +912,176 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                 </Box>
             )}
 
-            <TextField fullWidth label="Add External Link" value={newLink} onChange={(e) => setNewLink(e.target.value)} sx={{ mt: 2 }} />
-            <Button variant="outlined" onClick={() => {
-                if (newLink.trim()) {
-                    setExternalLinks(prev => [...prev, newLink.trim()]);
-                    setNewLink('');
-                }
-            }}>Add Link</Button>
+            <TextField 
+                fullWidth 
+                label="Add External Link" 
+                value={newLink} 
+                onChange={(e) => setNewLink(e.target.value)} 
+                sx={{ 
+                    mt: 3,
+                    mb: 2,
+                    '& .MuiOutlinedInput-root': {
+                        borderRadius: 'var(--radius-md)',
+                        backgroundColor: 'var(--color-surface)',
+                        border: '1px solid var(--color-border)',
+                        transition: 'all var(--transition-fast)',
+                        '&:hover': {
+                            borderColor: 'var(--color-accent-blue)',
+                            backgroundColor: 'var(--color-surface-elevated)',
+                        },
+                        '&.Mui-focused': {
+                            borderColor: 'var(--color-accent-blue)',
+                            boxShadow: '0 0 0 2px rgba(93, 173, 226, 0.2)',
+                        }
+                    }
+                }} 
+            />
+            
+            <Button 
+                variant="outlined" 
+                onClick={() => {
+                    if (newLink.trim()) {
+                        setExternalLinks(prev => [...prev, newLink.trim()]);
+                        setNewLink('');
+                    }
+                }}
+                sx={{
+                    borderColor: 'var(--color-accent-rust)',
+                    color: 'var(--color-accent-rust)',
+                    borderRadius: 'var(--radius-md)',
+                    transition: 'all var(--transition-fast)',
+                    textTransform: 'none',
+                    mb: 3,
+                    '&:hover': {
+                        backgroundColor: 'rgba(255, 107, 53, 0.1)',
+                        borderColor: 'var(--color-accent-rust)',
+                        transform: 'translateY(-1px)',
+                    }
+                }}
+            >
+                Add Link
+            </Button>
 
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, my: 2 }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
                 {externalLinks.map((link, i) => (
-                    <Chip key={i} label={link} onDelete={() => setExternalLinks(prev => prev.filter((_, j) => j !== i))} />
+                    <Chip 
+                        key={i} 
+                        label={link} 
+                        onDelete={() => setExternalLinks(prev => prev.filter((_, j) => j !== i))}
+                        sx={{
+                            backgroundColor: 'var(--color-accent-blue)',
+                            color: 'var(--color-surface-elevated)',
+                            fontWeight: 600,
+                            '&:hover': {
+                                backgroundColor: 'var(--color-accent-blue)',
+                                transform: 'translateY(-1px)',
+                                boxShadow: 'var(--shadow-sm)',
+                            }
+                        }}
+                    />
                 ))}
             </Box>
 
-            <input type="file" multiple accept="image/*" onChange={(e) => setPhotos(e.target.files)} />
+            <Box sx={{ 
+                mb: 3,
+                p: 2,
+                backgroundColor: 'var(--color-surface-elevated)',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--color-border)'
+            }}>
+                <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)', mb: 1, fontWeight: 500 }}>
+                    📸 Photos (Optional)
+                </Typography>
+                <Box sx={{
+                    position: 'relative',
+                    display: 'inline-block',
+                    width: '100%'
+                }}>
+                    <input 
+                        type="file" 
+                        multiple 
+                        accept="image/*" 
+                        onChange={(e) => setPhotos(e.target.files)}
+                        style={{
+                            position: 'absolute',
+                            opacity: 0,
+                            width: '100%',
+                            height: '100%',
+                            cursor: 'pointer'
+                        }}
+                        id="file-upload"
+                    />
+                    <label 
+                        htmlFor="file-upload"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '12px 16px',
+                            backgroundColor: 'var(--color-surface)',
+                            border: '2px dashed var(--color-accent-blue)',
+                            borderRadius: 'var(--radius-md)',
+                            color: 'var(--color-accent-blue)',
+                            cursor: 'pointer',
+                            transition: 'all var(--transition-fast)',
+                            minHeight: '60px',
+                            textAlign: 'center'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'rgba(93, 173, 226, 0.1)';
+                            e.currentTarget.style.borderColor = 'var(--color-accent-blue)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'var(--color-surface)';
+                            e.currentTarget.style.borderColor = 'var(--color-accent-blue)';
+                        }}
+                    >
+                        <Box sx={{ textAlign: 'center' }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                                📁 Choose Files
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: 'var(--color-text-secondary)' }}>
+                                {photos && photos.length > 0 
+                                    ? `${photos.length} file(s) selected` 
+                                    : 'Click to select photos or drag and drop'
+                                }
+                            </Typography>
+                        </Box>
+                    </label>
+                </Box>
+            </Box>
 
             <Button 
                 type="submit" 
                 variant="contained" 
-                sx={{ mt: 3, backgroundColor: '#2F2F2F' }}
+                sx={{ 
+                    mt: 4, 
+                    backgroundColor: 'var(--color-accent-green)',
+                    color: 'var(--color-surface-elevated)',
+                    fontWeight: 'bold',
+                    fontSize: '1.1rem',
+                    px: 4,
+                    py: 1.5,
+                    borderRadius: 'var(--radius-lg)',
+                    boxShadow: 'var(--shadow-lg)',
+                    transition: 'all var(--transition-fast)',
+                    textTransform: 'none',
+                    '&:hover': {
+                        backgroundColor: 'var(--color-accent-green)',
+                        transform: 'translateY(-3px)',
+                        boxShadow: 'var(--shadow-xl)',
+                    },
+                    '&:disabled': {
+                        backgroundColor: 'var(--color-border)',
+                        transform: 'none',
+                        boxShadow: 'none'
+                    }
+                }}
                 disabled={isSubmitting}
             >
                 {isSubmitting ? 'Adding Spot...' : 'Submit Skate Spot'}
             </Button>
         </form>
+    </Box>
     );
 }

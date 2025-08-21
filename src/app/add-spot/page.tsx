@@ -34,15 +34,6 @@ export default function AddSpotPage() {
       p: 3,
       mt: 6
     }}>
-      <Typography variant="h3" component="h1" gutterBottom sx={{ 
-        textAlign: 'center',
-        fontWeight: 'bold',
-        color: '#2F2F2F',
-        mb: 4
-      }}>
-        Add New Spot
-      </Typography>
-      
       <Suspense fallback={<AddSpotLoading />}>
         <AddSpotForm coords={coords} setCoords={setCoords} />
       </Suspense>

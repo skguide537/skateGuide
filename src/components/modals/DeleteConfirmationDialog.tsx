@@ -13,7 +13,8 @@ import {
     Chip,
     CircularProgress
 } from '@mui/material';
-import { Warning } from '@mui/icons-material';
+import { Warning, Delete, Cancel } from '@mui/icons-material';
+import { useTheme } from '@/context/ThemeContext';
 
 interface DeleteConfirmationDialogProps {
     open: boolean;
@@ -39,6 +40,8 @@ export default function DeleteConfirmationDialog({
     spot,
     isDeleting
 }: DeleteConfirmationDialogProps) {
+    const { theme } = useTheme();
+    
     if (!spot) return null;
 
     const hasPhotos = spot.photoNames && spot.photoNames.length > 0;
@@ -54,27 +57,53 @@ export default function DeleteConfirmationDialog({
             fullWidth
             PaperProps={{
                 sx: {
-                    borderRadius: 3,
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+                    backgroundColor: 'var(--color-surface-elevated)',
+                    borderRadius: 'var(--radius-xl)',
+                    boxShadow: 'var(--shadow-xl)',
+                    border: '1px solid var(--color-border)',
+                    background: 'linear-gradient(135deg, var(--color-surface-elevated) 0%, var(--color-surface) 100%)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '3px',
+                        background: 'linear-gradient(90deg, var(--color-error) 0%, var(--color-accent-rust) 100%)',
+                    }
                 }
             }}
         >
             <DialogTitle sx={{ 
-                pb: 1,
+                pb: 2,
                 display: 'flex',
                 alignItems: 'center',
-                gap: 1,
-                color: '#d32f2f'
+                gap: 2,
+                color: 'var(--color-error)',
+                backgroundColor: 'var(--color-surface)',
+                borderBottom: '1px solid var(--color-border)',
+                position: 'relative',
+                '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: '1px',
+                    background: 'linear-gradient(90deg, transparent 0%, var(--color-error) 50%, transparent 100%)',
+                }
             }}>
-                <Warning color="error" />
+                <Warning sx={{ fontSize: 28, color: 'var(--color-error)' }} />
                 <Typography variant="h6" component="span" fontWeight="bold">
                     Delete Skate Spot
                 </Typography>
             </DialogTitle>
 
-            <DialogContent sx={{ pt: 1 }}>
+            <DialogContent sx={{ pt: 2, backgroundColor: 'var(--color-surface)', color: 'var(--color-text-primary)' }}>
                 <Box sx={{ mb: 3 }}>
-                    <Typography variant="body1" sx={{ mb: 2, color: '#2F2F2F' }}>
+                    <Typography variant="body1" sx={{ mb: 2, color: 'var(--color-text-primary)', lineHeight: 1.6 }}>
                         Are you sure you want to delete <strong>&quot;{spot.title}&quot;</strong>? 
                         This action cannot be undone.
                     </Typography>
@@ -84,10 +113,12 @@ export default function DeleteConfirmationDialog({
                 <Box sx={{ 
                     display: 'flex', 
                     gap: 2, 
-                    p: 2, 
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: 2,
-                    border: '1px solid #e9ecef'
+                    p: 3, 
+                    backgroundColor: 'var(--color-surface-elevated)',
+                    borderRadius: 'var(--radius-lg)',
+                    border: '1px solid var(--color-border)',
+                    boxShadow: 'var(--shadow-sm)',
+                    mb: 3
                 }}>
                     {/* Thumbnail */}
                     <Avatar
@@ -96,32 +127,50 @@ export default function DeleteConfirmationDialog({
                         sx={{ 
                             width: 80, 
                             height: 80,
-                            borderRadius: 2
+                            borderRadius: 'var(--radius-md)',
+                            border: '2px solid var(--color-border)'
                         }}
                     />
                     
                     {/* Spot Details */}
                     <Box sx={{ flex: 1 }}>
-                        <Typography variant="h6" fontWeight="bold" sx={{ mb: 1, color: '#2F2F2F' }}>
+                        <Typography variant="h6" fontWeight="bold" sx={{ mb: 1.5, color: 'var(--color-text-primary)' }}>
                             {spot.title}
                         </Typography>
                         
-                        <Box sx={{ display: 'flex', gap: 1, mb: 1, flexWrap: 'wrap' }}>
+                        <Box sx={{ display: 'flex', gap: 1, mb: 1.5, flexWrap: 'wrap' }}>
                             <Chip 
                                 label={spot.isPark ? 'Park' : 'Street'} 
                                 size="small" 
-                                color={spot.isPark ? 'success' : 'warning'}
-                                sx={{ fontSize: '0.7rem', height: 20 }}
+                                sx={{ 
+                                    fontSize: '0.7rem', 
+                                    height: 24,
+                                    backgroundColor: spot.isPark ? 'var(--color-accent-green)' : 'var(--color-accent-rust)',
+                                    color: 'var(--color-surface-elevated)',
+                                    fontWeight: 600
+                                }}
                             />
                             <Chip 
                                 label={spot.size} 
                                 size="small"
-                                sx={{ fontSize: '0.7rem', height: 20 }}
+                                sx={{ 
+                                    fontSize: '0.7rem', 
+                                    height: 24,
+                                    backgroundColor: 'var(--color-accent-blue)',
+                                    color: 'var(--color-surface-elevated)',
+                                    fontWeight: 600
+                                }}
                             />
                             <Chip 
                                 label={spot.level} 
                                 size="small"
-                                sx={{ fontSize: '0.7rem', height: 20 }}
+                                sx={{ 
+                                    fontSize: '0.7rem', 
+                                    height: 24,
+                                    backgroundColor: 'var(--color-accent-rust)',
+                                    color: 'var(--color-surface-elevated)',
+                                    fontWeight: 600
+                                }}
                             />
                         </Box>
                         
@@ -133,7 +182,12 @@ export default function DeleteConfirmationDialog({
                                         label={tag} 
                                         size="small" 
                                         variant="outlined"
-                                        sx={{ fontSize: '0.6rem', height: 18 }}
+                                        sx={{ 
+                                            fontSize: '0.6rem', 
+                                            height: 20,
+                                            borderColor: 'var(--color-border)',
+                                            color: 'var(--color-text-secondary)'
+                                        }}
                                     />
                                 ))}
                             </Box>
@@ -141,25 +195,52 @@ export default function DeleteConfirmationDialog({
                     </Box>
                 </Box>
 
-                <Box sx={{ mt: 2, p: 2, backgroundColor: '#fff3cd', borderRadius: 2, border: '1px solid #ffeaa7' }}>
-                    <Typography variant="body2" sx={{ color: '#856404', display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Warning sx={{ fontSize: '1rem' }} />
+                <Box sx={{ 
+                    p: 2.5, 
+                    backgroundColor: 'rgba(255, 107, 53, 0.1)', 
+                    borderRadius: 'var(--radius-md)', 
+                    border: '1px solid var(--color-accent-rust)',
+                    mb: 2
+                }}>
+                    <Typography variant="body2" sx={{ 
+                        color: 'var(--color-accent-rust)', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 1,
+                        fontWeight: 500,
+                        lineHeight: 1.5
+                    }}>
+                        <Warning sx={{ fontSize: '1.1rem' }} />
                         This will permanently remove the spot and all associated photos from Cloudinary.
                     </Typography>
                 </Box>
             </DialogContent>
 
-            <DialogActions sx={{ p: 3, pt: 1 }}>
+            <DialogActions sx={{ 
+                p: 3, 
+                pt: 1, 
+                backgroundColor: 'var(--color-surface)',
+                borderTop: '1px solid var(--color-border)'
+            }}>
                 <Button
                     onClick={onClose}
                     disabled={isDeleting}
                     variant="outlined"
+                    startIcon={<Cancel />}
                     sx={{
-                        borderColor: '#A7A9AC',
-                        color: '#A7A9AC',
+                        borderColor: 'var(--color-border)',
+                        color: 'var(--color-text-secondary)',
+                        borderRadius: 'var(--radius-md)',
+                        transition: 'all var(--transition-fast)',
                         '&:hover': {
-                            borderColor: '#8A8A8A',
-                            backgroundColor: 'rgba(167, 169, 172, 0.1)'
+                            borderColor: 'var(--color-accent-blue)',
+                            backgroundColor: 'rgba(93, 173, 226, 0.1)',
+                            transform: 'translateY(-1px)',
+                        },
+                        '&:disabled': {
+                            borderColor: 'var(--color-border)',
+                            color: 'var(--color-text-secondary)',
+                            opacity: 0.5
                         }
                     }}
                 >
@@ -169,15 +250,21 @@ export default function DeleteConfirmationDialog({
                     onClick={onConfirm}
                     disabled={isDeleting}
                     variant="contained"
-                    color="error"
-                    startIcon={isDeleting ? <CircularProgress size={16} color="inherit" /> : null}
+                    startIcon={isDeleting ? <CircularProgress size={16} color="inherit" /> : <Delete />}
                     sx={{
-                        backgroundColor: '#d32f2f',
+                        backgroundColor: 'var(--color-error)',
+                        borderRadius: 'var(--radius-md)',
+                        transition: 'all var(--transition-fast)',
+                        fontWeight: 600,
                         '&:hover': {
-                            backgroundColor: '#c62828'
+                            backgroundColor: 'var(--color-error)',
+                            transform: 'translateY(-1px)',
+                            boxShadow: 'var(--shadow-lg)',
                         },
                         '&:disabled': {
-                            backgroundColor: '#6c757d'
+                            backgroundColor: 'var(--color-border)',
+                            transform: 'none',
+                            boxShadow: 'none'
                         }
                     }}
                 >
