@@ -49,6 +49,18 @@ function getDistanceKm(userLat: number, userLng: number, parkLat: number, parkLn
 }
 
 export default function HomePage() {
+    // Configuration constants
+    const BACKGROUND_REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
+    
+    // Get user's preferred refresh interval from localStorage (default: 5 minutes)
+    const getUserRefreshInterval = () => {
+        const saved = localStorage.getItem('skateGuide_refreshInterval');
+        if (saved) {
+            const interval = parseInt(saved);
+            return interval > 0 ? interval * 60 * 1000 : BACKGROUND_REFRESH_INTERVAL;
+        }
+        return BACKGROUND_REFRESH_INTERVAL;
+    };
     const router = useRouter();
     const pathname = usePathname();
     const { showToast, invalidateCache } = useToast();
@@ -76,6 +88,8 @@ export default function HomePage() {
     const [distanceFilterEnabled, setDistanceFilterEnabled] = useState(false);
     const [distanceFilter, setDistanceFilter] = useState<number>(10);
     const [ratingFilter, setRatingFilter] = useState<number[]>([0, 5]);
+    const [sortBy, setSortBy] = useState<'default' | 'distance' | 'rating' | 'recent'>('default');
+    const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
     // Subscribe to cache invalidation events to refresh data when spots are added/deleted
     const refreshParks = useCallback(async () => {
@@ -111,6 +125,9 @@ export default function HomePage() {
           
           // Clear any deleted spot IDs since we're refreshing
           setDeletedSpotIds(new Set());
+          
+          // Update last updated timestamp
+          setLastUpdated(new Date());
 
         } catch (err) {
           console.error('Error refreshing parks:', err);
@@ -122,6 +139,22 @@ export default function HomePage() {
     }, [page, limit]); // Include page and limit dependencies for accurate data
 
     useCache('skateparks', refreshParks);
+
+    // Background refresh - periodically update data based on user preference
+    useEffect(() => {
+        const refreshInterval = getUserRefreshInterval();
+        const interval = setInterval(() => {
+            // Only refresh if user is actively viewing the page
+            if (document.visibilityState === 'visible') {
+                refreshParks();
+                // Show a subtle toast to indicate background refresh
+                showToast('Data refreshed in background', 'info', 2000);
+            }
+        }, refreshInterval);
+
+        return () => clearInterval(interval);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [refreshParks, showToast]);
 
 
 
@@ -479,13 +512,28 @@ export default function HomePage() {
             })
             .filter(Boolean); // Remove any null entries
 
-        // Sort by distance if distance filter is enabled
-        if (distanceFilterEnabled) {
+        // Apply sorting based on sortBy selection
+        if (sortBy === 'distance' || (distanceFilterEnabled && sortBy === 'default')) {
+            // Sort by distance (closest first)
             filtered = filtered.sort((a, b) => {
                 if (!a || !b) return 0;
                 return a.distanceKm - b.distanceKm;
             });
+        } else if (sortBy === 'rating') {
+            // Sort by rating (highest first)
+            filtered = filtered.sort((a, b) => {
+                if (!a || !b) return 0;
+                return b.avgRating - a.avgRating;
+            });
+        } else if (sortBy === 'recent') {
+            // Sort by recently added (newest first) - using _id as proxy for creation time
+            filtered = filtered.sort((a, b) => {
+                if (!a || !b) return 0;
+                // MongoDB ObjectIds contain timestamp, so we can sort by them
+                return b._id.localeCompare(a._id);
+            });
         }
+        // For 'default' without distance filter, maintain original order
 
         return filtered;
     }, [
@@ -503,7 +551,8 @@ export default function HomePage() {
         favorites,
         distanceFilterEnabled,
         distanceFilter,
-        ratingFilter
+        ratingFilter,
+        sortBy
     ]);
 
     // Update total pages when background data is loaded
@@ -683,10 +732,26 @@ export default function HomePage() {
                         onDistanceFilterChange={setDistanceFilter}
                         ratingFilter={ratingFilter}
                         onRatingFilterChange={setRatingFilter}
+                        sortBy={sortBy}
+                        onSortByChange={setSortBy}
                         filteredCount={parksWithDistance.length}
                         totalCount={allParks.length}
                         userLocation={userCoords}
                     />
+
+                    {/* Last Updated Indicator */}
+                    <Box sx={{ 
+                        textAlign: 'center', 
+                        mb: 2,
+                        p: 1,
+                        backgroundColor: 'rgba(167, 169, 172, 0.05)',
+                        borderRadius: 1,
+                        border: '1px solid rgba(167, 169, 172, 0.1)'
+                    }}>
+                        <Typography variant="caption" color="text.secondary">
+                            Last updated: {lastUpdated.toLocaleTimeString()}
+                        </Typography>
+                    </Box>
 
                     <Grid container spacing={4} id="skatepark-cards-container">
                         {/* Show actual skatepark cards */}
