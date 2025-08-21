@@ -65,8 +65,6 @@ export default function HomePage() {
 
     // Subscribe to cache invalidation events to refresh data when spots are added/deleted
     useCache('skateparks', useCallback(() => {
-      console.log('🔄 Cache invalidation triggered - refreshing parks data immediately');
-      
       const fetchParks = async () => {
         try {
 
@@ -79,14 +77,10 @@ export default function HomePage() {
           const parksData = Array.isArray(data?.parks) ? data.parks : [];
           const totalPagesData = data?.totalPages || 1;
           
-          console.log('✅ Fresh parks data received:', parksData.length, 'parks');
-          
           // Only update if we got valid data, otherwise keep existing data
           if (parksData.length > 0) {
             setParks(parksData);
             setTotalPages(totalPagesData);
-          } else {
-            console.log('⚠️ Received 0 parks, keeping existing data to prevent empty state');
           }
           
           // Also refresh all parks for distance calculations
@@ -94,24 +88,19 @@ export default function HomePage() {
           if (allRes.ok) {
             const allData = await allRes.json();
             const allParksData = Array.isArray(allData?.parks) ? allData.parks : [];
-            console.log('✅ All parks data refreshed:', allParksData.length, 'total parks');
             
             // Only update if we got valid data, otherwise keep existing data
             if (allParksData.length > 0) {
               setAllParks(allParksData);
-            } else {
-              console.log('⚠️ Received 0 all parks, keeping existing data to prevent empty state');
             }
           }
           
           // Clear any deleted spot IDs since we're refreshing
           setDeletedSpotIds(new Set());
-          console.log('🧹 Cleared deleted spot IDs');
 
         } catch (err) {
-          console.error('❌ Error refreshing parks:', err);
+          console.error('Error refreshing parks:', err);
           // Don't clear existing data on error - keep what we have
-          console.log('⚠️ Keeping existing data due to refresh error');
         }
       };
 
@@ -296,11 +285,9 @@ export default function HomePage() {
             
             // Invalidate caches AFTER state updates are complete to prevent race conditions
             setTimeout(() => {
-                console.log('🔄 Invalidating caches after spot deletion (delayed)...');
                 invalidateCache('skateparks');
                 invalidateCache('spots');
                 invalidateCache('map-markers');
-                console.log('✅ Cache invalidation completed (delayed)');
             }, 500); // Increased delay to ensure database transaction is committed
             
         } catch (error: any) {
