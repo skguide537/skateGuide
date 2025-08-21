@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import SkateparkCard from '@/components/skateparkCard/LightSkateparkCard';
 import SkeletonCard from '@/components/loading/SkeletonCard';
@@ -19,6 +19,7 @@ import TextField from '@mui/material/TextField';
 import { useMediaQuery, useTheme as useMuiTheme, IconButton } from '@mui/material';
 import { useCache } from '@/context/ToastContext';
 import CloseIcon from '@mui/icons-material/Close';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 
 interface Skatepark {
@@ -70,33 +71,27 @@ export default function HomePage() {
     const { favorites } = useFavorites();
     const { theme } = useTheme();
 
-    // Responsive breakpoints
+    // Responsive breakpoints for grid layout
     const muiTheme = useMuiTheme();
     const isXs = useMediaQuery(muiTheme.breakpoints.only('xs')); // Mobile
     const isSm = useMediaQuery(muiTheme.breakpoints.only('sm')); // Small tablet
     const isMd = useMediaQuery(muiTheme.breakpoints.only('md')); // Medium tablet
     const isLg = useMediaQuery(muiTheme.breakpoints.up('lg'));  // Desktop and up
 
-    // Responsive limit calculation
-    const limit = useMemo(() => {
-        if (isXs) return 4;  // Mobile: 4 cards (2x2 grid)
-        if (isSm) return 6;  // Small tablet: 6 cards (2x3 or 3x2 grid)
-        if (isMd) return 8;  // Medium tablet: 8 cards (2x4 or 4x2 grid)
-        if (isLg) return 9;  // Desktop: 9 cards (3x3 grid)
-        return 6; // Default fallback
+    // Grid columns calculation for virtual scrolling
+    const gridColumns = useMemo(() => {
+        if (isXs) return 2;  // Mobile: 2 columns
+        if (isSm) return 2;  // Small tablet: 2 columns
+        if (isMd) return 3;  // Medium tablet: 3 columns
+        if (isLg) return 3;  // Desktop: 3 columns
+        return 2; // Default fallback
     }, [isXs, isSm, isMd, isLg]);
 
-    const [parks, setParks] = useState<Skatepark[]>([]);
-    const [allParks, setAllParks] = useState<Skatepark[]>([]); 
-    const [page, setPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isBackgroundLoading, setIsBackgroundLoading] = useState(false);
-    const [prefetchedPages, setPrefetchedPages] = useState<Set<number>>(new Set());
-    const [backgroundDataLoaded, setBackgroundDataLoaded] = useState(false);
-    const [deletedSpotIds, setDeletedSpotIds] = useState<Set<string>>(new Set());
-    const [deletingSpotIds, setDeletingSpotIds] = useState<Set<string>>(new Set());
+         const [parks, setParks] = useState<Skatepark[]>([]);
+     const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+     const [isLoading, setIsLoading] = useState(true);
+     const [deletedSpotIds, setDeletedSpotIds] = useState<Set<string>>(new Set());
+     const [deletingSpotIds, setDeletingSpotIds] = useState<Set<string>>(new Set());
 
     // Search and filter state
     const [searchTerm, setSearchTerm] = useState('');
@@ -110,54 +105,35 @@ export default function HomePage() {
     const [ratingFilter, setRatingFilter] = useState<number[]>([0, 5]);
     const [sortBy, setSortBy] = useState<'default' | 'distance' | 'rating' | 'recent'>('default');
     const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-    const [showHero, setShowHero] = useState(true);
+         const [showHero, setShowHero] = useState(true);
 
-    // Subscribe to cache invalidation events to refresh data when spots are added/deleted
-    const refreshParks = useCallback(async () => {
-      const fetchParks = async () => {
-        try {
+          // Subscribe to cache invalidation events to refresh data when spots are added/deleted
+     const refreshParks = useCallback(async () => {
+       try {
+         // Refresh all parks data for virtual scrolling
+         const res = await fetch(`/api/skateparks?limit=1000`);
+         if (!res.ok) throw new Error('Failed to fetch parks');
+         const data = await res.json();
 
-          // Refresh current page data
-          const res = await fetch(`/api/skateparks?page=${page}&limit=${limit}`);
-          if (!res.ok) throw new Error('Failed to fetch parks');
-          const data = await res.json();
+         // Add robust null checks to prevent crashes
+         const parksData = Array.isArray(data?.parks) ? data.parks : [];
+         
+         // Only update if we got valid data, otherwise keep existing data
+         if (parksData.length > 0) {
+           setParks(parksData);
+         }
+         
+         // Clear any deleted spot IDs since we're refreshing
+         setDeletedSpotIds(new Set());
+         
+         // Update last updated timestamp
+         setLastUpdated(new Date());
 
-          // Add robust null checks to prevent crashes
-          const parksData = Array.isArray(data?.parks) ? data.parks : [];
-          const totalPagesData = data?.totalPages || 1;
-          
-          // Only update if we got valid data, otherwise keep existing data
-          if (parksData.length > 0) {
-            setParks(parksData);
-            setTotalPages(totalPagesData);
-          }
-          
-          // Also refresh all parks for distance calculations
-          const allRes = await fetch(`/api/skateparks?limit=1000`);
-          if (allRes.ok) {
-            const allData = await allRes.json();
-            const allParksData = Array.isArray(allData?.parks) ? allData.parks : [];
-            
-            // Only update if we got valid data, otherwise keep existing data
-            if (allParksData.length > 0) {
-              setAllParks(allParksData);
-            }
-          }
-          
-          // Clear any deleted spot IDs since we're refreshing
-          setDeletedSpotIds(new Set());
-          
-          // Update last updated timestamp
-          setLastUpdated(new Date());
-
-        } catch (err) {
-          console.error('Error refreshing parks:', err);
-          // Don't clear existing data on error - keep what we have
-        }
-      };
-
-      fetchParks();
-    }, [page, limit]); // Include page and limit dependencies for accurate data
+       } catch (err) {
+         console.error('Error refreshing parks:', err);
+         // Don't clear existing data on error - keep what we have
+       }
+     }, []);
 
     useCache('skateparks', refreshParks);
 
@@ -179,91 +155,26 @@ export default function HomePage() {
 
 
 
-    const fetchParks = useCallback(async (pageNumber: number = 1, isBackground: boolean = false) => {
-        try {
-            if (!isBackground) {
-                setIsLoading(true);
-            }
-            
-            const res = await fetch(`/api/skateparks?page=${pageNumber}&limit=${limit}`);
-            const { data = [], totalCount = 0 } = await res.json();
+         const fetchParks = useCallback(async () => {
+         try {
+             setIsLoading(true);
+             
+             const res = await fetch(`/api/skateparks?limit=1000`);
+             const { data = [] } = await res.json();
 
-            if (!isBackground) {
-                // Regular page load - update current page
-                setParks(Array.isArray(data) ? data : []);
-                setPage(pageNumber);
-                setTotalPages(Math.ceil(totalCount / limit));
-            } else {
-                // Background prefetch - just cache the data
-                setPrefetchedPages(prev => new Set([...prev, pageNumber]));
-            }
-        } catch (err) {
-            console.error(`Failed to fetch parks page ${pageNumber}:`, err);
-            if (!isBackground) {
-                setParks([]);
-                setTotalPages(1);
-            }
-        } finally {
-            if (!isBackground) {
-                setIsLoading(false);
-            }
-        }
-    }, [limit]);
-
-    // Fetch all parks in background for instant pagination
-    const fetchAllParksBackground = useCallback(async () => {
-        try {
-            const res = await fetch(`/api/skateparks?limit=1000`);
-            if (res.ok) {
-                const data = await res.json();
-                // Handle both array and object responses
-                const parksData = Array.isArray(data) ? data : (data.parks || data.data || []);
-                setAllParks(parksData);
-                setBackgroundDataLoaded(true);
-            }
-        } catch (error) {
-            // Silent background fetch - don't show errors to user
-        }
-    }, []);
+             // Update parks data for virtual scrolling
+             setParks(Array.isArray(data) ? data : []);
+         } catch (err) {
+             console.error('Failed to fetch parks:', err);
+             setParks([]);
+         } finally {
+             setIsLoading(false);
+         }
+     }, []);
 
 
 
-    const prefetchNextPages = useCallback(async () => {
-        if (page >= totalPages) return;
-        
-        const nextPage = page + 1;
-        const startIndex = (nextPage - 1) * limit;
-        
-        try {
-            const res = await fetch(`/api/skateparks?page=${nextPage}&limit=${limit}`);
-            if (res.ok) {
-                const data = await res.json();
-                // Store in background data for instant pagination
-                setAllParks(prev => {
-                    const newParks = [...(prev || [])];
-                    data.parks.forEach((park: any, index: number) => {
-                        newParks[startIndex + index] = park;
-                    });
-                    return newParks;
-                });
-            }
-        } catch (error) {
-            // Silent prefetch - don't show errors to user
-        }
-    }, [page, totalPages, limit]);
-
-    // Get current page parks from background data or fallback to paginated data
-    const getCurrentPageParks = useCallback((pageNum: number) => {
-        if (backgroundDataLoaded && allParks && allParks.length > 0) {
-            // Use background data for instant pagination
-            const startIndex = (pageNum - 1) * limit;
-            const endIndex = startIndex + limit;
-            const result = allParks.slice(startIndex, endIndex);
-            return Array.isArray(result) ? result : [];
-        }
-        // Fallback to current paginated data
-        return Array.isArray(parks) ? parks : [];
-    }, [backgroundDataLoaded, allParks, parks, limit]);
+    
 
     // Handle spot deletion with optimistic updates
     const handleSpotDelete = useCallback(async (spotId: string) => {
@@ -306,25 +217,18 @@ export default function HomePage() {
                 return newSet;
             });
             
-            // Get spot title for better toast message
-            const deletedSpot = parks.find(park => park._id === spotId) || allParks.find(park => park._id === spotId);
-            const spotTitle = deletedSpot?.title || 'Spot';
+                         // Get spot title for better toast message
+             const deletedSpot = parks.find(park => park._id === spotId);
+             const spotTitle = deletedSpot?.title || 'Spot';
+             
+             // Show success toast
+             showToast(`"${spotTitle}" deleted successfully!`, 'success');
+             
+             // Remove from local state FIRST
+             setParks(prev => prev.filter(park => park._id !== spotId));
             
-            // Show success toast
-            showToast(`"${spotTitle}" deleted successfully!`, 'success');
-            
-            // Remove from local state FIRST
-            setParks(prev => prev.filter(park => park._id !== spotId));
-            setAllParks(prev => prev.filter(park => park._id !== spotId));
-            
-            // Handle pagination edge case: if current page is empty, go to previous page
-            const currentPageParks = getCurrentPageParks(page);
-            if (currentPageParks && currentPageParks.length === 1 && page > 1) {
-                setPage(page - 1);
-            }
-            
-            // Update total pages
-            setTotalPages(prev => Math.max(1, prev - 1));
+            // Handle deletion - no pagination needed with virtual scrolling
+            // Just remove from the list and let virtual scrolling handle the rest
             
             // Invalidate caches AFTER state updates are complete to prevent race conditions
             setTimeout(() => {
@@ -346,7 +250,7 @@ export default function HomePage() {
             // Show error to user (we'll add toast later)
             showToast(`Failed to delete spot: ${error.message}`, 'error');
         }
-    }, [page, getCurrentPageParks, showToast, parks, allParks, invalidateCache]);
+    }, [showToast, parks, invalidateCache]);
 
     // Check for newly added spots when component mounts (only once)
     useEffect(() => {
@@ -359,17 +263,16 @@ export default function HomePage() {
                 if (timeSinceAdded < 10000) {
                     localStorage.removeItem('spotJustAdded');
                     localStorage.removeItem('spotAddedAt');
-                    setTimeout(() => {
-                        fetchParks(page, false);
-                        fetchAllParksBackground();
-                    }, 1000);
+                     setTimeout(() => {
+                         fetchParks();
+                     }, 1000);
                 }
             }
         };
         checkForNewSpots();
         const timer = setTimeout(checkForNewSpots, 2000);
         return () => clearTimeout(timer);
-    }, [fetchParks, fetchAllParksBackground, page]);
+    }, [fetchParks]);
 
     useEffect(() => {
         navigator.geolocation.getCurrentPosition(
@@ -379,91 +282,22 @@ export default function HomePage() {
         );
     }, []);
 
-    // Reset to page 1 when component mounts or when pathname changes
-    useEffect(() => {
-        // Only reset to page 1 when actually navigating to a different route
-        // Don't reset when just the component re-renders
-        if (pathname !== '/') {
-            setPage(1);
-            // Reset background data when coming back to home
-            if (allParks.length > 0) {
-                setBackgroundDataLoaded(false);
-                setAllParks([]);
-            }
-        }
-    }, [pathname, allParks.length]); // Include allParks.length dependency
 
-    // Handle URL changes (e.g., when logo is clicked)
-    useEffect(() => {
-        const handleRouteChange = () => {
-            setPage(1);
-            if (allParks && allParks.length > 0) {
-                setBackgroundDataLoaded(false);
-                setAllParks([]);
-            }
-        };
-
-        // Listen for route changes
-        window.addEventListener('popstate', handleRouteChange);
-        
-        return () => {
-            window.removeEventListener('popstate', handleRouteChange);
-        };
-    }, [allParks]); // Include allParks dependency
-
-    // Listen for navbar logo click when on home page
-    useEffect(() => {
-        const handleLogoClick = () => {
-            setPage(1);
-            // Reset background data when logo is clicked
-            if (allParks && allParks.length > 0) {
-                setBackgroundDataLoaded(false);
-                setAllParks([]);
-            }
-        };
-
-        // Listen for custom event from navbar
-        window.addEventListener('resetToPageOne', handleLogoClick);
-        
-        return () => {
-            window.removeEventListener('resetToPageOne', handleLogoClick);
-        };
-    }, [allParks]); // Include allParks dependency
-
-    // Reset page to 1 when limit changes (responsive breakpoint change)
-    useEffect(() => {
-        setPage(1);
-        setAllParks([]); // Clear cached data since limit changed
-        setPrefetchedPages(new Set()); // Clear prefetch cache
-        setBackgroundDataLoaded(false); // Reset background loading state
-    }, [limit]);
 
     // Fetch parks when user coordinates are available
     useEffect(() => {
-        // Always fetch first page immediately for fast initial load
-        fetchParks(page);
-    }, [page, fetchParks]);
+        // Always fetch parks immediately for virtual scrolling
+        fetchParks();
+    }, [fetchParks]);
 
-    // Start background loading of all parks after initial load
-    useEffect(() => {
-        if (!isLoading && userCoords && !backgroundDataLoaded) {
-            // Start background loading after a short delay
-            const timer = setTimeout(() => {
-                fetchAllParksBackground();
-            }, 500); // Shorter delay for faster background loading
 
-            return () => clearTimeout(timer);
-        }
-    }, [isLoading, userCoords, backgroundDataLoaded, fetchAllParksBackground]);
 
     // Memoize parks with distance calculation and filtering to prevent unnecessary re-renders
     const parksWithDistance = useMemo(() => {
         if (!userCoords) return [];
         
-        // For sorting, we need to use all parks data, not just current page
-        // This ensures proper sorting across all data
-        const shouldUseAllParks = sortBy !== 'default' && backgroundDataLoaded && allParks.length > 0;
-        const sourceParks = shouldUseAllParks ? allParks : getCurrentPageParks(page);
+        // For virtual scrolling, we always use parks data
+        const sourceParks = parks;
         
         // Add robust null checks to prevent crashes
         if (!Array.isArray(sourceParks) || !sourceParks || sourceParks.length === 0) return [];
@@ -568,131 +402,37 @@ export default function HomePage() {
         }
         // For 'default' without distance filter, maintain original order
 
-        // If we used all parks for sorting, we need to paginate the results
-        if (shouldUseAllParks) {
-            const startIndex = (page - 1) * limit;
-            const endIndex = startIndex + limit;
-            filtered = filtered.slice(startIndex, endIndex);
-        }
+                 // No pagination needed with virtual scrolling - return all filtered results
 
         return filtered;
-    }, [
-        getCurrentPageParks, 
-        page, 
-        userCoords, 
-        deletedSpotIds, 
-        deletingSpotIds,
-        searchTerm,
-        typeFilter,
-        sizeFilter,
-        levelFilter,
-        tagFilter,
-        showOnlyFavorites,
-        favorites,
-        distanceFilterEnabled,
-        distanceFilter,
-        ratingFilter,
-        sortBy,
-        backgroundDataLoaded,
-        allParks,
-        limit
-    ]);
+              }, [
+         userCoords, 
+         deletedSpotIds, 
+         deletingSpotIds,
+         searchTerm,
+         typeFilter,
+         sizeFilter,
+         levelFilter,
+         tagFilter,
+         showOnlyFavorites,
+         favorites,
+         distanceFilterEnabled,
+         distanceFilter,
+         ratingFilter,
+         sortBy,
+                   parks
+     ]);
 
-    // Calculate total pages based on filtered results when sorting/filtering is applied
-    const totalFilteredParks = useMemo(() => {
-        if (!userCoords) return 0;
-        
-        // When sorting/filtering, we need to count all filtered results, not just current page
-        const shouldUseAllParks = sortBy !== 'default' && backgroundDataLoaded && allParks.length > 0;
-        if (!shouldUseAllParks) return allParks.length;
-        
-        const sourceParks = allParks;
-        if (!Array.isArray(sourceParks) || sourceParks.length === 0) return 0;
-        
-        // Apply the same filtering logic as in parksWithDistance but just count
-        let filtered = sourceParks
-            .filter(park => park && park._id && !deletedSpotIds.has(park._id))
-            .filter(park => {
-                if (!park) return false;
+     // Virtual scrolling setup
+     const parentRef = useRef<HTMLDivElement>(null);
+     const virtualizer = useVirtualizer({
+         count: Math.ceil(parksWithDistance.length / gridColumns), // Count rows, not individual items
+         getScrollElement: () => parentRef.current,
+         estimateSize: () => 440, // 420px card height + 20px spacing between rows
+         overscan: 3, // Number of rows to render outside the viewport
+     });
 
-                // Search filter
-                if (searchTerm) {
-                    const searchLower = searchTerm.toLowerCase();
-                    const matchesSearch = 
-                        park.title.toLowerCase().includes(searchLower) ||
-                        park.description.toLowerCase().includes(searchLower) ||
-                        park.tags.some(tag => tag.toLowerCase().includes(searchLower));
-                    if (!matchesSearch) return false;
-                }
-
-                // Type filter
-                if (typeFilter !== 'all') {
-                    if (typeFilter === 'park' && !park.isPark) return false;
-                    if (typeFilter === 'street' && park.isPark) return false;
-                }
-
-                // Size filter
-                if (sizeFilter.length > 0 && !sizeFilter.includes(park.size)) return false;
-
-                // Level filter
-                if (levelFilter.length > 0 && !levelFilter.includes(park.level)) return false;
-
-                // Tag filter
-                if (tagFilter.length > 0) {
-                    const hasMatchingTag = tagFilter.some(tag => park.tags.includes(tag));
-                    if (!hasMatchingTag) return false;
-                }
-
-                // Distance filter
-                if (distanceFilterEnabled) {
-                    const distance = getDistanceKm(
-                        userCoords.lat,
-                        userCoords.lng,
-                        park.location.coordinates[1],
-                        park.location.coordinates[0]
-                    );
-                    if (distance > distanceFilter) return false;
-                }
-
-                // Rating filter
-                if (park.avgRating < ratingFilter[0] || park.avgRating > ratingFilter[1]) return false;
-
-                // Favorites filter
-                if (showOnlyFavorites) {
-                    if (!favorites.includes(park._id)) return false;
-                }
-
-                return true;
-            });
-        
-        return filtered.length;
-    }, [
-        userCoords,
-        sortBy,
-        backgroundDataLoaded,
-        allParks,
-        deletedSpotIds,
-        searchTerm,
-        typeFilter,
-        sizeFilter,
-        levelFilter,
-        tagFilter,
-        distanceFilterEnabled,
-        distanceFilter,
-        ratingFilter,
-        showOnlyFavorites,
-        favorites
-    ]);
-
-    // Update total pages when background data is loaded
-    useEffect(() => {
-        if (backgroundDataLoaded && allParks.length > 0) {
-            const shouldUseAllParks = sortBy !== 'default';
-            const totalCount = shouldUseAllParks ? totalFilteredParks : allParks.length;
-            const newTotalPages = Math.ceil(totalCount / limit);
-            setTotalPages(newTotalPages);
-        }
-    }, [backgroundDataLoaded, allParks.length, limit, sortBy, totalFilteredParks]);
+     // No pagination needed with virtual scrolling
 
     return (
         <Container maxWidth="lg" sx={{ mt: 6 }}>
@@ -862,131 +602,45 @@ export default function HomePage() {
                         </Typography>
                     </Box>
                     
-                    <Grid container spacing={4}>
-                        {/* Show skeleton cards while loading */}
-                        {Array.from({ length: limit }).map((_, index) => (
-                            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={`skeleton-${index}`}>
-                                <SkeletonCard />
-                            </Grid>
-                        ))}
-                    </Grid>
+                                         <Grid container spacing={4}>
+                         {/* Show skeleton cards while loading */}
+                         {Array.from({ length: 6 }).map((_, index) => (
+                             <Grid size={{ xs: 12, sm: 6, md: 4 }} key={`skeleton-${index}`}>
+                                 <SkeletonCard />
+                             </Grid>
+                         ))}
+                     </Grid>
                 </>
             ) : (
                 <>
-                    {/* Top: Page info and quick navigation */}
-                    <Box sx={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center', 
-                        mb: 4,
-                        p: 3,
-                        backgroundColor: 'var(--color-surface-elevated)',
-                        borderRadius: 'var(--radius-lg)',
-                        border: '1px solid var(--color-border)',
-                        boxShadow: 'var(--shadow-md)',
-                        background: 'linear-gradient(135deg, var(--color-surface-elevated) 0%, var(--color-surface) 100%)'
-                    }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                                         <Typography variant="body1" color="var(--color-text-secondary)" sx={{ fontWeight: 500 }}>
-                                  Page {page} of {totalPages} • {allParks.length} total spots
-                              </Typography>
-                            
-                            {/* Back to First button when not on page 1 */}
-                            {page > 1 && (
-                                <Button
-                                    variant="outlined"
-                                    size="small"
-                                    onClick={() => setPage(1)}
-                                    sx={{
-                                        textTransform: 'none',
-                                        fontSize: '0.75rem',
-                                        py: 0.5,
-                                        px: 1.5,
-                                        borderColor: 'var(--color-accent-blue)',
-                                        color: 'var(--color-accent-blue)',
-                                        borderRadius: 'var(--radius-md)',
-                                        transition: 'all var(--transition-fast)',
-                                        '&:hover': {
-                                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                                            borderColor: 'var(--color-accent-blue)',
-                                            transform: 'translateY(-1px)',
-                                        }
-                                    }}
-                                >
-                                    Back to First
-                                </Button>
-                            )}
-                        </Box>
-                        
-                        {/* Quick page jump for power users */}
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
-                                Jump to:
-                            </Typography>
-                            <TextField
-                                size="small"
-                                type="number"
-                                value={page}
-                                onChange={(e) => {
-                                    const newPage = parseInt(e.target.value);
-                                    if (newPage >= 1 && newPage <= totalPages) {
-                                        setPage(newPage);
-                                    }
-                                }}
-                                onKeyPress={(e) => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        const target = e.target as HTMLInputElement;
-                                        const newPage = parseInt(target.value);
-                                        if (newPage >= 1 && newPage <= totalPages) {
-                                            setPage(newPage);
-                                        }
-                                    }
-                                }}
-                                sx={{
-                                    width: 70,
-                                    '& .MuiOutlinedInput-root': {
-                                        fontSize: '0.875rem',
-                                        height: 32,
-                                        '& input': {
-                                            padding: '6px 8px',
-                                            textAlign: 'center'
-                                        }
-                                    }
-                                }}
-                            />
-                            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
-                                of {totalPages}
-                            </Typography>
-                        </Box>
-                    </Box>
+                                                              {/* Search and Filter Bar */}
+                     <SearchFilterBar
+                         searchTerm={searchTerm}
+                         onSearchChange={setSearchTerm}
+                         typeFilter={typeFilter}
+                         onTypeFilterChange={setTypeFilter}
+                         sizeFilter={sizeFilter}
+                         onSizeFilterChange={setSizeFilter}
+                         levelFilter={levelFilter}
+                         onLevelFilterChange={setLevelFilter}
+                         tagFilter={tagFilter}
+                         onTagFilterChange={setTagFilter}
+                         showOnlyFavorites={showOnlyFavorites}
+                         onShowOnlyFavoritesChange={setShowOnlyFavorites}
+                         distanceFilterEnabled={distanceFilterEnabled}
+                         onDistanceFilterEnabledChange={setDistanceFilterEnabled}
+                         distanceFilter={distanceFilter}
+                         onDistanceFilterChange={setDistanceFilter}
+                         ratingFilter={ratingFilter}
+                         onRatingFilterChange={setRatingFilter}
+                         sortBy={sortBy}
+                         onSortByChange={setSortBy}
+                         filteredCount={parksWithDistance.length}
+                         totalCount={parks.length}
+                         userLocation={userCoords}
+                     />
 
-                    {/* Search and Filter Bar */}
-                    <SearchFilterBar
-                        searchTerm={searchTerm}
-                        onSearchChange={setSearchTerm}
-                        typeFilter={typeFilter}
-                        onTypeFilterChange={setTypeFilter}
-                        sizeFilter={sizeFilter}
-                        onSizeFilterChange={setSizeFilter}
-                        levelFilter={levelFilter}
-                        onLevelFilterChange={setLevelFilter}
-                        tagFilter={tagFilter}
-                        onTagFilterChange={setTagFilter}
-                        showOnlyFavorites={showOnlyFavorites}
-                        onShowOnlyFavoritesChange={setShowOnlyFavorites}
-                        distanceFilterEnabled={distanceFilterEnabled}
-                        onDistanceFilterEnabledChange={setDistanceFilterEnabled}
-                        distanceFilter={distanceFilter}
-                        onDistanceFilterChange={setDistanceFilter}
-                        ratingFilter={ratingFilter}
-                        onRatingFilterChange={setRatingFilter}
-                        sortBy={sortBy}
-                        onSortByChange={setSortBy}
-                        filteredCount={parksWithDistance.length}
-                        totalCount={allParks.length}
-                        userLocation={userCoords}
-                    />
+                    
 
                     {/* Last Updated Indicator */}
                     <Box sx={{ 
@@ -1004,154 +658,88 @@ export default function HomePage() {
                         </Typography>
                     </Box>
 
-                    <Grid container spacing={4} id="skatepark-cards-container">
-                        {/* Show actual skatepark cards */}
-                        {parksWithDistance.map((park) => park && (
-                            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={park._id}>
-                                <SkateparkCard
-                                    _id={park._id}
-                                    title={park.title}
-                                    description={park.description}
-                                    tags={park.tags}
-                                    photoNames={park.photoNames}
-                                    distanceKm={park.distanceKm}
-                                    coordinates={park.coordinates}
-                                    isPark={park.isPark}
-                                    size={park.size}
-                                    level={park.level}
-                                    avgRating={park.avgRating}
-                                    externalLinks={park.externalLinks || []}
-                                    isDeleting={park.isDeleting}
-                                    onDelete={handleSpotDelete}
-                                />
-                            </Grid>
-                        ))}
-                    </Grid>
+                                         {/* Virtual Scrolling Container */}
+                     <Box
+                         ref={parentRef}
+                         sx={{
+                             height: '600px',
+                             overflow: 'auto',
+                             border: '1px solid var(--color-border)',
+                             borderRadius: 'var(--radius-lg)',
+                             backgroundColor: 'var(--color-surface)',
+                             p: 2,
+                         }}
+                     >
+                         <div
+                             style={{
+                                 height: `${virtualizer.getTotalSize()}px`,
+                                 width: '100%',
+                                 position: 'relative',
+                             }}
+                         >
+                             {virtualizer.getVirtualItems().map((virtualRow) => {
+                                 const rowIndex = virtualRow.index;
+                                 const startIndex = rowIndex * gridColumns;
+                                 
+                                 // Render all cards in this row
+                                 return Array.from({ length: gridColumns }, (_, colIndex) => {
+                                     const parkIndex = startIndex + colIndex;
+                                     const park = parksWithDistance[parkIndex];
+                                     
+                                     if (!park) return null;
+                                     
+                                     return (
+                                         <div
+                                             key={`${rowIndex}-${colIndex}`}
+                                             style={{
+                                                 position: 'absolute',
+                                                 top: `${rowIndex * 440}px`, // 420px card height + 20px spacing
+                                                 left: `${colIndex * (100 / gridColumns)}%`,
+                                                 width: `${100 / gridColumns}%`,
+                                                 height: '420px',
+                                                 padding: '10px',
+                                                 boxSizing: 'border-box',
+                                             }}
+                                         >
+                                             <SkateparkCard
+                                                 _id={park._id}
+                                                 title={park.title}
+                                                 description={park.description}
+                                                 tags={park.tags}
+                                                 photoNames={park.photoNames}
+                                                 distanceKm={park.distanceKm}
+                                                 coordinates={park.coordinates}
+                                                 isPark={park.isPark}
+                                                 size={park.size}
+                                                 level={park.level}
+                                                 avgRating={park.avgRating}
+                                                 externalLinks={park.externalLinks || []}
+                                                 isDeleting={park.isDeleting}
+                                                 onDelete={handleSpotDelete}
+                                             />
+                                         </div>
+                                     );
+                                 });
+                             })}
+                         </div>
+                     </Box>
 
-                    {/* Bottom: Enhanced pagination controls */}
-                    <Box sx={{ 
-                        display: 'flex', 
-                        justifyContent: 'center', 
-                        alignItems: 'center', 
-                        mt: 8, 
-                        mb: 4,
-                        p: 4,
-                        backgroundColor: 'var(--color-surface-elevated)',
-                        borderRadius: 'var(--radius-xl)',
-                        boxShadow: 'var(--shadow-lg)',
-                        border: '1px solid var(--color-border)',
-                        background: 'linear-gradient(135deg, var(--color-surface-elevated) 0%, var(--color-surface) 100%)',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        '&::before': {
-                            content: '""',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            height: '3px',
-                            background: 'linear-gradient(90deg, var(--color-accent-green) 0%, var(--color-accent-blue) 50%, var(--color-accent-rust) 100%)',
-                        }
-                    }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                            {/* Enhanced Pagination */}
-                            <Pagination
-                                count={totalPages}
-                                page={page}
-                                onChange={(_, newPage) => setPage(newPage)}
-                                color="primary"
-                                size="large"
-                                showFirstButton
-                                showLastButton
-                                sx={{
-                                    '& .MuiPaginationItem-root': {
-                                        color: 'var(--color-text-primary)',
-                                        border: '1px solid var(--color-border)',
-                                        backgroundColor: 'var(--color-surface)',
-                                        fontWeight: 500,
-                                        '&:hover': {
-                                            backgroundColor: 'var(--color-accent-blue)',
-                                            color: 'var(--color-surface-elevated)',
-                                            borderColor: 'var(--color-accent-blue)',
-                                        },
-                                        '&.Mui-selected': {
-                                            backgroundColor: 'var(--color-accent-blue)',
-                                            color: 'var(--color-surface-elevated)',
-                                            borderColor: 'var(--color-accent-blue)',
-                                            '&:hover': {
-                                                backgroundColor: 'var(--color-accent-blue)',
-                                            }
-                                        }
-                                    },
-                                    '& .MuiPaginationItem-ellipsis': {
-                                        color: 'var(--color-text-secondary)',
-                                        border: 'none',
-                                        backgroundColor: 'transparent',
-                                    }
-                                }}
-                            />
-                            
-                            {/* Quick Page Input */}
-                                <Box sx={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                gap: 1,
-                                ml: 2,
-                                    p: 1.5,
-                                backgroundColor: 'var(--color-surface)',
-                                borderRadius: 'var(--radius-md)',
-                                border: '1px solid var(--color-border)'
-                            }}>
-                                <Typography variant="body2" color="var(--color-text-primary)" sx={{ fontWeight: 500 }}>
-                                    Go to:
-                                </Typography>
-                                <TextField
-                                    type="number"
-                                    value={page}
-                                    onChange={(e) => {
-                                        const newPage = parseInt(e.target.value);
-                                        if (newPage >= 1 && newPage <= totalPages) {
-                                            setPage(newPage);
-                                        }
-                                    }}
-                                    onKeyPress={(e) => {
-                                        if (e.key === 'Enter') {
-                                            e.preventDefault();
-                                            const target = e.target as HTMLInputElement;
-                                            const newPage = parseInt(target.value);
-                                            if (newPage >= 1 && newPage <= totalPages) {
-                                                setPage(newPage);
-                                            }
-                                        }
-                                    }}
-                                    sx={{
-                                        width: 70,
-                                        '& .MuiOutlinedInput-root': {
-                                            fontSize: '0.875rem',
-                                            height: 32,
-                                            backgroundColor: 'var(--color-background)',
-                                            '& input': {
-                                                padding: '6px 8px',
-                                                textAlign: 'center'
-                                            },
-                                            '& .MuiOutlinedInput-notchedOutline': {
-                                                borderColor: 'var(--color-border)',
-                                            },
-                                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                                                borderColor: 'var(--color-accent-blue)',
-                                            },
-                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                borderColor: 'var(--color-accent-blue)',
-                                            }
-                                        }
-                                    }}
-                                />
-                                <Typography variant="body2" color="var(--color-text-secondary)" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                                    of {totalPages}
-                                    </Typography>
-                                </Box>
-                        </Box>
-                    </Box>
+                                         {/* Virtual Scrolling Status */}
+                     <Box sx={{ 
+                         textAlign: 'center', 
+                         mt: 4, 
+                         mb: 4,
+                         p: 3,
+                         backgroundColor: 'var(--color-surface)',
+                         borderRadius: 'var(--radius-lg)',
+                         border: '1px solid var(--color-border)',
+                         boxShadow: 'var(--shadow-sm)',
+                         background: 'linear-gradient(135deg, var(--color-surface) 0%, var(--color-surface-elevated) 100%)'
+                     }}>
+                         <Typography variant="body2" color="var(--color-text-secondary)" fontWeight={500}>
+                             🚀 Virtual scrolling enabled • Smooth performance with {parksWithDistance.length} spots
+                         </Typography>
+                     </Box>
                 </>
             )}
         </Container>
