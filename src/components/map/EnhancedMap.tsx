@@ -297,22 +297,20 @@ export default function EnhancedMap({ userLocation }: MapProps) {
       Math.sin(dLat/2) * Math.sin(dLat/2) +
       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
       Math.sin(dLng/2) * Math.sin(dLng/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
 
-  // Filter spots based on search and filters
+  // Filter spots based on search and filter criteria
   const filteredSpots = useMemo(() => {
-    let filtered = spots.filter(spot => {
-      // Search filter - expanded to include more location-based search
+    return spots.filter(spot => {
+      // Search filter
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
         const matchesSearch = 
           spot.title.toLowerCase().includes(searchLower) ||
           spot.description.toLowerCase().includes(searchLower) ||
-          spot.tags.some(tag => tag.toLowerCase().includes(searchLower)) ||
-          // Add location-based search (you might need to add address fields to your Skatepark model)
-          (spot.title + ' ' + spot.description).toLowerCase().includes(searchLower);
+          spot.tags.some(tag => tag.toLowerCase().includes(searchLower));
         if (!matchesSearch) return false;
       }
 
@@ -328,13 +326,7 @@ export default function EnhancedMap({ userLocation }: MapProps) {
       // Level filter
       if (levelFilter.length > 0 && !levelFilter.includes(spot.level)) return false;
 
-      // Tag filter
-      if (tagFilter.length > 0) {
-        const hasMatchingTag = tagFilter.some(tag => spot.tags.includes(tag));
-        if (!hasMatchingTag) return false;
-      }
-
-      // Distance filter (only if enabled and user location is available)
+      // Distance filter
       if (distanceFilterEnabled && userLocation) {
         const distance = calculateDistance(
           userLocation[0], userLocation[1],
@@ -348,24 +340,7 @@ export default function EnhancedMap({ userLocation }: MapProps) {
 
       return true;
     });
-
-    // Sort by distance if user location is available (shortest to longest)
-    if (userLocation) {
-      filtered = filtered.sort((a, b) => {
-        const distanceA = calculateDistance(
-          userLocation[0], userLocation[1],
-          a.location.coordinates[1], a.location.coordinates[0]
-        );
-        const distanceB = calculateDistance(
-          userLocation[0], userLocation[1],
-          b.location.coordinates[1], b.location.coordinates[0]
-        );
-        return distanceA - distanceB;
-      });
-    }
-
-    return filtered;
-  }, [spots, searchTerm, typeFilter, sizeFilter, levelFilter, tagFilter, distanceFilterEnabled, distanceFilter, ratingFilter, userLocation]);
+  }, [spots, searchTerm, typeFilter, sizeFilter, levelFilter, distanceFilterEnabled, distanceFilter, ratingFilter, userLocation]);
 
   // Get unique values for filter options
   const allSizes = ['Small', 'Medium', 'Large']; // All possible sizes
@@ -384,9 +359,9 @@ export default function EnhancedMap({ userLocation }: MapProps) {
   const sidebarContent = (
     <Box sx={{ width: isMobile ? '100vw' : 380, height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
-      <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0', bgcolor: '#f8f9fa' }}>
+      <Box sx={{ p: 2, borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-          <Typography variant="h6" fontWeight="bold">
+          <Typography variant="h6" fontWeight="bold" sx={{ color: 'var(--color-text-primary)' }}>
             Skate Spots
           </Typography>
           {isMobile && (
@@ -396,166 +371,284 @@ export default function EnhancedMap({ userLocation }: MapProps) {
           )}
         </Box>
         
-        {/* Search */}
-        <TextField
-          fullWidth
-          placeholder="Search spots, tags, locations..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ mb: 2 }}
-        />
-        
-        {/* Filter Toggle */}
-        <Button
-          startIcon={<FilterList />}
-          endIcon={showFilters ? <ExpandLess /> : <ExpandMore />}
-          onClick={() => setShowFilters(!showFilters)}
-          variant="outlined"
-          fullWidth
-        >
-          Filters ({filteredSpots.length} spots)
-        </Button>
-      </Box>
-
-      {/* Filters */}
-      <Collapse in={showFilters}>
-        <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0', bgcolor: '#f8f9fa' }}>
-          {/* Type Filter */}
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Type</InputLabel>
-            <Select
-              value={typeFilter}
-              label="Type"
-              onChange={(e) => setTypeFilter(e.target.value as any)}
-            >
-              <MenuItem value="all">All Types</MenuItem>
-              <MenuItem value="park">Parks</MenuItem>
-              <MenuItem value="street">Street Spots</MenuItem>
-            </Select>
-          </FormControl>
-
-          {/* Size Filter */}
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Size</InputLabel>
-            <Select
-              multiple
-              value={sizeFilter}
-              label="Size"
-              displayEmpty
-              onChange={(e) => setSizeFilter(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
-            >
-              {allSizes.map(size => (
-                <MenuItem key={size} value={size}>{size}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {/* Level Filter */}
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Level</InputLabel>
-            <Select
-              multiple
-              value={levelFilter}
-              label="Level"
-              displayEmpty
-              onChange={(e) => setLevelFilter(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
-            >
-              {allLevels.map(level => (
-                <MenuItem key={level} value={level}>{level}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {/* Distance Filter */}
-          {userLocation && (
-            <Box sx={{ mb: 2 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={distanceFilterEnabled}
-                    onChange={(e) => setDistanceFilterEnabled(e.target.checked)}
-                  />
+        {/* Search and Filter Section */}
+        <Box sx={{ 
+          p: 2.5, 
+          backgroundColor: 'var(--color-surface-elevated)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-md)',
+          border: '1px solid var(--color-border)',
+          background: 'linear-gradient(135deg, var(--color-surface-elevated) 0%, var(--color-surface) 100%)',
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '3px',
+            background: 'linear-gradient(90deg, var(--color-accent-green) 0%, var(--color-accent-blue) 50%, var(--color-accent-rust) 100%)',
+          }
+        }}>
+          {/* Search Bar */}
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              mb: 2, 
+              color: 'var(--color-text-primary)', 
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}
+          >
+            🔍 Search & Discover
+          </Typography>
+          
+          <TextField
+            fullWidth
+            placeholder="Search spots, tags, locations..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search sx={{ color: 'var(--color-accent-blue)' }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ 
+              mb: 2,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 'var(--radius-md)',
+                backgroundColor: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
+                transition: 'all var(--transition-fast)',
+                '&:hover': {
+                  borderColor: 'var(--color-accent-blue)',
+                  backgroundColor: 'var(--color-surface-elevated)',
+                },
+                '&.Mui-focused': {
+                  borderColor: 'var(--color-accent-blue)',
+                  boxShadow: '0 0 0 2px rgba(93, 173, 226, 0.2)',
                 }
-                label="Filter by distance"
-              />
-              {distanceFilterEnabled && (
-                <Box sx={{ mt: 1 }}>
-                  <Typography gutterBottom>Distance: {distanceFilter}km</Typography>
+              }
+            }}
+          />
+          
+          {/* Filter Toggle */}
+          <Button
+            startIcon={<FilterList />}
+            endIcon={showFilters ? <ExpandLess /> : <ExpandMore />}
+            onClick={() => setShowFilters(!showFilters)}
+            variant="contained"
+            fullWidth
+            sx={{
+              backgroundColor: 'var(--color-accent-rust)',
+              color: 'var(--color-surface-elevated)',
+              fontWeight: 'bold',
+              borderRadius: 'var(--radius-md)',
+              boxShadow: 'var(--shadow-md)',
+              transition: 'all var(--transition-fast)',
+              textTransform: 'none',
+              mb: 2,
+              '&:hover': {
+                backgroundColor: 'var(--color-accent-rust)',
+                transform: 'translateY(-1px)',
+                boxShadow: 'var(--shadow-lg)',
+              }
+            }}
+          >
+            {showFilters ? 'Hide Filters' : 'Show Filters'}
+          </Button>
+          
+          {/* Collapsible Filters */}
+          <Collapse in={showFilters}>
+            <Box sx={{ pt: 2, borderTop: '1px solid var(--color-border)' }}>
+              {/* Type Filter */}
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel sx={{ color: 'var(--color-text-secondary)' }}>Type</InputLabel>
+                <Select
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value as 'all' | 'park' | 'street')}
+                  sx={{
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'var(--color-border)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'var(--color-accent-blue)',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'var(--color-accent-blue)',
+                    }
+                  }}
+                >
+                  <MenuItem value="all">All Types</MenuItem>
+                  <MenuItem value="park">Parks Only</MenuItem>
+                  <MenuItem value="street">Street Spots Only</MenuItem>
+                </Select>
+              </FormControl>
+              
+              {/* Size Filter */}
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel sx={{ color: 'var(--color-text-secondary)' }}>Size</InputLabel>
+                <Select
+                  multiple
+                  value={sizeFilter}
+                  onChange={(e) => setSizeFilter(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                  sx={{
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'var(--color-border)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'var(--color-accent-blue)',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'var(--color-accent-blue)',
+                    }
+                  }}
+                >
+                  {allSizes.map((size) => (
+                    <MenuItem key={size} value={size}>{size}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              
+              {/* Level Filter */}
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel sx={{ color: 'var(--color-text-secondary)' }}>Level</InputLabel>
+                <Select
+                  multiple
+                  value={levelFilter}
+                  onChange={(e) => setLevelFilter(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                  sx={{
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'var(--color-border)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'var(--color-accent-blue)',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'var(--color-accent-blue)',
+                    }
+                  }}
+                >
+                  {allLevels.map((level) => (
+                    <MenuItem key={level} value={level}>{level}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              
+              {/* Distance Filter */}
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={distanceFilterEnabled}
+                      onChange={(e) => setDistanceFilterEnabled(e.target.checked)}
+                      sx={{
+                        '& .MuiSwitch-switchBase.Mui-checked': {
+                          color: 'var(--color-accent-green)',
+                        },
+                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                          backgroundColor: 'var(--color-accent-green)',
+                        }
+                      }}
+                    />
+                  }
+                  label={
+                    <Typography sx={{ color: 'var(--color-text-primary)' }}>
+                      Distance Filter ({distanceFilter}km)
+                    </Typography>
+                  }
+                />
+                {distanceFilterEnabled && (
                   <Slider
                     value={distanceFilter}
-                    onChange={(_, newValue) => setDistanceFilter(newValue as number)}
+                    onChange={(_, value) => setDistanceFilter(value as number)}
                     min={1}
                     max={50}
-                    valueLabelDisplay="auto"
-                    valueLabelFormat={(value) => `${value}km`}
-                  />
-                </Box>
-              )}
-            </Box>
-          )}
-
-          {/* Rating Filter */}
-          <Box sx={{ mb: 2 }}>
-            <Typography gutterBottom>Rating: {ratingFilter[0]} - {ratingFilter[1]} stars</Typography>
-            <Slider
-              value={ratingFilter}
-              onChange={(_, newValue) => setRatingFilter(newValue as number[])}
-              min={0}
-              max={5}
-              step={0.5}
-              valueLabelDisplay="auto"
-              valueLabelFormat={(value) => `${value}★`}
-            />
-          </Box>
-        </Box>
-      </Collapse>
-
-      {/* Results */}
-      <Box sx={{ flex: 1, overflow: 'auto' }}>
-        <Typography variant="subtitle2" sx={{ p: 2, color: 'text.secondary' }}>
-          {filteredSpots.length} spots found
-        </Typography>
-        
-        <List sx={{ p: 0 }}>
-          {filteredSpots.map((spot, index) => (
-            <Box key={spot._id}>
-              <ListItem sx={{ p: 0 }}>
-                <Card 
-                  sx={{ 
-                    width: '100%', 
-                    cursor: 'pointer',
-                    '&:hover': { elevation: 4 }
-                  }}
-                  onClick={() => handleSpotClick(spot)}
-                >
-                  <Box sx={{ display: 'flex' }}>
-                    <CardMedia
-                      component="img"
-                      sx={{ width: 120, height: 80 }}
-                      image={spot.photoNames && spot.photoNames[0] 
-                        ? (spot.photoNames[0].startsWith('http') ? spot.photoNames[0] : `/${spot.photoNames[0]}`)
-                        : "https://res.cloudinary.com/dcncqacrd/image/upload/v1747566727/skateparks/default-skatepark.png"
+                    step={1}
+                    marks={[
+                      { value: 1, label: '1km' },
+                      { value: 25, label: '25km' },
+                      { value: 50, label: '50km' }
+                    ]}
+                    sx={{
+                      color: 'var(--color-accent-green)',
+                      '& .MuiSlider-mark': {
+                        backgroundColor: 'var(--color-border)',
+                      },
+                      '& .MuiSlider-markLabel': {
+                        color: 'var(--color-text-secondary)',
                       }
-                      alt={spot.title}
-                    />
-                    <CardContent sx={{ flex: 1, p: 1.5, '&:last-child': { pb: 1.5 } }}>
-                      <Typography variant="subtitle2" fontWeight="bold" noWrap>
-                        {spot.title}
-                      </Typography>
-                      <Box display="flex" alignItems="center" gap={0.5} mb={0.5}>
+                    }}
+                  />
+                )}
+              </FormControl>
+              
+              {/* Rating Filter */}
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <Typography sx={{ color: 'var(--color-text-primary)', mb: 1 }}>
+                  Rating Range: {ratingFilter[0]} - {ratingFilter[1]}
+                </Typography>
+                <Slider
+                  value={ratingFilter}
+                  onChange={(_, value) => setRatingFilter(value as number[])}
+                  min={0}
+                  max={5}
+                  step={0.5}
+                  sx={{
+                    color: 'var(--color-accent-rust)',
+                    '& .MuiSlider-mark': {
+                      backgroundColor: 'var(--color-border)',
+                    },
+                    '& .MuiSlider-markLabel': {
+                      color: 'var(--color-text-secondary)',
+                    }
+                  }}
+                />
+              </FormControl>
+            </Box>
+          </Collapse>
+        </Box>
+        
+        {/* Results Summary */}
+        <Box sx={{ p: 2, textAlign: 'center' }}>
+          <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)' }}>
+            Showing {filteredSpots.length} of {spots.length} spots
+          </Typography>
+        </Box>
+        
+        {/* Spots List */}
+        <Box sx={{ flex: 1, overflow: 'auto' }}>
+          <List>
+            {filteredSpots.map((spot, index) => (
+              <Box key={spot._id}>
+                <ListItem 
+                  onClick={() => handleViewDetails(spot)}
+                  sx={{ 
+                    p: 2,
+                    '&:hover': {
+                      backgroundColor: 'var(--color-surface-elevated)',
+                    }
+                  }}
+                >
+                  <Card sx={{ width: '100%', backgroundColor: 'var(--color-surface)' }}>
+                    <CardContent sx={{ p: 2 }}>
+                      <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                        <Typography variant="subtitle1" fontWeight="bold" sx={{ color: 'var(--color-text-primary)' }}>
+                          {spot.title}
+                        </Typography>
                         <Chip 
                           label={spot.isPark ? 'Park' : 'Street'} 
-                          size="small"
+                          size="small" 
                           color={spot.isPark ? 'success' : 'warning'}
                           sx={{ fontSize: '0.7rem', height: 20 }}
                         />
+                      </Box>
+                      <Box display="flex" gap={1} mb={1} flexWrap="wrap">
                         <Chip 
                           label={spot.size} 
                           size="small" 
@@ -570,30 +663,27 @@ export default function EnhancedMap({ userLocation }: MapProps) {
                       {spot.avgRating > 0 && (
                         <Box display="flex" alignItems="center" gap={0.5}>
                           <Rating value={spot.avgRating} readOnly size="small" />
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography variant="caption" sx={{ color: 'var(--color-text-secondary)' }}>
                             ({spot.avgRating.toFixed(1)})
                           </Typography>
                         </Box>
                       )}
                       {userLocation && (
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography variant="caption" sx={{ color: 'var(--color-text-secondary)' }}>
                           {calculateDistance(
                             userLocation[0], userLocation[1],
                             spot.location.coordinates[1], spot.location.coordinates[0]
                           ).toFixed(1)}km away
                         </Typography>
                       )}
-                      
-                      {/* Admin Delete Button */}
-                      {/* Removed admin delete button */}
                     </CardContent>
-                  </Box>
-                </Card>
-              </ListItem>
-              {index < filteredSpots.length - 1 && <Divider />}
-            </Box>
-          ))}
-        </List>
+                  </Card>
+                </ListItem>
+                {index < filteredSpots.length - 1 && <Divider />}
+              </Box>
+            ))}
+          </List>
+        </Box>
       </Box>
     </Box>
   );

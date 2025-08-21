@@ -318,8 +318,8 @@ const FastCarousel = memo(function FastCarousel({
             <Box
                 sx={{
                     position: 'absolute',
-                    top: 8,
-                    right: 8,
+                    bottom: 8,
+                    left: 8,
                     bgcolor: 'rgba(0, 0, 0, 0.7)',
                     color: 'white',
                     px: 1,

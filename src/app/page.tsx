@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import SkateparkCard from '@/components/skateparkCard/LightSkateparkCard';
 import SkeletonCard from '@/components/loading/SkeletonCard';
 import { useToast } from '@/context/ToastContext';
+import { useTheme } from '@/context/ThemeContext';
 import Box from '@mui/material/Box';
 import SearchFilterBar from '@/components/search/SearchFilterBar';
 import { useFavorites } from '@/hooks/useFavorites';
@@ -65,6 +66,7 @@ export default function HomePage() {
     const pathname = usePathname();
     const { showToast, invalidateCache } = useToast();
     const { favorites } = useFavorites();
+    const { theme } = useTheme();
     const [parks, setParks] = useState<Skatepark[]>([]);
     const [allParks, setAllParks] = useState<Skatepark[]>([]); 
     const [page, setPage] = useState(1);
@@ -565,11 +567,82 @@ export default function HomePage() {
 
     return (
         <Container maxWidth="lg" sx={{ mt: 6 }}>
-            <Box textAlign="center" mb={6}>
-                <Typography variant="h2" fontWeight="bold" color="#2F2F2F" gutterBottom id="home-welcome-heading">
-                    Welcome to SkateGuide
+            {/* Hero Section */}
+            <Box 
+                textAlign="center" 
+                mb={8}
+                sx={{
+                    p: 6,
+                    background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%)',
+                    borderRadius: 'var(--radius-xl)',
+                    boxShadow: 'var(--shadow-xl)',
+                    border: '1px solid var(--color-border)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.05\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                        opacity: 0.1,
+                    },
+                    '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: theme === 'dark'
+                            ? 'linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.1) 100%)'
+                            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
+                        pointerEvents: 'none',
+                    }
+                }}
+            >
+                <Typography 
+                    variant="h1" 
+                    fontWeight="800" 
+                    color="var(--color-accent-green)" 
+                    gutterBottom 
+                    id="home-welcome-heading"
+                    sx={{
+                        textShadow: theme === 'dark' 
+                            ? '0 4px 8px rgba(0, 0, 0, 0.7), 0 2px 4px rgba(0, 0, 0, 0.5)'
+                            : '0 2px 4px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.1)',
+                        mb: 3,
+                        fontSize: { xs: '2.5rem', md: '3.5rem', lg: '4rem' },
+                        filter: theme === 'dark' 
+                            ? 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8))'
+                            : 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))',
+                        position: 'relative',
+                        zIndex: 2
+                    }}
+                >
+                    🛹 WELCOME TO SKATEGUIDE
                 </Typography>
-                <Typography variant="h6" sx={{ mb: 4, color: '#6E7763' }} id="home-subtitle">
+                <Typography 
+                    variant="h5" 
+                    sx={{ 
+                        mb: 5, 
+                        color: 'var(--color-accent-green)',
+                        fontWeight: 600,
+                        textShadow: theme === 'dark'
+                            ? '0 2px 4px rgba(0, 0, 0, 0.8), 0 1px 2px rgba(0, 0, 0, 0.6)'
+                            : '0 1px 2px rgba(0, 0, 0, 0.2)',
+                        maxWidth: '600px',
+                        mx: 'auto',
+                        filter: theme === 'dark'
+                            ? 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9))'
+                            : 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2))',
+                        position: 'relative',
+                        zIndex: 2
+                    }} 
+                    id="home-subtitle"
+                >
                     Discover, rate, and share skateparks around the city — from wooden ramps to metallic rails.
                 </Typography>
                 <Button
@@ -577,10 +650,24 @@ export default function HomePage() {
                     onClick={() => router.push('/map')}
                     id="home-explore-map-btn"
                     sx={{
-                        backgroundColor: '#A7A9AC',
-                        color: '#fff',
+                        backgroundColor: 'var(--color-accent-rust)',
+                        color: 'var(--color-surface-elevated)',
                         fontWeight: 'bold',
-                        '&:hover': { backgroundColor: '#8A8A8A' }
+                        fontSize: '1.1rem',
+                        px: 5,
+                        py: 2,
+                        borderRadius: 'var(--radius-lg)',
+                        border: '3px solid var(--color-accent-rust)',
+                        boxShadow: 'var(--shadow-lg)',
+                        transition: 'all var(--transition-fast)',
+                        textTransform: 'none',
+                        position: 'relative',
+                        zIndex: 2,
+                        '&:hover': { 
+                            backgroundColor: 'var(--color-accent-rust)',
+                            transform: 'translateY(-3px)',
+                            boxShadow: 'var(--shadow-xl)',
+                        }
                     }}
                 >
                     Explore the Map
@@ -589,9 +676,16 @@ export default function HomePage() {
 
             {!userCoords ? (
                 <Box display="flex" justifyContent="center" mt={4}>
-                    <Box sx={{ textAlign: 'center' }}>
-                        <CircularProgress size={40} sx={{ color: '#A7A9AC', mb: 2 }} />
-                        <Typography variant="body2" color="text.secondary">
+                    <Box sx={{ 
+                        textAlign: 'center',
+                        p: 4,
+                        backgroundColor: 'var(--color-surface)',
+                        borderRadius: 'var(--radius-lg)',
+                        border: '1px solid var(--color-border)',
+                        boxShadow: 'var(--shadow-md)'
+                    }}>
+                        <CircularProgress size={40} sx={{ color: 'var(--color-accent-blue)', mb: 2 }} />
+                        <Typography variant="body1" color="var(--color-text-secondary)" fontWeight={500}>
                             Getting your location...
                         </Typography>
                     </Box>
@@ -601,17 +695,19 @@ export default function HomePage() {
                     {/* Loading header with progress info */}
                     <Box sx={{ 
                         textAlign: 'center', 
-                        mb: 4,
-                        p: 3,
-                        backgroundColor: 'rgba(167, 169, 172, 0.1)',
-                        borderRadius: 2,
-                        border: '1px solid rgba(167, 169, 172, 0.3)'
+                        mb: 6,
+                        p: 4,
+                        backgroundColor: 'var(--color-surface-elevated)',
+                        borderRadius: 'var(--radius-lg)',
+                        border: '1px solid var(--color-border)',
+                        boxShadow: 'var(--shadow-lg)',
+                        background: 'linear-gradient(135deg, var(--color-surface-elevated) 0%, var(--color-surface) 100%)'
                     }}>
-                        <CircularProgress size={32} sx={{ color: '#A7A9AC', mb: 2 }} />
-                        <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
+                        <CircularProgress size={40} sx={{ color: 'var(--color-accent-green)', mb: 3 }} />
+                        <Typography variant="h5" color="var(--color-text-primary)" sx={{ mb: 2, fontWeight: 600 }}>
                             Loading Skateparks
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body1" color="var(--color-text-secondary)" fontWeight={500}>
                             Finding the best spots near you...
                         </Typography>
                     </Box>
@@ -632,14 +728,16 @@ export default function HomePage() {
                         display: 'flex', 
                         justifyContent: 'space-between', 
                         alignItems: 'center', 
-                        mb: 3,
-                        p: 2,
-                        backgroundColor: 'rgba(167, 169, 172, 0.1)',
-                        borderRadius: 2,
-                        border: '1px solid rgba(167, 169, 172, 0.3)'
+                        mb: 4,
+                        p: 3,
+                        backgroundColor: 'var(--color-surface-elevated)',
+                        borderRadius: 'var(--radius-lg)',
+                        border: '1px solid var(--color-border)',
+                        boxShadow: 'var(--shadow-md)',
+                        background: 'linear-gradient(135deg, var(--color-surface-elevated) 0%, var(--color-surface) 100%)'
                     }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                                         <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                            <Typography variant="body1" color="var(--color-text-secondary)" sx={{ fontWeight: 500 }}>
                                  Page {page} of {totalPages} • {allParks.length} total spots • {parksWithDistance.length} filtered
                              </Typography>
                             
@@ -654,17 +752,18 @@ export default function HomePage() {
                                         fontSize: '0.75rem',
                                         py: 0.5,
                                         px: 1.5,
-                                        borderColor: '#A7A9AC',
-                                        color: '#A7A9AC',
+                                        borderColor: 'var(--color-accent-blue)',
+                                        color: 'var(--color-accent-blue)',
+                                        borderRadius: 'var(--radius-md)',
+                                        transition: 'all var(--transition-fast)',
                                         '&:hover': {
-                                            borderColor: '#8A8A8A',
-                                            backgroundColor: 'rgba(167, 169, 172, 0.1)',
-                                            transform: 'translateY(-1px)'
-                                        },
-                                        transition: 'all 0.2s ease'
+                                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                                            borderColor: 'var(--color-accent-blue)',
+                                            transform: 'translateY(-1px)',
+                                        }
                                     }}
                                 >
-                                    ← Back to First
+                                    Back to First
                                 </Button>
                             )}
                         </Box>
@@ -742,14 +841,16 @@ export default function HomePage() {
                     {/* Last Updated Indicator */}
                     <Box sx={{ 
                         textAlign: 'center', 
-                        mb: 2,
-                        p: 1,
-                        backgroundColor: 'rgba(167, 169, 172, 0.05)',
-                        borderRadius: 1,
-                        border: '1px solid rgba(167, 169, 172, 0.1)'
+                        mb: 4,
+                        p: 2,
+                        backgroundColor: 'var(--color-surface)',
+                        borderRadius: 'var(--radius-lg)',
+                        border: '1px solid var(--color-border)',
+                        boxShadow: 'var(--shadow-sm)',
+                        background: 'linear-gradient(135deg, var(--color-surface) 0%, var(--color-surface-elevated) 100%)'
                     }}>
-                        <Typography variant="caption" color="text.secondary">
-                            Last updated: {lastUpdated.toLocaleTimeString()}
+                        <Typography variant="body2" color="var(--color-text-secondary)" fontWeight={500}>
+                            🔄 Last updated: {lastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                         </Typography>
                     </Box>
 
@@ -782,77 +883,123 @@ export default function HomePage() {
                         display: 'flex', 
                         justifyContent: 'center', 
                         alignItems: 'center', 
-                        mt: 6, 
+                        mt: 8, 
                         mb: 4,
-                        p: 3,
-                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                        borderRadius: 3,
-                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-                        border: '1px solid rgba(167, 169, 172, 0.2)'
+                        p: 4,
+                        backgroundColor: 'var(--color-surface-elevated)',
+                        borderRadius: 'var(--radius-xl)',
+                        boxShadow: 'var(--shadow-lg)',
+                        border: '1px solid var(--color-border)',
+                        background: 'linear-gradient(135deg, var(--color-surface-elevated) 0%, var(--color-surface) 100%)',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        '&::before': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: '3px',
+                            background: 'linear-gradient(90deg, var(--color-accent-green) 0%, var(--color-accent-blue) 50%, var(--color-accent-rust) 100%)',
+                        }
                     }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                             {/* Enhanced Pagination */}
                             <Pagination
                                 count={totalPages}
                                 page={page}
-                                onChange={(_, value) => {
-                                    if (backgroundDataLoaded) {
-                                        // console.log(`⚡ Instant page ${value} from background data`);
-                                    } else {
-                                        // console.log(`🔄 Loading page ${value} from server`);
-                                    }
-                                    setPage(value);
-                                }}
+                                onChange={(_, newPage) => setPage(newPage)}
                                 color="primary"
                                 size="large"
                                 showFirstButton
                                 showLastButton
                                 sx={{
                                     '& .MuiPaginationItem-root': {
-                                        fontSize: '1rem',
-                                        fontWeight: 600,
-                                        minWidth: 44,
-                                        height: 44,
-                                        borderRadius: 2,
-                                        border: '1px solid rgba(167, 169, 172, 0.3)',
-                                        color: '#2F2F2F',
-                                        transition: 'all 0.2s ease',
+                                        color: 'var(--color-text-primary)',
+                                        border: '1px solid var(--color-border)',
+                                        backgroundColor: 'var(--color-surface)',
+                                        fontWeight: 500,
                                         '&:hover': {
-                                            backgroundColor: 'rgba(167, 169, 172, 0.1)',
-                                            transform: 'translateY(-1px)',
-                                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                                            backgroundColor: 'var(--color-accent-blue)',
+                                            color: 'var(--color-surface-elevated)',
+                                            borderColor: 'var(--color-accent-blue)',
                                         },
                                         '&.Mui-selected': {
-                                            backgroundColor: '#A7A9AC',
-                                            color: '#fff',
-                                            borderColor: '#A7A9AC',
-                                            boxShadow: '0 4px 12px rgba(167, 169, 172, 0.4)',
+                                            backgroundColor: 'var(--color-accent-blue)',
+                                            color: 'var(--color-surface-elevated)',
+                                            borderColor: 'var(--color-accent-blue)',
                                             '&:hover': {
-                                                backgroundColor: '#8A8A8A',
-                                                transform: 'translateY(-1px)',
+                                                backgroundColor: 'var(--color-accent-blue)',
                                             }
                                         }
+                                    },
+                                    '& .MuiPaginationItem-ellipsis': {
+                                        color: 'var(--color-text-secondary)',
+                                        border: 'none',
+                                        backgroundColor: 'transparent',
                                     }
                                 }}
                             />
                             
-                            {/* Background loading indicator with enhanced styling */}
-                            {isBackgroundLoading && (
+                            {/* Quick Page Input */}
                                 <Box sx={{ 
                                     display: 'flex', 
                                     alignItems: 'center', 
-                                    gap: 1.5,
+                                gap: 1,
+                                ml: 2,
                                     p: 1.5,
-                                    backgroundColor: 'rgba(167, 169, 172, 0.1)',
-                                    borderRadius: 2,
-                                    border: '1px solid rgba(167, 169, 172, 0.2)'
-                                }}>
-                                    <CircularProgress size={20} sx={{ color: '#A7A9AC' }} />
-                                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-                                        Preloading pages...
+                                backgroundColor: 'var(--color-surface)',
+                                borderRadius: 'var(--radius-md)',
+                                border: '1px solid var(--color-border)'
+                            }}>
+                                <Typography variant="body2" color="var(--color-text-primary)" sx={{ fontWeight: 500 }}>
+                                    Go to:
+                                </Typography>
+                                <TextField
+                                    type="number"
+                                    value={page}
+                                    onChange={(e) => {
+                                        const newPage = parseInt(e.target.value);
+                                        if (newPage >= 1 && newPage <= totalPages) {
+                                            setPage(newPage);
+                                        }
+                                    }}
+                                    onKeyPress={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            const target = e.target as HTMLInputElement;
+                                            const newPage = parseInt(target.value);
+                                            if (newPage >= 1 && newPage <= totalPages) {
+                                                setPage(newPage);
+                                            }
+                                        }
+                                    }}
+                                    sx={{
+                                        width: 70,
+                                        '& .MuiOutlinedInput-root': {
+                                            fontSize: '0.875rem',
+                                            height: 32,
+                                            backgroundColor: 'var(--color-background)',
+                                            '& input': {
+                                                padding: '6px 8px',
+                                                textAlign: 'center'
+                                            },
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: 'var(--color-border)',
+                                            },
+                                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: 'var(--color-accent-blue)',
+                                            },
+                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: 'var(--color-accent-blue)',
+                                            }
+                                        }
+                                    }}
+                                />
+                                <Typography variant="body2" color="var(--color-text-secondary)" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
+                                    of {totalPages}
                                     </Typography>
                                 </Box>
-                            )}
                         </Box>
                     </Box>
                 </>
