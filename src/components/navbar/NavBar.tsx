@@ -26,6 +26,7 @@ import AddLocationIcon from '@mui/icons-material/AddLocation';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LoginIcon from '@mui/icons-material/Login';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import Link from 'next/link';
 
 export default function NavBar() {
     const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
@@ -39,9 +40,8 @@ export default function NavBar() {
         setAnchorElNav(event.currentTarget);
     };
 
-    const handleCloseNavMenu = (href?: string) => {
+    const handleCloseNavMenu = () => {
         setAnchorElNav(null);
-        if (href) router.push(href);
     };
 
     const handleLogout = () => {
@@ -106,8 +106,6 @@ export default function NavBar() {
                     >
                         🛹 SkateGuide
                     </Typography>
-
-
 
                     {/* Theme Toggle */}
                     <Tooltip title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
@@ -177,27 +175,33 @@ export default function NavBar() {
                                 }
                             }}
                         >
-
-                            
-                            <MenuItem onClick={() => handleCloseNavMenu('/map')} sx={{ py: 1, px: 2 }}>
-                                <MapIcon sx={{ mr: 1, fontSize: 20 }} />
-                                <Typography textAlign="center" fontWeight={500} fontSize="0.9rem" color="var(--color-text-primary)">Map</Typography>
+                            <MenuItem onClick={handleCloseNavMenu} sx={{ py: 1, px: 2 }}>
+                                <Link href="/map" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit', width: '100%' }}>
+                                    <MapIcon sx={{ mr: 1, fontSize: 20 }} />
+                                    <Typography textAlign="center" fontWeight={500} fontSize="0.9rem" color="var(--color-text-primary)">Map</Typography>
+                                </Link>
                             </MenuItem>
                             {user && (
-                                <MenuItem onClick={() => handleCloseNavMenu('/add-spot')} sx={{ py: 1, px: 2 }}>
-                                    <AddLocationIcon sx={{ mr: 1, fontSize: 20 }} />
-                                    <Typography textAlign="center" fontWeight={500} fontSize="0.9rem" color="var(--color-text-primary)">Add Spot</Typography>
+                                <MenuItem onClick={handleCloseNavMenu} sx={{ py: 1, px: 2 }}>
+                                    <Link href="/add-spot" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit', width: '100%' }}>
+                                        <AddLocationIcon sx={{ mr: 1, fontSize: 20 }} />
+                                        <Typography textAlign="center" fontWeight={500} fontSize="0.9rem" color="var(--color-text-primary)">Add Spot</Typography>
+                                    </Link>
                                 </MenuItem>
                             )}
                             {!user ? (
                                 <>
-                                    <MenuItem onClick={() => handleCloseNavMenu('/login')} sx={{ py: 1, px: 2 }}>
-                                        <LoginIcon sx={{ mr: 1, fontSize: 20 }} />
-                                        <Typography textAlign="center" fontWeight={500} fontSize="0.9rem" color="var(--color-text-primary)">Login</Typography>
+                                    <MenuItem onClick={handleCloseNavMenu} sx={{ py: 1, px: 2 }}>
+                                        <Link href="/login" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit', width: '100%' }}>
+                                            <LoginIcon sx={{ mr: 1, fontSize: 20 }} />
+                                            <Typography textAlign="center" fontWeight={500} fontSize="0.9rem" color="var(--color-text-primary)">Login</Typography>
+                                        </Link>
                                     </MenuItem>
-                                    <MenuItem onClick={() => handleCloseNavMenu('/register')} sx={{ py: 1, px: 2 }}>
-                                        <PersonAddIcon sx={{ mr: 1, fontSize: 20 }} />
-                                        <Typography textAlign="center" fontWeight={500} fontSize="0.9rem" color="var(--color-text-primary)">Register</Typography>
+                                    <MenuItem onClick={handleCloseNavMenu} sx={{ py: 1, px: 2 }}>
+                                        <Link href="/register" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit', width: '100%' }}>
+                                            <PersonAddIcon sx={{ mr: 1, fontSize: 20 }} />
+                                            <Typography textAlign="center" fontWeight={500} fontSize="0.9rem" color="var(--color-text-primary)">Register</Typography>
+                                        </Link>
                                     </MenuItem>
                                 </>
                             ) : (
@@ -220,107 +224,120 @@ export default function NavBar() {
                         {/* Add Spot Button */}
                         <Tooltip title={!user ? "You need to login to add a spot" : "Add New Spot"}>
                             <span>
-                                <IconButton
-                                    onClick={() => user && router.push('/add-spot')}
-                                    disabled={!user}
-                                    sx={{
-                                        color: 'var(--color-surface-elevated)',
-                                        backgroundColor: 'var(--color-accent-rust)',
-                                        border: '2px solid var(--color-accent-rust)',
-                                        borderRadius: 'var(--radius-md)',
-                                        transition: 'all var(--transition-fast)',
-                                        boxShadow: 'var(--shadow-sm)',
-                                        p: 1,
-                                        '&:hover': {
-                                            backgroundColor: user ? 'var(--color-accent-rust)' : 'inherit',
-                                            transform: user ? 'translateY(-2px)' : 'none',
-                                            boxShadow: user ? 'var(--shadow-md)' : 'none',
-                                        },
-                                        '&:disabled': {
+                                {user ? (
+                                    <Link href="/add-spot" style={{ textDecoration: 'none' }}>
+                                        <IconButton
+                                            sx={{
+                                                color: 'var(--color-surface-elevated)',
+                                                backgroundColor: 'var(--color-accent-rust)',
+                                                border: '2px solid var(--color-accent-rust)',
+                                                borderRadius: 'var(--radius-md)',
+                                                transition: 'all var(--transition-fast)',
+                                                boxShadow: 'var(--shadow-sm)',
+                                                p: 1,
+                                                '&:hover': {
+                                                    backgroundColor: 'var(--color-accent-rust)',
+                                                    transform: 'translateY(-2px)',
+                                                    boxShadow: 'var(--shadow-md)',
+                                                }
+                                            }}
+                                        >
+                                            <AddLocationIcon />
+                                        </IconButton>
+                                    </Link>
+                                ) : (
+                                    <IconButton
+                                        disabled={true}
+                                        sx={{
                                             color: 'var(--color-text-secondary)',
                                             backgroundColor: 'var(--color-surface)',
-                                            borderColor: 'var(--color-border)',
-                                        }
-                                    }}
-                                >
-                                    <AddLocationIcon />
-                                </IconButton>
+                                            border: '2px solid var(--color-border)',
+                                            borderRadius: 'var(--radius-md)',
+                                            transition: 'all var(--transition-fast)',
+                                            boxShadow: 'var(--shadow-sm)',
+                                            p: 1,
+                                        }}
+                                    >
+                                        <AddLocationIcon />
+                                    </IconButton>
+                                )}
                             </span>
                         </Tooltip>
 
                         {/* Map Button */}
                         <Tooltip title="View Map">
-                            <IconButton
-                                onClick={() => router.push('/map')}
-                                sx={{
-                                    color: 'var(--color-accent-blue)',
-                                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                                    border: '2px solid var(--color-accent-blue)',
-                                    borderRadius: 'var(--radius-md)',
-                                    transition: 'all var(--transition-fast)',
-                                    boxShadow: 'var(--shadow-sm)',
-                                    p: 1,
-                                    '&:hover': { 
-                                        backgroundColor: 'rgba(52, 152, 219, 0.2)',
-                                        transform: 'translateY(-2px)',
-                                        boxShadow: 'var(--shadow-md)',
-                                    }
-                                }}
-                            >
-                                <MapIcon />
-                            </IconButton>
+                            <Link href="/map" style={{ textDecoration: 'none' }}>
+                                <IconButton
+                                    sx={{
+                                        color: 'var(--color-accent-blue)',
+                                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                                        border: '2px solid var(--color-accent-blue)',
+                                        borderRadius: 'var(--radius-md)',
+                                        transition: 'all var(--transition-fast)',
+                                        boxShadow: 'var(--shadow-sm)',
+                                        p: 1,
+                                        '&:hover': { 
+                                            backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                                            transform: 'translateY(-2px)',
+                                            boxShadow: 'var(--shadow-md)',
+                                        }
+                                    }}
+                                >
+                                    <MapIcon />
+                                </IconButton>
+                            </Link>
                         </Tooltip>
 
                         {/* Auth Buttons */}
                         {!user ? (
                             <>
                                 <Tooltip title="Login to your account">
-                                    <IconButton
-                                        onClick={() => router.push('/login')}
-                                        sx={{
-                                            color: 'var(--color-accent-green)',
-                                            backgroundColor: 'rgba(39, 174, 96, 0.1)',
-                                            border: '2px solid var(--color-accent-green)',
-                                            borderRadius: 'var(--radius-md)',
-                                            transition: 'all var(--transition-fast)',
-                                            boxShadow: 'var(--shadow-sm)',
-                                            p: 1,
-                                            '&:hover': { 
-                                                backgroundColor: 'rgba(39, 174, 96, 0.2)',
-                                                transform: 'translateY(-2px)',
-                                                boxShadow: 'var(--shadow-md)',
-                                            }
-                                        }}
-                                    >
-                                        <LoginIcon />
-                                    </IconButton>
+                                    <Link href="/login" style={{ textDecoration: 'none' }}>
+                                        <IconButton
+                                            sx={{
+                                                color: 'var(--color-accent-green)',
+                                                backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                                                border: '2px solid var(--color-accent-green)',
+                                                borderRadius: 'var(--radius-md)',
+                                                transition: 'all var(--transition-fast)',
+                                                boxShadow: 'var(--shadow-sm)',
+                                                p: 1,
+                                                '&:hover': { 
+                                                    backgroundColor: 'rgba(39, 174, 96, 0.2)',
+                                                    transform: 'translateY(-2px)',
+                                                    boxShadow: 'var(--shadow-md)',
+                                                }
+                                            }}
+                                        >
+                                            <LoginIcon />
+                                        </IconButton>
+                                    </Link>
                                 </Tooltip>
                                 <Tooltip title="Create a new account">
-                                    <IconButton
-                                        onClick={() => router.push('/register')}
-                                        sx={{
-                                            color: 'var(--color-surface-elevated)',
-                                            backgroundColor: 'var(--color-accent-green)',
-                                            border: '2px solid var(--color-accent-green)',
-                                            borderRadius: 'var(--radius-md)',
-                                            transition: 'all var(--transition-fast)',
-                                            boxShadow: 'var(--shadow-sm)',
-                                            p: 1,
-                                            '&:hover': { 
+                                    <Link href="/register" style={{ textDecoration: 'none' }}>
+                                        <IconButton
+                                            sx={{
+                                                color: 'var(--color-surface-elevated)',
                                                 backgroundColor: 'var(--color-accent-green)',
-                                                transform: 'translateY(-2px)',
-                                                boxShadow: 'var(--shadow-md)',
-                                            }
-                                        }}
-                                    >
-                                        <PersonAddIcon />
-                                    </IconButton>
+                                                border: '2px solid var(--color-accent-green)',
+                                                borderRadius: 'var(--radius-md)',
+                                                transition: 'all var(--transition-fast)',
+                                                boxShadow: 'var(--shadow-sm)',
+                                                p: 1,
+                                                '&:hover': { 
+                                                    backgroundColor: 'var(--color-accent-green)',
+                                                    transform: 'translateY(-2px)',
+                                                    boxShadow: 'var(--shadow-md)',
+                                                }
+                                            }}
+                                        >
+                                            <PersonAddIcon />
+                                        </IconButton>
+                                    </Link>
                                 </Tooltip>
                             </>
                         ) : (
                             <>
-
-                                
                                 {/* User Avatar */}
                                 <Avatar
                                     alt={user.name}
