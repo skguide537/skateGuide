@@ -9,6 +9,34 @@ import { useTheme } from '@/context/ThemeContext';
 import { Size, Tag, SkaterLevel } from '@/types/enums';
 import AddSpotMap from '@/components/map/AddSpotMap';
 
+// Debounce utility function
+function debounce<T extends (...args: any[]) => any>(
+    func: T,
+    wait: number
+): (...args: Parameters<T>) => void {
+    let timeout: NodeJS.Timeout;
+    return (...args: Parameters<T>) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), wait);
+    };
+}
+
+// Helper function to create shorter, more readable addresses
+function createShortAddress(fullAddress: string): string {
+    if (!fullAddress) return 'Unknown location';
+    
+    // Split by commas and take the first 2-3 meaningful parts
+    const parts = fullAddress.split(',').map(part => part.trim()).filter(part => part.length > 0);
+    
+    if (parts.length <= 2) return fullAddress;
+    
+    // Take first 2-3 parts, but avoid very short parts like postal codes
+    const meaningfulParts = parts.filter(part => part.length > 2);
+    const shortParts = meaningfulParts.slice(0, 3);
+    
+    return shortParts.join(', ');
+}
+
 const sizes = Object.values(Size);
 const tags = Object.values(Tag);
 const levels = Object.values(SkaterLevel);
@@ -22,7 +50,7 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [size, setSize] = useState('');
-    const [level, setLevel] = useState('');
+    const [levelList, setLevelList] = useState<string[]>([]);
     const [isPark, setIsPark] = useState(false);
     const [tagList, setTagList] = useState<string[]>([]);
     const [photos, setPhotos] = useState<FileList | null>(null);
@@ -32,6 +60,7 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
     const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
     
     // New address state variables
+    const [fullAddress, setFullAddress] = useState('');
     const [street, setStreet] = useState('');
     const [city, setCity] = useState('');
     const [state, setState] = useState('');
@@ -68,13 +97,25 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
             showToast('Please select a size', 'error');
             return;
         }
-        if (!level) {
-            showToast('Please select a level', 'error');
+        if (levelList.length === 0) {
+            showToast('Please select at least one level', 'error');
             return;
         }
         if (!coords) {
             showToast('Please select a location using "Search Address", "Use My Location", or click on the map.', 'error');
             return;
+        }
+        
+        // Smart address validation - only require address fields if using address method
+        if (locationMethod === 'address' && !coords) {
+            // Check if we have either a full address or structured address
+            const hasFullAddress = fullAddress.trim();
+            const hasStructuredAddress = country.trim() && city.trim() && street.trim();
+            
+            if (!hasFullAddress && !hasStructuredAddress) {
+                showToast('Please enter either a full address or complete the structured address fields', 'error');
+                return;
+            }
         }
 
         setIsSubmitting(true);
@@ -83,7 +124,7 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
             title,
             description,
             size,
-            level,
+            levels: levelList,
             isPark,
             tags: tagList,
             location: {
@@ -144,11 +185,16 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                     if (setValidatedCoords(lat, lng)) {
                         setLocationMethod('gps');
                         // Clear address fields when using GPS
+                        setFullAddress('');
                         setStreet('');
                         setCity('');
                         setState('');
                         setCountry('');
                         setShowMap(false);
+                        // Clear suggestions when switching to GPS method
+                        setStreetSuggestions([]);
+                        setCitySuggestions([]);
+                        setCountrySuggestions([]);
                         showToast(`Location set: ${lat.toFixed(4)}, ${lng.toFixed(4)}`, 'success');
                     }
                 },
@@ -163,39 +209,54 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
     };
 
     const searchAddress = async () => {
-        if (!street.trim() || !city.trim()) {
-            showToast('Please enter at least street and city', 'error');
+        // Check if we have a full address or structured address
+        const hasFullAddress = fullAddress.trim();
+        const hasStructuredAddress = street.trim() && city.trim();
+        
+        if (!hasFullAddress && !hasStructuredAddress) {
+            showToast('Please enter either a full address or at least street and city', 'error');
             return;
         }
 
         setIsGeocoding(true);
         
         try {
-            // Build the search query
-            const searchQuery = [street, city, state, country]
+            // Build the search query - prioritize full address if available
+            let searchQuery = '';
+            if (hasFullAddress) {
+                searchQuery = fullAddress;
+            } else {
+                searchQuery = [street, city, state, country]
                 .filter(part => part.trim())
                 .join(', ');
+            }
             
-            // Use OpenStreetMap Nominatim API for geocoding
+            // Use our backend geocoding API
             const response = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`
+                `/api/geocoding/search?type=address&q=${encodeURIComponent(searchQuery)}&limit=1`
             );
             
             if (!response.ok) {
+                if (response.status === 429) {
+                    showToast('Too many requests. Please wait a moment and try again.', 'error');
+                } else if (response.status === 503) {
+                    showToast('Geocoding service temporarily unavailable. Please try again later.', 'error');
+                } else {
                 throw new Error('Geocoding service unavailable');
+                }
+                return;
             }
             
             const data = await response.json();
             
-            if (data && data.length > 0) {
-                const result = data[0];
-                const lat = parseFloat(result.lat);
-                const lng = parseFloat(result.lon);
-                
-                if (setValidatedCoords(lat, lng)) {
+            if (data && data.lat && data.lng) {
+                if (setValidatedCoords(data.lat, data.lng)) {
                     setShowMap(true); // Show map with the found location
                     setLocationMethod('address');
-                    showToast(`Location found: ${result.display_name}`, 'success');
+                    
+                    // Create a shorter, more readable address for the toast
+                    const shortAddress = createShortAddress(data.displayName || searchQuery);
+                    showToast(`Location found: ${shortAddress}`, 'success');
                 }
             } else {
                 showToast('Address not found. Please try a different address or use the map.', 'error');
@@ -230,87 +291,125 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
         }
     };
 
-    // Autocomplete functions
-    const fetchStreetSuggestions = useCallback(async (query: string) => {
+    // Debounced autocomplete functions
+    const debouncedFetchStreet = useCallback(
+        debounce(async (query: string) => {
         if (query.length < 2) return;
         
         setIsLoadingStreet(true);
         try {
             const response = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=5&featuretype=street`
+                    `/api/geocoding/search?type=street&q=${encodeURIComponent(query)}&limit=5`
             );
             
             if (response.ok) {
                 const data = await response.json();
-                const streets = data
-                    .map((item: any) => item.address?.road || item.display_name.split(',')[0])
-                    .filter(Boolean)
-                    .slice(0, 5);
-                setStreetSuggestions(streets);
+                    if (Array.isArray(data)) {
+                        setStreetSuggestions(data);
+                    } else {
+                        setStreetSuggestions([]);
+                    }
+                } else {
+                    console.error('Street autocomplete error:', response.status);
+                    setStreetSuggestions([]);
             }
         } catch (error) {
             console.error('Street autocomplete error:', error);
+                setStreetSuggestions([]);
         } finally {
             setIsLoadingStreet(false);
         }
-    }, []);
+        }, 500),
+        []
+    );
 
-    const fetchCitySuggestions = useCallback(async (query: string) => {
+    const fetchStreetSuggestions = useCallback((query: string) => {
+        debouncedFetchStreet(query);
+    }, [debouncedFetchStreet]);
+
+    const debouncedFetchCity = useCallback(
+        debounce(async (query: string) => {
         if (query.length < 2) return;
         
         setIsLoadingCity(true);
         try {
             const response = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=5&featuretype=city`
+                    `/api/geocoding/search?type=city&q=${encodeURIComponent(query)}&limit=5`
             );
             
             if (response.ok) {
                 const data = await response.json();
-                const cities = data
-                    .map((item: any) => item.address?.city || item.address?.town || item.address?.village || item.display_name.split(',')[0])
-                    .filter(Boolean)
-                    .slice(0, 5);
-                setCitySuggestions(cities);
+                    if (Array.isArray(data)) {
+                        setCitySuggestions(data);
+                    } else {
+                        setCitySuggestions([]);
+                    }
+                } else {
+                    console.error('City autocomplete error:', response.status);
+                    setCitySuggestions([]);
             }
         } catch (error) {
             console.error('City autocomplete error:', error);
+                setCitySuggestions([]);
         } finally {
             setIsLoadingCity(false);
         }
-    }, []);
+        }, 500),
+        []
+    );
 
-    const fetchCountrySuggestions = useCallback(async (query: string) => {
+    const fetchCitySuggestions = useCallback((query: string) => {
+        debouncedFetchCity(query);
+    }, [debouncedFetchCity]);
+
+    const debouncedFetchCountry = useCallback(
+        debounce(async (query: string) => {
         if (query.length < 2) return;
         
         setIsLoadingCountry(true);
         try {
             const response = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=5&featuretype=country`
+                    `/api/geocoding/search?type=country&q=${encodeURIComponent(query)}&limit=5`
             );
             
             if (response.ok) {
                 const data = await response.json();
-                const countries = data
-                    .map((item: any) => item.address?.country || item.display_name.split(',')[0])
-                    .filter(Boolean)
-                    .slice(0, 5);
-                setCountrySuggestions(countries);
+                    if (Array.isArray(data)) {
+                        setCountrySuggestions(data);
+                    } else {
+                        setCountrySuggestions([]);
+                    }
+                } else {
+                    console.error('Country autocomplete error:', response.status);
+                    setCountrySuggestions([]);
             }
         } catch (error) {
             console.error('Country autocomplete error:', error);
+                setCountrySuggestions([]);
         } finally {
             setIsLoadingCountry(false);
         }
-    }, []);
+        }, 500),
+        []
+    );
+
+    const fetchCountrySuggestions = useCallback((query: string) => {
+        debouncedFetchCountry(query);
+    }, [debouncedFetchCountry]);
 
     const handleMapClick = (coords: { lat: number; lng: number }) => {
         if (setValidatedCoords(coords.lat, coords.lng)) {
             setLocationMethod('map');
             // Clear address fields when using map selection
+            setFullAddress('');
             setStreet('');
             setCity('');
             setState('');
             setCountry('');
+            // Clear suggestions when switching to map method
+            setStreetSuggestions([]);
+            setCitySuggestions([]);
+            setCountrySuggestions([]);
             showToast(`Location selected on map: ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`, 'success');
         }
     };
@@ -324,6 +423,9 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
             // Note: We can't set coords to null, so we'll just update the location method
             // The coordinates will be cleared when a new address is searched
         }
+        
+        // Clear full address when using structured fields
+        setFullAddress('');
         
         // Update the specific field
         switch (field) {
@@ -340,6 +442,31 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                 setCountry(value);
                 break;
         }
+        
+        // Clear suggestions when switching to address method to ensure fresh results
+        if (locationMethod !== 'address') {
+            setStreetSuggestions([]);
+            setCitySuggestions([]);
+            setCountrySuggestions([]);
+                }
+    };
+    
+    // Handle full address changes - switch to address method and clear structured fields
+    const handleFullAddressChange = (value: string) => {
+        if (locationMethod !== 'address') {
+            setLocationMethod('address');
+        }
+        
+        setFullAddress(value);
+        
+        // Clear structured fields when using full address
+        setStreet('');
+        setCity('');
+        setState('');
+        setCountry('');
+        setStreetSuggestions([]);
+        setCitySuggestions([]);
+        setCountrySuggestions([]);
     };
 
     return (
@@ -465,17 +592,33 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                     {hasAttemptedSubmit && !size && <Typography variant="caption" sx={{ color: 'var(--color-error)', mt: 1 }}>Size is required</Typography>}
                 </FormControl>
 
-                <FormControl fullWidth sx={{ mb: 3 }} required error={hasAttemptedSubmit && !level}>
+                <FormControl fullWidth sx={{ mb: 3 }} required error={hasAttemptedSubmit && levelList.length === 0}>
                     <InputLabel sx={{ 
                         color: 'var(--color-text-secondary)',
                         '&.Mui-focused': {
                             color: 'var(--color-accent-blue)'
                         }
-                    }}>Level *</InputLabel>
+                    }}>Levels *</InputLabel>
                     <Select 
-                        value={level} 
-                        label="Level *" 
-                        onChange={e => setLevel(e.target.value)}
+                        multiple
+                        value={levelList}
+                        onChange={(e) => setLevelList(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                        input={<OutlinedInput label="Levels" />}
+                        renderValue={(selected) => (
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                {selected.map((value) => (
+                                    <Chip 
+                                        key={value} 
+                                        label={value} 
+                                        sx={{
+                                            backgroundColor: 'var(--color-accent-rust)',
+                                            color: 'var(--color-surface-elevated)',
+                                            fontWeight: 600
+                                        }}
+                                    />
+                                ))}
+                            </Box>
+                        )}
                         sx={{
                             '& .MuiOutlinedInput-notchedOutline': {
                                 borderColor: 'var(--color-border)',
@@ -491,10 +634,9 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                             }
                         }}
                     >
-                        <MenuItem value="">Select a level</MenuItem>
-                        {levels.map(l => <MenuItem key={l} value={l}>{l}</MenuItem>)}
+                        {levels.map(level => <MenuItem key={level} value={level}>{level}</MenuItem>)}
                     </Select>
-                    {hasAttemptedSubmit && !level && <Typography variant="caption" sx={{ color: 'var(--color-error)', mt: 1 }}>Level is required</Typography>}
+                    {hasAttemptedSubmit && levelList.length === 0 && <Typography variant="caption" sx={{ color: 'var(--color-error)', mt: 1 }}>At least one level is required</Typography>}
                 </FormControl>
 
                 <FormControl fullWidth sx={{ mb: 3 }}>
@@ -586,26 +728,79 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                     📍 Location
                 </Typography>
             
+            {/* Full Address Field - Quick and Easy */}
+            <TextField 
+                fullWidth 
+                label="Full Address (Quick Entry)" 
+                value={fullAddress}
+                onChange={e => handleFullAddressChange(e.target.value)}
+                placeholder="e.g., R. António Ferro, 2765-503 Estoril, Portugal"
+                disabled={locationMethod === 'gps' || locationMethod === 'map'}
+                sx={{ 
+                    mb: 3,
+                    '& .MuiOutlinedInput-root': {
+                        borderRadius: 'var(--radius-md)',
+                        backgroundColor: 'var(--color-surface)',
+                        border: '1px solid var(--color-border)',
+                        transition: 'all var(--transition-fast)',
+                        '&:hover': {
+                            borderColor: 'var(--color-accent-blue)',
+                            backgroundColor: 'var(--color-surface-elevated)',
+                        },
+                        '&.Mui-focused': {
+                            borderColor: 'var(--color-accent-blue)',
+                            boxShadow: '0 0 0 2px rgba(93, 173, 226, 0.2)',
+                        }
+                    },
+                    '& .MuiInputBase-input::placeholder': {
+                        color: 'var(--color-text-secondary)',
+                        opacity: 1
+                    }
+                }}
+                helperText={
+                    locationMethod === 'gps' ? "Disabled when using GPS location" :
+                    locationMethod === 'map' ? "Disabled when using map selection" :
+                    "Paste the complete address here for quick geocoding"
+                }
+            />
+            
+            <Typography 
+                variant="body2" 
+                sx={{ 
+                    mb: 2, 
+                    color: 'var(--color-text-secondary)',
+                    textAlign: 'center',
+                    fontStyle: 'italic'
+                }}
+            >
+                — OR use the structured fields below for detailed control —
+            </Typography>
+            
+            {/* Country First - for context */}
             <Autocomplete
                 freeSolo
-                options={streetSuggestions}
-                value={street}
-                onChange={(_, newValue) => handleAddressChange('street', newValue || '')}
+                options={countrySuggestions}
+                value={country} 
+                onChange={(_, newValue) => handleAddressChange('country', newValue || '')}
                 onInputChange={(_, newInputValue) => {
-                    handleAddressChange('street', newInputValue);
-                    // Small delay to avoid too many API calls while typing
-                    setTimeout(() => fetchStreetSuggestions(newInputValue), 300);
+                    handleAddressChange('country', newInputValue);
+                    fetchCountrySuggestions(newInputValue);
+                    // Clear city and street when country changes
+                    setCity('');
+                    setStreet('');
+                    setCitySuggestions([]);
+                    setStreetSuggestions([]);
                 }}
                 disabled={locationMethod === 'gps' || locationMethod === 'map'}
                 renderInput={(params) => (
                     <TextField
                         {...params}
-                        label="Street Address *"
-                        placeholder="e.g., רחוב דיזנגוף 99 or 99 Dizengoff Street"
-                        required
-                        error={hasAttemptedSubmit && !street.trim()}
+                        label="Country *"
+                        placeholder="e.g., Israel"
+                        required={locationMethod === 'address' && !coords}
+                        error={hasAttemptedSubmit && locationMethod === 'address' && !country.trim()}
                         helperText={
-                            hasAttemptedSubmit && !street.trim() ? "Street address is required" : 
+                            hasAttemptedSubmit && locationMethod === 'address' && !country.trim() ? "Country is required" : 
                             locationMethod === 'gps' ? "Disabled when using GPS location" :
                             locationMethod === 'map' ? "Disabled when using map selection" : ""
                         }
@@ -613,7 +808,7 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                             ...params.InputProps,
                             endAdornment: (
                                 <>
-                                    {isLoadingStreet ? <CircularProgress color="inherit" size={20} /> : null}
+                                    {isLoadingCountry ? <CircularProgress color="inherit" size={20} /> : null}
                                     {params.InputProps.endAdornment}
                                 </>
                             ),
@@ -643,6 +838,7 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                 )}
             />
             
+            {/* City Second - depends on country */}
             <Autocomplete
                 freeSolo
                 options={citySuggestions}
@@ -650,18 +846,25 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                 onChange={(_, newValue) => handleAddressChange('city', newValue || '')}
                 onInputChange={(_, newInputValue) => {
                     handleAddressChange('city', newInputValue);
-                    setTimeout(() => fetchCitySuggestions(newInputValue), 300);
+                    // Only fetch city suggestions if country is selected
+                    if (country.trim()) {
+                        fetchCitySuggestions(newInputValue);
+                    }
+                    // Clear street when city changes
+                    setStreet('');
+                    setStreetSuggestions([]);
                 }}
-                disabled={locationMethod === 'gps' || locationMethod === 'map'}
+                disabled={locationMethod === 'gps' || locationMethod === 'map' || !country.trim()}
                 renderInput={(params) => (
                     <TextField
                         {...params}
                         label="City *"
                         placeholder="e.g., Tel Aviv"
-                        required
-                        error={hasAttemptedSubmit && !city.trim()}
+                        required={locationMethod === 'address' && !coords}
+                        error={hasAttemptedSubmit && locationMethod === 'address' && !city.trim()}
                         helperText={
-                            hasAttemptedSubmit && !city.trim() ? "City is required" : 
+                            hasAttemptedSubmit && locationMethod === 'address' && !city.trim() ? "City is required" : 
+                            !country.trim() ? "Select country first" :
                             locationMethod === 'gps' ? "Disabled when using GPS location" :
                             locationMethod === 'map' ? "Disabled when using map selection" : ""
                         }
@@ -699,12 +902,14 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                 )}
             />
             
+            {/* State/Province - optional */}
             <TextField 
                 fullWidth 
                 label="State/Province" 
                 value={state} 
                 onChange={e => handleAddressChange('state', e.target.value)} 
                 placeholder="e.g., Tel Aviv District"
+                disabled={locationMethod === 'gps' || locationMethod === 'map'}
                 sx={{ 
                     mb: 2,
                     '& .MuiOutlinedInput-root': {
@@ -728,25 +933,31 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                 }} 
             />
             
+            {/* Street Address Last - depends on country and city */}
             <Autocomplete
                 freeSolo
-                options={countrySuggestions}
-                value={country} 
-                onChange={(_, newValue) => handleAddressChange('country', newValue || '')}
+                options={streetSuggestions}
+                value={street}
+                onChange={(_, newValue) => handleAddressChange('street', newValue || '')}
                 onInputChange={(_, newInputValue) => {
-                    handleAddressChange('country', newInputValue);
-                    setTimeout(() => fetchCountrySuggestions(newInputValue), 300);
+                    handleAddressChange('street', newInputValue);
+                    // Only fetch street suggestions if both country and city are selected
+                    if (country.trim() && city.trim()) {
+                        fetchStreetSuggestions(newInputValue);
+                    }
                 }}
-                disabled={locationMethod === 'gps' || locationMethod === 'map'}
+                disabled={locationMethod === 'gps' || locationMethod === 'map' || !country.trim() || !city.trim()}
                 renderInput={(params) => (
                     <TextField
                         {...params}
-                        label="Country *"
-                        placeholder="e.g., Israel"
-                        required
-                        error={hasAttemptedSubmit && !country.trim()}
+                        label="Street Address *"
+                        placeholder="e.g., רחוב דיזנגוף 99 or 99 Dizengoff Street"
+                        required={locationMethod === 'address' && !coords}
+                        error={hasAttemptedSubmit && locationMethod === 'address' && !street.trim()}
                         helperText={
-                            hasAttemptedSubmit && !country.trim() ? "Country is required" : 
+                            hasAttemptedSubmit && locationMethod === 'address' && !street.trim() ? "Street address is required" : 
+                            !country.trim() ? "Select country first" :
+                            !city.trim() ? "Select city first" :
                             locationMethod === 'gps' ? "Disabled when using GPS location" :
                             locationMethod === 'map' ? "Disabled when using map selection" : ""
                         }
@@ -754,7 +965,7 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                             ...params.InputProps,
                             endAdornment: (
                                 <>
-                                    {isLoadingCountry ? <CircularProgress color="inherit" size={20} /> : null}
+                                    {isLoadingStreet ? <CircularProgress color="inherit" size={20} /> : null}
                                     {params.InputProps.endAdornment}
                                 </>
                             ),
@@ -796,7 +1007,9 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                     gap: 1
                 }}>
                     <Typography variant="body2" color="success.contrastText">
-                        ✅ Location set via {locationMethod === 'address' ? 'address search' : locationMethod === 'gps' ? 'GPS' : 'map selection'}: {coords.lat.toFixed(6)}, {coords.lng.toFixed(6)}
+                        ✅ Location set via {locationMethod === 'address' ? 
+                            (fullAddress.trim() ? 'full address search' : 'structured address search') : 
+                            locationMethod === 'gps' ? 'GPS' : 'map selection'}: {coords.lat.toFixed(6)}, {coords.lng.toFixed(6)}
                     </Typography>
                 </Box>
             )}
@@ -815,7 +1028,10 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                         📍 Choose ONE location method:
                     </Typography>
                     <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)', display: 'block', mb: 0.5 }}>
-                        • <strong>Address Search:</strong> Type street and city, then click &quot;Search Address&quot;
+                        • <strong>Quick Address:</strong> Paste the full address (e.g., "R. António Ferro, 2765-503 Estoril, Portugal")
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)', display: 'block', mb: 0.5 }}>
+                        • <strong>Structured Address:</strong> Fill in country, city, and street separately for better autocomplete
                     </Typography>
                     <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)', display: 'block', mb: 0.5 }}>
                         • <strong>Use My Location:</strong> Automatically get your current GPS coordinates
@@ -830,7 +1046,7 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                 <Button
                     variant="contained"
                     onClick={searchAddress}
-                    disabled={!street || !city || isGeocoding || locationMethod === 'gps' || locationMethod === 'map'}
+                    disabled={(!fullAddress.trim() && (!street || !city)) || isGeocoding || locationMethod === 'gps' || locationMethod === 'map'}
                     sx={{
                         backgroundColor: 'var(--color-accent-blue)',
                         color: 'var(--color-surface-elevated)',
@@ -919,6 +1135,7 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                             setCoords(newCoords);
                             setLocationMethod('map');
                             // Clear address fields when using map selection
+                             setFullAddress('');
                             setStreet('');
                             setCity('');
                             setState('');

@@ -21,7 +21,7 @@ const getMockSkateparks = () => [
     location: { coordinates: [32.073, 34.789] },
     isPark: false,
     size: 'medium',
-    level: 'beginner',
+    levels: ['beginner'],
     avgRating: 4.2,
     distance: 0.5
   },
@@ -34,7 +34,7 @@ const getMockSkateparks = () => [
     location: { coordinates: [32.074, 34.790] },
     isPark: true,
     size: 'large',
-    level: 'advanced',
+    levels: ['advanced'],
     avgRating: 4.7,
     distance: 1.2
   }
@@ -218,7 +218,7 @@ test.describe('Home Page', () => {
             location: { coordinates: [32.073 + i * 0.001, 34.789 + i * 0.001] },
             isPark: false,
             size: 'medium',
-            level: 'beginner',
+            levels: ['beginner'],
             avgRating: 4.0,
             distance: i * 0.1
           })),
@@ -241,7 +241,7 @@ test.describe('Home Page', () => {
             location: { coordinates: [32.073 + (i + 9) * 0.001, 34.789 + (i + 9) * 0.001] },
             isPark: true,
             size: 'large',
-            level: 'advanced',
+            levels: ['advanced'],
             avgRating: 4.5,
             distance: (i + 9) * 0.1
           })),
@@ -265,7 +265,7 @@ test.describe('Home Page', () => {
             location: { coordinates: [32.073 + i * 0.001, 34.789 + i * 0.001] },
             isPark: false,
             size: 'medium',
-            level: 'beginner',
+            levels: ['beginner'],
             avgRating: 4.0,
             distance: i * 0.1
           })),

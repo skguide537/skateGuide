@@ -28,7 +28,7 @@ interface SkateparkModalProps {
   }[];
   isPark: boolean;
   size: string;
-  level: string;
+  levels: string[];
   _id: string;
   avgRating?: number;
   distanceKm?: number;
@@ -53,7 +53,7 @@ export default function SkateparkModal({
   coordinates,
   isPark,
   size,
-  level,
+  levels,
   _id,
   externalLinks,
   avgRating,
@@ -260,7 +260,7 @@ export default function SkateparkModal({
             </Box>
           )}
           
-          {level && (
+          {levels && levels.length > 0 && levels.some(level => level !== null && level !== undefined) && (
             <Box sx={{ 
               display: 'flex', 
               alignItems: 'center', 
@@ -273,7 +273,7 @@ export default function SkateparkModal({
               fontWeight: 600,
               fontSize: '0.875rem'
             }}>
-              Level: {level}
+              Levels: {levels.filter(level => level !== null && level !== undefined).join(', ')}
             </Box>
           )}
         </Box>
@@ -401,17 +401,6 @@ export default function SkateparkModal({
                       <LinkIcon sx={{ mr: 1, fontSize: 16 }} />
                       {hostname}
                     </Button>
-                    <Typography 
-                      variant="caption" 
-                      sx={{ 
-                        display: 'block', 
-                        mt: 0.5,
-                        color: 'var(--color-text-secondary)',
-                        fontSize: '0.75rem'
-                      }}
-                    >
-                      Sent by: {sentByName}
-                    </Typography>
                   </Box>
                 );
               })}

@@ -47,9 +47,12 @@ import {
 import SkateparkModal from '../modals/SkateparkModal';
 
 // Custom icons for different spot types
-const createCustomIcon = (isPark: boolean, size: string, level: string) => {
+const createCustomIcon = (isPark: boolean, size: string, levels: string[]) => {
   const baseSize = [30, 30];
   const iconColor = isPark ? '#4CAF50' : '#FF9800'; // Green for parks, Orange for street
+  
+  // Get the first valid level, or default to 'beginner'
+  const level = levels && levels.length > 0 && levels[0] !== null && levels[0] !== undefined ? levels[0] : 'beginner';
   
   // Create a custom SVG icon
   const svgIcon = `
@@ -119,7 +122,7 @@ interface Skatepark {
   photoNames: string[]; // Changed from photoName to photoNames
   isPark: boolean;
   size: string;
-  level: string;
+  levels: string[];
   tags: string[];
   avgRating: number;
   externalLinks?: {
@@ -162,7 +165,8 @@ function RichPopup({ spot, onViewDetails }: {
           size="small" 
         />
         <Chip label={spot.size} size="small" />
-        <Chip label={spot.level} size="small" />
+        <Chip label={spot.levels && spot.levels.length > 0 && spot.levels.some(level => level !== null && level !== undefined) ? 
+            spot.levels.filter(level => level !== null && level !== undefined).join(', ') : 'Unknown'} size="small" />
       </Box>
       
       {spot.avgRating > 0 && (
@@ -331,8 +335,8 @@ export default function EnhancedMap({ userLocation }: MapProps) {
       // Size filter
       if (sizeFilter.length > 0 && !sizeFilter.includes(spot.size)) return false;
 
-      // Level filter
-      if (levelFilter.length > 0 && !levelFilter.includes(spot.level)) return false;
+                  // Level filter
+            if (levelFilter.length > 0 && (!spot.levels || !spot.levels.some(level => level !== null && level !== undefined && levelFilter.includes(level)))) return false;
 
       // Distance filter
       if (distanceFilterEnabled && userLocation) {
@@ -663,10 +667,11 @@ export default function EnhancedMap({ userLocation }: MapProps) {
                           sx={{ fontSize: '0.7rem', height: 20 }}
                         />
                         <Chip 
-                          label={spot.level} 
-                          size="small" 
-                          sx={{ fontSize: '0.7rem', height: 20 }}
-                        />
+                           label={spot.levels && spot.levels.length > 0 && spot.levels.some(level => level !== null && level !== undefined) ? 
+                               spot.levels.filter(level => level !== null && level !== undefined).join(', ') : 'Unknown'} 
+                           size="small" 
+                           sx={{ fontSize: '0.7rem', height: 20 }}
+                         />
                       </Box>
                       {spot.avgRating > 0 && (
                         <Box display="flex" alignItems="center" gap={0.5}>
@@ -839,7 +844,7 @@ export default function EnhancedMap({ userLocation }: MapProps) {
             <Marker
               key={spot._id}
               position={[spot.location.coordinates[1], spot.location.coordinates[0]]}
-              icon={createCustomIcon(spot.isPark, spot.size, spot.level)}
+                              icon={createCustomIcon(spot.isPark, spot.size, spot.levels)}
             >
               <Popup>
                 <RichPopup spot={spot} onViewDetails={handleViewDetails} />
@@ -861,7 +866,7 @@ export default function EnhancedMap({ userLocation }: MapProps) {
           photoNames={selectedSpot.photoNames || []}
           isPark={selectedSpot.isPark}
           size={selectedSpot.size}
-          level={selectedSpot.level}
+          levels={selectedSpot.levels ? selectedSpot.levels.filter(level => level !== null && level !== undefined) : []}
           tags={selectedSpot.tags}
           coordinates={{
             lat: selectedSpot.location.coordinates[1],
