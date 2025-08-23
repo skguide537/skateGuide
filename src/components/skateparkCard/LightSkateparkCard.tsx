@@ -30,7 +30,7 @@ interface LightSkateparkCardProps {
     coordinates: { lat: number; lng: number };
     isPark: boolean;
     size: string;
-    level: string;
+    levels: string[];
     avgRating: number;
     distanceKm: number;
     externalLinks: any[];
@@ -47,7 +47,7 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
     coordinates,
     isPark,
     size,
-    level,
+    levels,
     avgRating,
     distanceKm,
     externalLinks,
@@ -363,7 +363,8 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
                                     textTransform: 'uppercase',
                                     fontSize: '0.7rem'
                                 }}>
-                                    {level}
+                                    {levels && levels.length > 0 && levels.some(level => level !== null && level !== undefined) ? 
+                                        levels.filter(level => level !== null && level !== undefined).join(', ') : 'Unknown'}
                                 </Typography>
                             </Box>
                         </Box>
@@ -398,7 +399,7 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
                 photoNames={photoNames}
                 isPark={isPark}
                 size={size}
-                level={level}
+                levels={levels}
                 tags={tags}
                 coordinates={coordinates}
                 externalLinks={externalLinks}
@@ -421,7 +422,7 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
                     photoNames,
                     isPark,
                     size,
-                    level,
+                    levels,
                     tags
                 }}
                 isDeleting={isDeleting}

@@ -81,7 +81,7 @@ class SkateparkService {
         // Optimize query with lean() and select only needed fields
         const skateparks = await SkateparkModel
             .find()
-            .select('title description tags location photoNames isPark size level avgRating rating externalLinks')
+            .select('title description tags location photoNames isPark size levels avgRating rating externalLinks')
             .populate("externalLinks.sentBy", "name")
             .lean()
             .exec();
@@ -117,13 +117,13 @@ class SkateparkService {
     // refactor, and than perfect for home page
     public async advancedSearch(filters: {
         size?: Size;
-        level?: SkaterLevel;
+        levels?: SkaterLevel[];
         tags?: Tag[];
         isPark?: boolean;
     }): Promise<ISkateparkModel[]> {
         const query: Record<string, any> = {};
         if (filters.size) query.size = filters.size;
-        if (filters.level) query.level = filters.level;
+        if (filters.levels && filters.levels.length > 0) query.levels = { $in: filters.levels };
         if (filters.isPark !== undefined) query.isPark = filters.isPark;
         if (filters.tags && filters.tags.length > 0) query.tags = { $in: filters.tags };
 
@@ -213,7 +213,7 @@ class SkateparkService {
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
-            .select('title description tags location photoNames isPark size level avgRating rating externalLinks createdAt')
+            .select('title description tags location photoNames isPark size levels avgRating rating externalLinks createdAt')
             .populate('externalLinks.sentBy', 'name')
             .lean();
 
@@ -335,7 +335,7 @@ class SkateparkService {
                 coordinates: [lng, lat]
             },
             size: parkData.size,
-            level: parkData.level,
+            levels: parkData.levels,
             isPark: parkData.isPark === true || parkData.isPark === "true",
             rating: [],
             createdBy: userId,
@@ -424,7 +424,7 @@ class SkateparkService {
                     coordinates: [lon, lat]
                 },
                 size: parkData.size,
-                level: parkData.level,
+                levels: parkData.levels,
                 isPark: parkData.isPark === true || parkData.isPark === "true",
                 rating: [],
                 createdBy: userId,

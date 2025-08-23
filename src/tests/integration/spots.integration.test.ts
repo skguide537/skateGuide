@@ -136,7 +136,7 @@ describe('Spots API - Integration Tests', () => {
           },
           type: 'street',
           size: 'medium',
-          level: 'beginner',
+          levels: ['beginner'],
           createdBy: new mongoose.Types.ObjectId() // Use proper ObjectId
         };
 
@@ -174,7 +174,7 @@ describe('Spots API - Integration Tests', () => {
           },
           type: 'street',
           size: 'medium',
-          level: 'beginner',
+          levels: ['beginner'],
           createdBy: new mongoose.Types.ObjectId() // Use proper ObjectId
         };
 

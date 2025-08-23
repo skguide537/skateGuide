@@ -26,7 +26,7 @@ interface SkateparkCardProps {
     coordinates: { lat: number; lng: number };
     isPark: boolean;
     size: string;
-    level: string;
+    levels: string[];
     avgRating: number;
     externalLinks?: { url: string; sentBy: { id: string; name: string }; sentAt: string }[];
 }
@@ -40,7 +40,7 @@ const SkateparkCard = memo(function SkateparkCard({
     coordinates,
     isPark,
     size,
-    level,
+    levels,
     avgRating,
     _id,
     externalLinks
@@ -261,7 +261,7 @@ const SkateparkCard = memo(function SkateparkCard({
                     photoNames={photoNames}
                     isPark={isPark}
                     size={size}
-                    level={level}
+                    levels={levels}
                     tags={tags}
                     coordinates={coordinates}
                     externalLinks={externalLinks}

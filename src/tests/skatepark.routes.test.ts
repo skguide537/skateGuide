@@ -77,7 +77,7 @@ describe('Skatepark API Routes', () => {
 
     it('should perform advanced search', async () => {
       const mockSkateparks = [
-        { _id: '1', name: 'Advanced Park', size: 'Large', level: 'Expert' },
+        { _id: '1', name: 'Advanced Park', size: 'Large', levels: ['Expert'] },
       ];
 
       const mockResponse = { status: 200, json: () => Promise.resolve(mockSkateparks) };

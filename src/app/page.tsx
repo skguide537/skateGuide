@@ -31,7 +31,7 @@ interface Skatepark {
     location: { coordinates: [number, number] };
     isPark: boolean;
     size: string;
-    level: string;
+    levels: string[];
     avgRating: number;
     externalLinks?: {
         url: string;
@@ -327,7 +327,7 @@ export default function HomePage() {
                 if (sizeFilter.length > 0 && !sizeFilter.includes(park.size)) return false;
 
                 // Level filter
-                if (levelFilter.length > 0 && !levelFilter.includes(park.level)) return false;
+                if (levelFilter.length > 0 && (!park.levels || !park.levels.some(level => level !== null && level !== undefined && levelFilter.includes(level)))) return false;
 
                 // Tag filter
                 if (tagFilter.length > 0) {
@@ -711,7 +711,7 @@ export default function HomePage() {
                                                  coordinates={park.coordinates}
                                                  isPark={park.isPark}
                                                  size={park.size}
-                                                 level={park.level}
+                                                 levels={park.levels ? park.levels.filter(level => level !== null && level !== undefined) : []}
                                                  avgRating={park.avgRating}
                                                  externalLinks={park.externalLinks || []}
                                                  isDeleting={park.isDeleting}
