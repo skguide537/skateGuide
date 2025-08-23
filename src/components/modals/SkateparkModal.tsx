@@ -67,7 +67,16 @@ export default function SkateparkModal({
   const { theme } = useTheme();
 
   const formatSrc = (src: string) => src.startsWith('http') ? src : `/${src}`;
-  const isLoading = photoNames.length === 0;
+  const isLoading = !photoNames || photoNames.length === 0;
+  
+  // Ensure tags is always an array
+  const safeTags = tags || [];
+  
+  // Ensure levels is always an array
+  const safeLevels = levels || [];
+  
+  // Ensure externalLinks is always an array
+  const safeExternalLinks = externalLinks || [];
   
   if (isLoading) return <Loading />;
 
@@ -260,7 +269,7 @@ export default function SkateparkModal({
             </Box>
           )}
           
-          {levels && levels.length > 0 && levels.some(level => level !== null && level !== undefined) && (
+          {safeLevels && safeLevels.length > 0 && safeLevels.some(level => level !== null && level !== undefined) && (
             <Box sx={{ 
               display: 'flex', 
               alignItems: 'center', 
@@ -273,7 +282,7 @@ export default function SkateparkModal({
               fontWeight: 600,
               fontSize: '0.875rem'
             }}>
-              Levels: {levels.filter(level => level !== null && level !== undefined).join(', ')}
+              Levels: {safeLevels.filter(level => level !== null && level !== undefined).join(', ')}
             </Box>
           )}
         </Box>
@@ -294,7 +303,7 @@ export default function SkateparkModal({
             🏷️ Tags
           </Typography>
           <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
-            {tags.map((tag, idx) => (
+            {safeTags.map((tag, idx) => (
               <Chip
                 key={idx}
                 label={tag}
@@ -340,7 +349,7 @@ export default function SkateparkModal({
         </Box>
 
         {/* External Links */}
-        {externalLinks && externalLinks.length > 0 && (
+        {safeExternalLinks && safeExternalLinks.length > 0 && (
           <Box sx={{ mb: 3 }}>
             <Typography 
               variant="subtitle2" 
@@ -361,7 +370,7 @@ export default function SkateparkModal({
               pb: 1,
               flexWrap: 'wrap'
             }}>
-              {externalLinks.map((link, idx) => {
+              {safeExternalLinks.map((link, idx) => {
                 let hostname = '';
                 try {
                   const urlObj = new URL(link.url);

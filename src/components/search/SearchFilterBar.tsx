@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import {
     Box,
     TextField,
@@ -33,6 +33,7 @@ import {
     Schedule
 } from '@mui/icons-material';
 import { useUser } from '@/context/UserContext';
+import { useSearchFilterBar } from '@/hooks/useSearchFilterBar';
 
 interface SearchFilterBarProps {
     searchTerm: string;
@@ -85,44 +86,75 @@ export default function SearchFilterBar({
     totalCount,
     userLocation
 }: SearchFilterBarProps) {
-    const [showFilters, setShowFilters] = useState(false);
     const { user } = useUser();
 
-    // Get unique values for filter options
-    const allSizes = ['Small', 'Medium', 'Large'];
-    const allLevels = ['Beginner', 'Intermediate', 'Expert'];
-    const uniqueTags = ['Ramp', 'Rail', 'Stairs', 'Gap', 'Bowl', 'Halfpipe', 'Street', 'Park'];
+    const {
+        state,
+        allSizes,
+        allLevels,
+        uniqueTags,
+        hasActiveFilters,
+        filterSummary,
+        sortOptions,
+        updateSearchTerm,
+        updateTypeFilter,
+        updateSizeFilter,
+        updateLevelFilter,
+        updateTagFilter,
+        updateShowOnlyFavorites,
+        updateDistanceFilterEnabled,
+        updateDistanceFilter,
+        updateRatingFilter,
+        updateSortBy,
+        toggleFilters,
+        clearAllFilters
+    } = useSearchFilterBar();
+
+    // Initialize hook state with props on mount
+    React.useEffect(() => {
+        updateSearchTerm(searchTerm);
+        updateTypeFilter(typeFilter);
+        updateSizeFilter(sizeFilter);
+        updateLevelFilter(levelFilter);
+        updateTagFilter(tagFilter);
+        updateShowOnlyFavorites(showOnlyFavorites);
+        updateDistanceFilterEnabled(distanceFilterEnabled);
+        updateDistanceFilter(distanceFilter);
+        updateRatingFilter(ratingFilter);
+        updateSortBy(sortBy);
+    }, []); // Only run once on mount
+
+    // Sync hook state changes back to parent
+    React.useEffect(() => {
+        onSearchChange(state.searchTerm);
+        onTypeFilterChange(state.typeFilter);
+        onSizeFilterChange(state.sizeFilter);
+        onLevelFilterChange(state.levelFilter);
+        onTagFilterChange(state.tagFilter);
+        onShowOnlyFavoritesChange(state.showOnlyFavorites);
+        onDistanceFilterEnabledChange(state.distanceFilterEnabled);
+        onDistanceFilterChange(state.distanceFilter);
+        onRatingFilterChange(state.ratingFilter);
+        onSortByChange(state.sortBy);
+    }, [
+        state.searchTerm, state.typeFilter, state.sizeFilter, state.levelFilter, 
+        state.tagFilter, state.showOnlyFavorites, state.distanceFilterEnabled,
+        state.distanceFilter, state.ratingFilter, state.sortBy,
+        onSearchChange, onTypeFilterChange, onSizeFilterChange, onLevelFilterChange,
+        onTagFilterChange, onShowOnlyFavoritesChange, onDistanceFilterEnabledChange,
+        onDistanceFilterChange, onRatingFilterChange, onSortByChange
+    ]);
 
     const handleClearFilters = () => {
-        onTypeFilterChange('all');
-        onSizeFilterChange([]);
-        onLevelFilterChange([]);
-        onTagFilterChange([]);
-        onDistanceFilterEnabledChange(false);
-        onDistanceFilterChange(10);
-        onRatingFilterChange([0, 5]);
-        onShowOnlyFavoritesChange(false);
-        onSortByChange('default');
+        clearAllFilters();
     };
-
-    const hasActiveFilters = 
-        typeFilter !== 'all' ||
-        sizeFilter.length > 0 ||
-        levelFilter.length > 0 ||
-        tagFilter.length > 0 ||
-        distanceFilterEnabled ||
-        ratingFilter[0] !== 0 ||
-        ratingFilter[1] !== 5 ||
-        showOnlyFavorites ||
-        sortBy !== 'default';
 
     return (
         <Box sx={{ 
-            mb: 4, 
-            p: 2.5, 
+            p: 3, 
             backgroundColor: 'var(--color-surface-elevated)',
-            borderRadius: 'var(--radius-lg)',
-            boxShadow: 'var(--shadow-md)',
+            borderRadius: 'var(--radius-xl)',
+            boxShadow: 'var(--shadow-lg)',
             border: '1px solid var(--color-border)',
             background: 'linear-gradient(135deg, var(--color-surface-elevated) 0%, var(--color-surface) 100%)',
             position: 'relative',
@@ -137,39 +169,39 @@ export default function SearchFilterBar({
                 background: 'linear-gradient(90deg, var(--color-accent-green) 0%, var(--color-accent-blue) 50%, var(--color-accent-rust) 100%)',
             }
         }}>
-            {/* Compact Mode - Search and Sort Side by Side */}
-            <Box sx={{ 
-                display: 'flex', 
-                flexDirection: { xs: 'column', sm: 'row' }, 
-                gap: 2, 
-                alignItems: { xs: 'stretch', sm: 'center' },
-                mb: 2
-            }}>
-                {/* Search Section */}
-                <Box sx={{ flex: 1, minWidth: 0 }}>
+            {/* Header */}
                     <Typography 
-                        variant="h6" 
+                variant="h5" 
                         sx={{ 
-                            mb: 1.5, 
+                    mb: 3, 
                             color: 'var(--color-text-primary)', 
-                            fontWeight: 600,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1
-                        }}
-                    >
-                        🔍 Search & Discover
+                    fontWeight: 700,
+                    textAlign: 'center',
+                    textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+                }}
+            >
+                🔍 Search & Filter Skate Spots
                     </Typography>
                     
-                    <TextField
+            {/* Search Bar and Sort Options */}
+            <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                                        <TextField
                         placeholder="Search spots, tags, locations..."
-                        value={searchTerm}
-                        onChange={(e) => onSearchChange(e.target.value)}
-                        sx={{
+                        value={state.searchTerm}
+                        onChange={(e) => updateSearchTerm(e.target.value)}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <Search sx={{ color: 'var(--color-accent-blue)' }} />
+                                </InputAdornment>
+                            ),
+                        }}
+                        sx={{ 
+                            flex: 1,
                             '& .MuiOutlinedInput-root': {
-                                borderRadius: 'var(--radius-md)',
+                                borderRadius: 'var(--radius-lg)',
                                 backgroundColor: 'var(--color-surface)',
-                                border: '1px solid var(--color-border)',
+                                border: '2px solid var(--color-border)',
                                 transition: 'all var(--transition-fast)',
                                 '&:hover': {
                                     borderColor: 'var(--color-accent-blue)',
@@ -177,291 +209,103 @@ export default function SearchFilterBar({
                                 },
                                 '&.Mui-focused': {
                                     borderColor: 'var(--color-accent-blue)',
-                                    boxShadow: '0 0 0 2px rgba(93, 173, 226, 0.2)',
+                                    boxShadow: '0 0 0 3px rgba(93, 173, 226, 0.2)',
+                                }
+                            },
+                            '& .MuiInputBase-input': {
+                                color: 'var(--color-text-primary)',
+                                '&::placeholder': {
+                                    color: 'var(--color-text-secondary)',
+                                    opacity: 1
                                 }
                             }
-                        }}
-                        InputProps={{
-                            startAdornment: <Search sx={{ color: 'var(--color-accent-blue)', mr: 1 }} />,
                         }}
                     />
-                </Box>
-
-                {/* Sort Section */}
-                <Box sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    gap: 1,
-                    minWidth: { xs: '100%', sm: 'auto' }
-                }}>
-                    <Typography 
-                        variant="subtitle2" 
+                
+                {/* Sort Options */}
+                <FormControl sx={{ minWidth: 200 }}>
+                    <InputLabel sx={{ color: 'var(--color-text-secondary)' }}>Sort By</InputLabel>
+                    <Select
+                        value={state.sortBy}
+                        onChange={(e) => updateSortBy(e.target.value as 'default' | 'distance' | 'rating' | 'recent')}
                         sx={{ 
-                            color: 'var(--color-text-primary)', 
-                            fontWeight: 600,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1
+                            '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'var(--color-border)',
+                            },
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'var(--color-accent-blue)',
+                            },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'var(--color-accent-blue)',
+                            },
+                            '& .MuiSelect-select': {
+                                color: 'var(--color-text-primary)'
+                            }
                         }}
                     >
-                        ☰ Sort by:
-                    </Typography>
-                    
-                                        <Box sx={{ 
-                        display: 'flex', 
-                        gap: 1, 
-                        flexWrap: 'wrap',
-                        p: 1,
-                        backgroundColor: 'var(--color-surface)',
-                        borderRadius: 'var(--radius-md)',
-                        border: '1px solid var(--color-border)'
-                    }}>
-                        <FormControlLabel
-                            control={
-                                <input
-                                    type="radio"
-                                    name="sortBy"
-                                    value="default"
-                                    checked={sortBy === 'default'}
-                                    onChange={(e) => onSortByChange(e.target.value as any)}
-                                    style={{ margin: 0 }}
-                                />
-                            }
-                            label={
-                                <Typography variant="body2" sx={{ color: 'var(--color-text-primary)', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
-                                    <Sort sx={{ mr: 0.5, fontSize: '1em', color: 'var(--color-accent-green)' }} />
-                                    Default
-                                </Typography>
-                            }
-                            sx={{ 
-                                margin: 0,
-                                '& .MuiFormControlLabel-label': { ml: 1 }
-                            }}
-                        />
-                        <FormControlLabel
-                            control={
-                                <input
-                                    type="radio"
-                                    name="sortBy"
-                                    value="distance"
-                                    checked={sortBy === 'distance'}
-                                    onChange={(e) => onSortByChange(e.target.value as any)}
-                                    style={{ margin: 0 }}
-                                />
-                            }
-                            label={
-                                <Typography variant="body2" sx={{ color: 'var(--color-text-primary)', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
-                                    <LocationOn sx={{ mr: 0.5, fontSize: '1em', color: 'var(--color-accent-blue)' }} />
-                                    Distance
-                                </Typography>
-                            }
-                            sx={{ 
-                                margin: 0,
-                                '& .MuiFormControlLabel-label': { ml: 1 }
-                            }}
-                        />
-                        <FormControlLabel
-                            control={
-                                <input
-                                    type="radio"
-                                    name="sortBy"
-                                    value="rating"
-                                    checked={sortBy === 'rating'}
-                                    onChange={(e) => onSortByChange(e.target.value as any)}
-                                    style={{ margin: 0 }}
-                                />
-                            }
-                            label={
-                                <Typography variant="body2" sx={{ color: 'var(--color-text-primary)', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
-                                    <Star sx={{ mr: 0.5, fontSize: '1em', color: 'var(--color-accent-blue)' }} />
-                                    Rating
-                                </Typography>
-                            }
-                            sx={{ 
-                                margin: 0,
-                                '& .MuiFormControlLabel-label': { ml: 1 }
-                            }}
-                        />
-                        <FormControlLabel
-                            control={
-                                <input
-                                    type="radio"
-                                    name="sortBy"
-                                    value="recent"
-                                    checked={sortBy === 'recent'}
-                                    onChange={(e) => onSortByChange(e.target.value as any)}
-                                    style={{ margin: 0 }}
-                                />
-                            }
-                            label={
-                                <Typography variant="body2" sx={{ color: 'var(--color-text-primary)', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
-                                    <Schedule sx={{ mr: 0.5, fontSize: '1em', color: 'var(--color-accent-green)' }} />
-                                    Recent
-                                </Typography>
-                            }
-                            sx={{ 
-                                margin: 0,
-                                '& .MuiFormControlLabel-label': { ml: 1 }
-                            }}
-                        />
-                    </Box>
-                </Box>
+                                                <MenuItem value="default" sx={{ color: 'var(--color-text-primary)' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Sort sx={{ fontSize: 20 }} />
+                                Default
+                            </Box>
+                        </MenuItem>
+                        <MenuItem value="distance" sx={{ color: 'var(--color-text-primary)' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <LocationOn sx={{ fontSize: 20 }} />
+                                Distance
+                            </Box>
+                        </MenuItem>
+                        <MenuItem value="rating" sx={{ color: 'var(--color-text-primary)' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Star sx={{ fontSize: 20 }} />
+                                Rating
+                            </Box>
+                        </MenuItem>
+                        <MenuItem value="recent" sx={{ color: 'var(--color-text-primary)' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Schedule sx={{ fontSize: 20 }} />
+                                Recent
+                            </Box>
+                        </MenuItem>
+                    </Select>
+                </FormControl>
             </Box>
 
-            {/* Filter Toggle Button */}
-            <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                mb: 2,
-                mt: 1
-            }}>
+            {/* Filter Toggle */}
                 <Button
-                    variant="outlined"
-                    onClick={() => setShowFilters(!showFilters)}
+                startIcon={<FilterList />}
+                endIcon={state.showFilters ? <ExpandLess /> : <ExpandMore />}
+                onClick={toggleFilters}
+                variant="contained"
+                fullWidth
                     sx={{
-                        borderColor: 'var(--color-accent-blue)',
-                        color: 'var(--color-accent-blue)',
-                        fontWeight: 600,
-                        borderRadius: 'var(--radius-md)',
+                    backgroundColor: 'var(--color-accent-rust)',
+                    color: 'var(--color-surface-elevated)',
+                    fontWeight: 'bold',
+                    borderRadius: 'var(--radius-lg)',
+                    boxShadow: 'var(--shadow-md)',
                         transition: 'all var(--transition-fast)',
                         textTransform: 'none',
-                        px: 2,
-                        py: 0.75,
-                        fontSize: '0.875rem',
+                    mb: 3,
                         '&:hover': {
-                            backgroundColor: 'var(--color-accent-blue)',
-                            color: 'var(--color-surface-elevated)',
-                            transform: 'translateY(-1px)',
-                            boxShadow: 'var(--shadow-sm)',
-                        }
-                    }}
-                    startIcon={<FilterList />}
-                    endIcon={showFilters ? <ExpandLess /> : <ExpandMore />}
-                >
-                    {showFilters ? 'Hide Advanced Filters' : 'More Filters'}
+                        backgroundColor: 'var(--color-accent-rust)',
+                        transform: 'translateY(-2px)',
+                        boxShadow: 'var(--shadow-lg)',
+                    }
+                }}
+            >
+                {state.showFilters ? 'Hide Filters' : 'Show Filters'}
                 </Button>
-            </Box>
 
             {/* Collapsible Filters */}
-            <Collapse in={showFilters}>
-                <Box sx={{ 
-                    pt: 3, 
-                    borderTop: '2px solid var(--color-border)',
-                    display: 'grid',
-                    gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' },
-                    gap: 3
-                }}>
-                    {/* Favorites Toggle */}
-                    {user && (
-                        <FormControl fullWidth>
-                            <FormControlLabel
-                                control={
-                                    <Switch
-                                        checked={showOnlyFavorites}
-                                        onChange={(e) => onShowOnlyFavoritesChange(e.target.checked)}
-                                        sx={{
-                                            '& .MuiSwitch-switchBase.Mui-checked': {
-                                                color: 'var(--color-accent-green)',
-                                            },
-                                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                                                backgroundColor: 'var(--color-accent-green)',
-                                            },
-                                        }}
-                                    />
-                                }
-                                label={
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'var(--color-text-primary)', fontWeight: 500 }}>
-                                        {showOnlyFavorites ? <Favorite sx={{ color: 'var(--color-accent-rust)' }} /> : <FavoriteBorder sx={{ color: 'var(--color-accent-rust)' }} />}
-                                        Show only favorites
-                                    </Box>
-                                }
-                            />
-                        </FormControl>
-                    )}
-
-                    {/* Distance Filter */}
-                    {userLocation && (
-                        <FormControl fullWidth>
-                            <Box sx={{ mb: 2 }}>
-                                <Typography variant="subtitle2" sx={{ color: 'var(--color-text-primary)', fontWeight: 600, mb: 1 }}>
-                                    <LocationOn sx={{ mr: 1, color: 'var(--color-accent-blue)' }} />
-                                    Distance (km): {distanceFilter}
-                                </Typography>
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={distanceFilterEnabled}
-                                            onChange={(e) => onDistanceFilterEnabledChange(e.target.checked)}
-                                            sx={{
-                                                '& .MuiSwitch-switchBase.Mui-checked': {
-                                                    color: 'var(--color-accent-blue)',
-                                                },
-                                                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                                                    backgroundColor: 'var(--color-accent-blue)',
-                                                },
-                                            }}
-                                        />
-                                    }
-                                    label="Enable distance filter"
-                                    sx={{ color: 'var(--color-text-secondary)' }}
-                                />
-                            </Box>
-                            {distanceFilterEnabled && (
-                                <Slider
-                                    value={distanceFilter}
-                                    onChange={(_, value) => onDistanceFilterChange(value as number)}
-                                    min={1}
-                                    max={50}
-                                    step={1}
-                                    sx={{
-                                        '& .MuiSlider-thumb': {
-                                            backgroundColor: 'var(--color-accent-blue)',
-                                        },
-                                        '& .MuiSlider-track': {
-                                            backgroundColor: 'var(--color-accent-blue)',
-                                        },
-                                        '& .MuiSlider-rail': {
-                                            backgroundColor: 'var(--color-border)',
-                                        },
-                                    }}
-                                />
-                            )}
-                        </FormControl>
-                    )}
-
-                    {/* Rating Filter */}
-                    <FormControl fullWidth>
-                        <Typography variant="subtitle2" sx={{ color: 'var(--color-text-primary)', fontWeight: 600, mb: 2 }}>
-                            <Star sx={{ mr: 1, color: 'var(--color-accent-rust)' }} />
-                            Rating Range: {ratingFilter[0]} - {ratingFilter[1]}
-                        </Typography>
-                        <Slider
-                            value={ratingFilter}
-                            onChange={(_, value) => onRatingFilterChange(value as number[])}
-                            min={0}
-                            max={5}
-                            step={0.5}
-                            sx={{
-                                '& .MuiSlider-thumb': {
-                                    backgroundColor: 'var(--color-accent-rust)',
-                                },
-                                '& .MuiSlider-track': {
-                                    backgroundColor: 'var(--color-accent-rust)',
-                                },
-                                '& .MuiSlider-rail': {
-                                    backgroundColor: 'var(--color-border)',
-                                },
-                            }}
-                        />
-                    </FormControl>
-
+            <Collapse in={state.showFilters}>
+                <Box sx={{ pt: 3, borderTop: '1px solid var(--color-border)' }}>
                     {/* Type Filter */}
-                    <FormControl fullWidth>
-                        <InputLabel sx={{ color: 'var(--color-text-primary)', fontWeight: 500 }} shrink>Type</InputLabel>
+                    <FormControl fullWidth sx={{ mb: 3 }}>
+                        <InputLabel sx={{ color: 'var(--color-text-secondary)' }}>Type</InputLabel>
                         <Select
-                            value={typeFilter}
-                            label="Type"
-                            onChange={(e) => onTypeFilterChange(e.target.value as any)}
+                            value={state.typeFilter}
+                            onChange={(e) => updateTypeFilter(e.target.value as 'all' | 'park' | 'street')}
                             sx={{
                                 '& .MuiOutlinedInput-notchedOutline': {
                                     borderColor: 'var(--color-border)',
@@ -472,126 +316,114 @@ export default function SearchFilterBar({
                                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                                     borderColor: 'var(--color-accent-blue)',
                                 },
+                                '& .MuiSelect-select': {
+                                    color: 'var(--color-text-primary)'
+                                }
                             }}
                         >
-                            <MenuItem value="all">All Types</MenuItem>
-                            <MenuItem value="park">Parks</MenuItem>
-                            <MenuItem value="street">Street Spots</MenuItem>
+                            <MenuItem value="all" sx={{ color: 'var(--color-text-primary)' }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <FilterList sx={{ fontSize: 20 }} />
+                                    All Types
+                                </Box>
+                            </MenuItem>
+                            <MenuItem value="park" sx={{ color: 'var(--color-text-primary)' }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <LocationOn sx={{ fontSize: 20 }} />
+                                    Parks Only
+                                </Box>
+                            </MenuItem>
+                            <MenuItem value="street" sx={{ color: 'var(--color-text-primary)' }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <LocationOn sx={{ fontSize: 20 }} />
+                                    Street Only
+                                </Box>
+                            </MenuItem>
                         </Select>
                     </FormControl>
 
                     {/* Size Filter */}
-                    <FormControl fullWidth>
-                        <InputLabel sx={{ color: 'var(--color-text-primary)', fontWeight: 500 }} shrink>Size</InputLabel>
+                    <FormControl fullWidth sx={{ mb: 3 }}>
+                        <InputLabel sx={{ color: 'var(--color-text-secondary)' }}>Size</InputLabel>
                         <Select
                             multiple
-                            value={sizeFilter}
-                            label="Size"
-                            onChange={(e) => onSizeFilterChange(e.target.value as string[])}
-                            renderValue={(selected) => (
-                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                    {selected.map((value) => (
-                                        <Chip 
-                                            key={value} 
-                                            label={value} 
-                                            size="small"
-                                            sx={{
-                                                backgroundColor: 'var(--color-accent-green)',
-                                                color: 'var(--color-surface-elevated)',
-                                                fontWeight: 500,
-                                            }}
-                                        />
-                                    ))}
-                                </Box>
-                            )}
+                            value={state.sizeFilter}
+                            onChange={(e) => updateSizeFilter(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
                             sx={{
                                 '& .MuiOutlinedInput-notchedOutline': {
                                     borderColor: 'var(--color-border)',
                                 },
                                 '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'var(--color-accent-green)',
+                                    borderColor: 'var(--color-accent-blue)',
                                 },
                                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'var(--color-accent-green)',
+                                    borderColor: 'var(--color-accent-blue)',
                                 },
+                                '& .MuiSelect-select': {
+                                    color: 'var(--color-text-primary)'
+                                }
                             }}
                         >
-                            {allSizes.map((size) => (
-                                <MenuItem key={size} value={size}>
-                                    {size}
+                                                        {allSizes.map((size) => (
+                                <MenuItem key={size} value={size} sx={{ color: 'var(--color-text-primary)' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Box sx={{ 
+                                            width: 16, 
+                                            height: 16, 
+                                            borderRadius: '50%', 
+                                            backgroundColor: 'var(--color-accent-blue)',
+                                            display: 'inline-block'
+                                        }} />
+                                        {size}
+                                    </Box>
                                 </MenuItem>
                             ))}
                         </Select>
                     </FormControl>
 
                     {/* Level Filter */}
-                    <FormControl fullWidth>
-                        <InputLabel sx={{ color: 'var(--color-text-primary)', fontWeight: 500 }} shrink>Level</InputLabel>
+                    <FormControl fullWidth sx={{ mb: 3 }}>
+                        <InputLabel sx={{ color: 'var(--color-text-secondary)' }}>Level</InputLabel>
                         <Select
                             multiple
-                            value={levelFilter}
-                            label="Level"
-                            onChange={(e) => onLevelFilterChange(e.target.value as string[])}
-                            renderValue={(selected) => (
-                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                    {selected.map((value) => (
-                                        <Chip 
-                                            key={value} 
-                                            label={value} 
-                                            size="small"
-                                            sx={{
-                                                backgroundColor: 'var(--color-accent-rust)',
-                                                color: 'var(--color-surface-elevated)',
-                                                fontWeight: 500,
-                                            }}
-                                        />
-                                    ))}
-                                </Box>
-                            )}
+                            value={state.levelFilter}
+                            onChange={(e) => updateLevelFilter(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
                             sx={{
                                 '& .MuiOutlinedInput-notchedOutline': {
                                     borderColor: 'var(--color-border)',
                                 },
                                 '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'var(--color-accent-rust)',
+                                    borderColor: 'var(--color-accent-blue)',
                                 },
                                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'var(--color-accent-rust)',
+                                    borderColor: 'var(--color-accent-blue)',
                                 },
+                                '& .MuiSelect-select': {
+                                    color: 'var(--color-text-primary)'
+                                }
                             }}
                         >
-                            {allLevels.map((level) => (
-                                <MenuItem key={level} value={level}>
-                                    {level}
+                                                        {allLevels.map((level) => (
+                                <MenuItem key={level} value={level} sx={{ color: 'var(--color-text-primary)' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Star sx={{ 
+                                            fontSize: 20, 
+                                            color: 'var(--color-accent-blue)' 
+                                        }} />
+                                        {level}
+                                    </Box>
                                 </MenuItem>
                             ))}
                         </Select>
                     </FormControl>
 
                     {/* Tag Filter */}
-                    <FormControl fullWidth>
-                        <InputLabel sx={{ color: 'var(--color-text-primary)', fontWeight: 500 }} shrink>Tags</InputLabel>
+                    <FormControl fullWidth sx={{ mb: 3 }}>
+                        <InputLabel sx={{ color: 'var(--color-text-secondary)' }}>Tags</InputLabel>
                         <Select
                             multiple
-                            value={tagFilter}
-                            label="Tags"
-                            onChange={(e) => onTagFilterChange(e.target.value as string[])}
-                            renderValue={(selected) => (
-                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                    {selected.map((value) => (
-                                        <Chip 
-                                            key={value} 
-                                            label={value} 
-                                            size="small"
-                                            sx={{
-                                                backgroundColor: 'var(--color-accent-blue)',
-                                                color: 'var(--color-surface-elevated)',
-                                                fontWeight: 500,
-                                            }}
-                                        />
-                                    ))}
-                                </Box>
-                            )}
+                            value={state.tagFilter}
+                            onChange={(e) => updateTagFilter(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
                             sx={{
                                 '& .MuiOutlinedInput-notchedOutline': {
                                     borderColor: 'var(--color-border)',
@@ -602,53 +434,168 @@ export default function SearchFilterBar({
                                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                                     borderColor: 'var(--color-accent-blue)',
                                 },
+                                '& .MuiSelect-select': {
+                                    color: 'var(--color-text-primary)'
+                                }
                             }}
                         >
-                            {uniqueTags.map((tag) => (
-                                <MenuItem key={tag} value={tag}>
-                                    {tag}
+                                                        {uniqueTags.map((tag) => (
+                                <MenuItem key={tag} value={tag} sx={{ color: 'var(--color-text-primary)' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Box sx={{ 
+                                            width: 8, 
+                                            height: 8, 
+                                            borderRadius: '50%', 
+                                            backgroundColor: 'var(--color-accent-blue)',
+                                            display: 'inline-block'
+                                        }} />
+                                        {tag}
+                                    </Box>
                                 </MenuItem>
                             ))}
                         </Select>
                     </FormControl>
-                </Box>
-            </Collapse>
 
-            {/* Results Summary and Clear Filters */}
-            <Box sx={{ 
-                mt: 4, 
-                pt: 3, 
-                borderTop: '2px solid var(--color-border)',
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: 2
-            }}>
-                <Typography variant="body2" color="var(--color-text-secondary)">
-                    Showing <strong>{filteredCount}</strong> of <strong>{totalCount}</strong> spots
+                    {/* Favorites Filter */}
+                    {user && (
+                        <FormControlLabel
+                            control={
+                                <Switch
+                                    checked={state.showOnlyFavorites}
+                                    onChange={(e) => updateShowOnlyFavorites(e.target.checked)}
+                                    color="primary"
+                                />
+                            }
+                            label={
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    {state.showOnlyFavorites ? (
+                                        <Favorite sx={{ color: 'var(--color-accent-rust)', fontSize: 20 }} />
+                                    ) : (
+                                        <FavoriteBorder sx={{ color: 'var(--color-text-secondary)', fontSize: 20 }} />
+                                    )}
+                                    Show Only Favorites
+                                </Box>
+                            }
+                            sx={{ mb: 3, display: 'flex', alignItems: 'center' }}
+                        />
+                    )}
+
+                    {/* Distance Filter */}
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={state.distanceFilterEnabled}
+                                onChange={(e) => updateDistanceFilterEnabled(e.target.checked)}
+                                color="primary"
+                            />
+                        }
+                        label={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <LocationOn sx={{ color: 'var(--color-accent-blue)', fontSize: 20 }} />
+                                Distance Filter
+                            </Box>
+                        }
+                        sx={{ mb: 2 }}
+                    />
+                    
+                    {state.distanceFilterEnabled && (
+                        <Box sx={{ mb: 3 }}>
+                            <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)', mb: 1 }}>
+                                Within {state.distanceFilter}km
+                            </Typography>
+                            <Slider
+                                value={state.distanceFilter}
+                                onChange={(_, value) => updateDistanceFilter(value as number)}
+                                min={1}
+                                max={50}
+                                step={1}
+                                valueLabelDisplay="auto"
+                                sx={{
+                                    color: 'var(--color-accent-blue)',
+                                    '& .MuiSlider-thumb': {
+                                        backgroundColor: 'var(--color-accent-blue)',
+                                    }
+                                }}
+                            />
+                </Box>
+                    )}
+
+                    {/* Rating Filter */}
+                    <Box sx={{ mb: 3 }}>
+                        <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)', mb: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Star sx={{ color: 'var(--color-accent-blue)', fontSize: 20 }} />
+                                Rating: {state.ratingFilter[0]} - {state.ratingFilter[1]} stars
+                            </Box>
                 </Typography>
-                
+                        <Slider
+                            value={state.ratingFilter}
+                            onChange={(_, value) => updateRatingFilter(value as number[])}
+                            min={0}
+                            max={5}
+                            step={0.5}
+                            valueLabelDisplay="auto"
+                            sx={{
+                                color: 'var(--color-accent-blue)',
+                                '& .MuiSlider-thumb': {
+                                    backgroundColor: 'var(--color-accent-blue)',
+                                }
+                            }}
+                        />
+                    </Box>
+
+
+
+                    {/* Clear Filters Button */}
                 {hasActiveFilters && (
                     <Button
+                            variant="outlined"
                         onClick={handleClearFilters}
-                        variant="outlined"
+                            fullWidth
                         sx={{
-                            color: 'var(--color-accent-rust)',
-                            borderColor: 'var(--color-accent-rust)',
-                            borderRadius: 'var(--radius-md)',
-                            fontWeight: 500,
-                            textTransform: 'none',
-                            '&:hover': {
-                                backgroundColor: 'rgba(230, 126, 34, 0.1)',
                                 borderColor: 'var(--color-accent-rust)',
-                                transform: 'translateY(-1px)',
+                            color: 'var(--color-accent-rust)',
+                            '&:hover': {
+                                borderColor: 'var(--color-accent-rust)',
+                                    backgroundColor: 'rgba(255, 87, 34, 0.1)',
                             }
                         }}
                     >
                         Clear All Filters
                     </Button>
                 )}
+                </Box>
+            </Collapse>
+
+            {/* Active Filters Display */}
+            {hasActiveFilters && (
+                <Box sx={{ mt: 3 }}>
+                    <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)', mb: 2 }}>
+                        Active Filters:
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {filterSummary.map((filter, index) => (
+                            <Chip
+                                key={index}
+                                label={filter}
+                                size="small"
+                                variant="outlined"
+                                sx={{
+                                    borderColor: 'var(--color-accent-blue)',
+                                    color: 'var(--color-accent-blue)',
+                                    fontSize: '0.75rem'
+                                }}
+                            />
+                        ))}
+                    </Box>
+                </Box>
+            )}
+
+            {/* Results Summary */}
+            <Box sx={{ mt: 3, textAlign: 'center' }}>
+                <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)' }}>
+                    Showing {filteredCount} of {totalCount} spots
+                </Typography>
             </Box>
         </Box>
     );
