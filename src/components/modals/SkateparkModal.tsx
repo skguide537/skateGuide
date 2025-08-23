@@ -62,6 +62,7 @@ export default function SkateparkModal({
   // All hooks must be called at the top level, before any conditional returns
   const [userRating, setUserRating] = useState<number | null>(null);
   const [hoverRating, setHoverRating] = useState<number | null>(-1);
+  const [isRatingLoading, setIsRatingLoading] = useState(false);
   const { showToast } = useToast();
   const { user } = useUser();
   const { theme } = useTheme();
@@ -482,10 +483,12 @@ export default function SkateparkModal({
             <Rating
               name="user-rating"
               value={userRating}
+              disabled={isRatingLoading}
               onChange={async (_, value) => {
                 if (!value) return;
                 if (!user) return showToast("You must be logged in to rate.", "error");
 
+                setIsRatingLoading(true);
                 try {
                   const res = await fetch(`/api/skateparks/${_id}/rate`, {
                     method: "POST",
@@ -498,9 +501,10 @@ export default function SkateparkModal({
                   const result = await res.json();
                   if (!res.ok) throw new Error(result.error);
                   setUserRating(value);
-                  showToast("Thanks for rating!", "success");
                 } catch (err: any) {
                   showToast(err.message, "error");
+                } finally {
+                  setIsRatingLoading(false);
                 }
               }}
               onChangeActive={(_, hover) => setHoverRating(hover)}
