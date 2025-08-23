@@ -1,25 +1,24 @@
 'use client';
 
-// Lightweight version of SkateparkCard without heavy Carousel
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
-import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
 import Rating from '@mui/material/Rating';
-import { useState, memo } from 'react';
+import { memo } from 'react';
 import Image from 'next/image';
 import SkateparkModal from '../modals/SkateparkModal';
 import FastCarousel from '../ui/FastCarousel';
-import { useUser } from '@/context/UserContext';
 import DeleteConfirmationDialog from '../modals/DeleteConfirmationDialog';
 import FavoriteButton from '../common/FavoriteButton';
 import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Star from '@mui/icons-material/Star';
 import LocationOn from '@mui/icons-material/LocationOn';
+import { useLightSkateparkCard } from '@/hooks/useLightSkateparkCard';
+import { CardData } from '@/services/card.service';
 
 interface LightSkateparkCardProps {
     _id: string;
@@ -38,92 +37,68 @@ interface LightSkateparkCardProps {
     onDelete?: (spotId: string) => void;
 }
 
-const LightSkateparkCard = memo(function LightSkateparkCard({
-    _id,
-    title,
-    description,
-    tags,
-    photoNames,
-    coordinates,
-    isPark,
-    size,
-    levels,
-    avgRating,
-    distanceKm,
-    externalLinks,
-    isDeleting,
-    onDelete
-}: LightSkateparkCardProps) {
-    const [open, setOpen] = useState(false);
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const { user } = useUser();
-    const isAdmin = user?.role === 'admin';
-
-    const formatSrc = (src: string) => {
-        if (src.startsWith('http')) return src;
-        return `/${src}`;
+const LightSkateparkCard = memo(function LightSkateparkCard(props: LightSkateparkCardProps) {
+    const cardData: CardData = {
+        _id: props._id,
+        title: props.title,
+        description: props.description,
+        tags: props.tags,
+        photoNames: props.photoNames,
+        coordinates: props.coordinates,
+        isPark: props.isPark,
+        size: props.size,
+        levels: props.levels,
+        avgRating: props.avgRating,
+        distanceKm: props.distanceKm,
+        externalLinks: props.externalLinks
     };
 
-    const hasPhotos = photoNames && photoNames.length > 0;
-    const imagesToShow = hasPhotos ? photoNames : ["https://res.cloudinary.com/dcncqacrd/image/upload/v1747566727/skateparks/default-skatepark.png"];
-
-    const handleDelete = async (e: React.MouseEvent) => {
-        e.stopPropagation();
+    const {
+        // State
+        modalOpen,
+        deleteDialogOpen,
+        isDeleting,
         
-        setDeleteDialogOpen(true);
-    };
+        // Computed values
+        isAdmin,
+        typeInfo,
+        levelDisplayText,
+        imagesToShow,
+        truncatedDescription,
+        tagsInfo,
+        distanceText,
+        ratingText,
+        
+        // Actions
+        openModal,
+        closeModal,
+        openDeleteDialog,
+        closeDeleteDialog,
+        handleDelete,
+        handleCardClick,
+        formatImageSrc,
+        
+        // Style getters
+        getCardStyles,
+        getDeleteButtonStyles,
+        getTypeBadgeStyles,
+        getDistanceBadgeStyles
+    } = useLightSkateparkCard(cardData, props.onDelete);
 
     return (
         <>
             <Card 
-                onClick={() => !isDeleting && setOpen(true)}
-                sx={{ 
-                    width: 345,
-                    height: 420,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    boxShadow: 'var(--shadow-md)',
-                    borderRadius: 'var(--radius-lg)',
-                    backgroundColor: 'var(--color-surface-elevated)',
-                    color: 'var(--color-text-primary)',
-                    transition: 'all var(--transition-fast)',
-                    opacity: isDeleting ? 0.5 : 1,
-                    border: '1px solid var(--color-border)',
-                    overflow: 'hidden',
-                    cursor: isDeleting ? 'not-allowed' : 'pointer',
-                    position: 'relative',
-                    '&:hover': {
-                        transform: isDeleting ? 'none' : 'translateY(-4px)',
-                        boxShadow: isDeleting ? 'var(--shadow-md)' : 'var(--shadow-xl)',
-                        backgroundColor: isDeleting ? 'var(--color-surface-elevated)' : 'var(--color-surface)',
-                    },
-                    '&:active': {
-                        transform: isDeleting ? 'none' : 'translateY(-2px)',
-                    }
-                }}
+                onClick={handleCardClick}
+                sx={getCardStyles()}
             >
                 {/* Admin Delete Button */}
-                {user?.role === 'admin' && (
-                  <IconButton
-                    onClick={handleDelete}
-                    sx={{
-                      position: 'absolute',
-                      top: 8,
-                      right: 8,
-                      backgroundColor: 'rgba(220, 53, 69, 0.9)',
-                      color: 'white',
-                      width: 32,
-                      height: 32,
-                      zIndex: 10,
-                      '&:hover': {
-                        backgroundColor: 'var(--color-error)',
-                        transform: 'scale(1.1)',
-                      },
-                      transition: 'all var(--transition-fast)',
-                    }}
-                  >
-                    <DeleteIcon sx={{ fontSize: 16 }} />
-                  </IconButton>
+                {isAdmin && (
+                    <IconButton
+                        onClick={openDeleteDialog}
+                        sx={getDeleteButtonStyles()}
+                    >
+                        <DeleteIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
                 )}
 
                 {/* Image Section */}
@@ -133,50 +108,20 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
                     overflow: 'hidden',
                     borderBottom: '1px solid var(--color-border)'
                 }}>
-                <FastCarousel 
-                    images={imagesToShow} 
-                    alt={title}
-                    formatSrc={formatSrc}
-                    height={200}
-                    showArrows={false}
-                    showDots={true}
-                    autoPlay={false}
-                />
+                    <FastCarousel 
+                        images={imagesToShow} 
+                        alt={props.title}
+                        height={200}
+                    />
                     
                     {/* Type Badge - Top Left */}
-                    <Box sx={{
-                        position: 'absolute',
-                        top: 8,
-                        left: 8,
-                        backgroundColor: isPark ? 'var(--color-accent-green)' : 'var(--color-accent-rust)',
-                        color: 'var(--color-surface-elevated)',
-                        px: 2,
-                        py: 0.5,
-                        borderRadius: 'var(--radius-md)',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                        boxShadow: 'var(--shadow-sm)',
-                    }}>
-                        {isPark ? '🏞️ Park' : '🛣️ Street'}
+                    <Box sx={getTypeBadgeStyles()}>
+                        {typeInfo.emoji} {typeInfo.label}
                     </Box>
 
                     {/* Distance Badge - Top Right */}
-                    <Box sx={{
-                        position: 'absolute',
-                        top: 8,
-                        right: user?.role === 'admin' ? 48 : 8,
-                        backgroundColor: 'rgba(52, 152, 219, 0.9)',
-                        color: 'var(--color-surface-elevated)',
-                        px: 2,
-                        py: 0.5,
-                        borderRadius: 'var(--radius-md)',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        boxShadow: 'var(--shadow-sm)',
-                    }}>
-                        📍 {distanceKm.toFixed(1)}km
+                    <Box sx={getDistanceBadgeStyles()}>
+                        📍 {props.distanceKm.toFixed(1)}km
                     </Box>
                 </Box>
 
@@ -206,8 +151,8 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
                                 mr: 2
                             }}
                         >
-                        {title}
-                    </Typography>
+                            {props.title}
+                        </Typography>
 
                         {/* Rating Display */}
                         <Box sx={{ 
@@ -228,13 +173,13 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
                                 fontWeight: 600,
                                 color: 'var(--color-text-primary)'
                             }}>
-                                {avgRating.toFixed(1)}
-                        </Typography>
+                                {ratingText}
+                            </Typography>
                         </Box>
                     </Box>
 
                     {/* Distance Display */}
-                    {distanceKm !== undefined && (
+                    {props.distanceKm !== undefined && (
                         <Box sx={{ 
                             display: 'flex', 
                             alignItems: 'center', 
@@ -256,7 +201,7 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
                                 color: 'var(--color-text-primary)',
                                 fontSize: '0.8rem'
                             }}>
-                                {distanceKm.toFixed(1)}km away
+                                {distanceText}
                             </Typography>
                         </Box>
                     )}
@@ -275,13 +220,13 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
                             textOverflow: 'ellipsis'
                         }}
                     >
-                        {description || 'No description available'}
+                        {truncatedDescription}
                     </Typography>
 
                     {/* Tags */}
                     <Box sx={{ mb: 3 }}>
                         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                            {tags.slice(0, 3).map((tag, index) => (
+                            {tagsInfo.displayTags.map((tag, index) => (
                                 <Chip
                                     key={index}
                                     label={tag}
@@ -298,9 +243,9 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
                                     }}
                                 />
                             ))}
-                            {tags.length > 3 && (
+                            {tagsInfo.hasMore && (
                                 <Chip
-                                    label={`+${tags.length - 3}`}
+                                    label={`+${tagsInfo.moreCount}`}
                                     size="small"
                                     sx={{
                                         backgroundColor: 'var(--color-surface)',
@@ -343,7 +288,7 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
                                     textTransform: 'uppercase',
                                     fontSize: '0.7rem'
                                 }}>
-                                    {size}
+                                    {props.size}
                                 </Typography>
                             </Box>
                             
@@ -363,67 +308,61 @@ const LightSkateparkCard = memo(function LightSkateparkCard({
                                     textTransform: 'uppercase',
                                     fontSize: '0.7rem'
                                 }}>
-                                    {levels && levels.length > 0 && levels.some(level => level !== null && level !== undefined) ? 
-                                        levels.filter(level => level !== null && level !== undefined).join(', ') : 'Unknown'}
+                                    {levelDisplayText}
                                 </Typography>
                             </Box>
                         </Box>
 
                         {/* Favorite Button */}
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 'auto' }}>
-                          <FavoriteButton 
-                            spotId={_id} 
-                            size="medium" 
-                            showCount={true}
-                            variant="icon"
-                            sx={{
-                              backgroundColor: 'var(--color-surface-elevated)',
-                              border: '1px solid var(--color-border)',
-                              '&:hover': {
-                                backgroundColor: 'var(--color-surface)',
-                                transform: 'scale(1.05)',
-                              }
-                            }}
-                          />
+                            <FavoriteButton 
+                                spotId={props._id} 
+                                size="medium" 
+                                showCount={true}
+                                variant="icon"
+                                sx={{
+                                    backgroundColor: 'var(--color-surface-elevated)',
+                                    border: '1px solid var(--color-border)',
+                                    '&:hover': {
+                                        backgroundColor: 'var(--color-surface)',
+                                        transform: 'scale(1.05)',
+                                    }
+                                }}
+                            />
                         </Box>
                     </Box>
                 </CardContent>
             </Card>
 
             <SkateparkModal
-                _id={_id}
-                open={open}
-                onClose={() => setOpen(false)}
-                title={title}
-                description={description}
-                photoNames={photoNames}
-                isPark={isPark}
-                size={size}
-                levels={levels}
-                tags={tags}
-                coordinates={coordinates}
-                externalLinks={externalLinks}
-                distanceKm={distanceKm}
+                _id={props._id}
+                open={modalOpen}
+                onClose={closeModal}
+                title={props.title}
+                description={props.description}
+                photoNames={props.photoNames}
+                isPark={props.isPark}
+                size={props.size}
+                levels={props.levels}
+                tags={props.tags}
+                coordinates={props.coordinates}
+                externalLinks={props.externalLinks}
+                distanceKm={props.distanceKm}
             />
 
             <DeleteConfirmationDialog
                 open={deleteDialogOpen}
-                onClose={() => setDeleteDialogOpen(false)}
-                onConfirm={() => {
-                    if (onDelete) {
-                        onDelete(_id);
-                    }
-                    setDeleteDialogOpen(false);
-                }}
+                onClose={closeDeleteDialog}
+                onConfirm={handleDelete}
                 spot={{
-                    _id,
-                    title,
-                    description,
-                    photoNames,
-                    isPark,
-                    size,
-                    levels,
-                    tags
+                    _id: props._id,
+                    title: props.title,
+                    description: props.description,
+                    photoNames: props.photoNames,
+                    isPark: props.isPark,
+                    size: props.size,
+                    levels: props.levels,
+                    tags: props.tags
                 }}
                 isDeleting={isDeleting}
             />
