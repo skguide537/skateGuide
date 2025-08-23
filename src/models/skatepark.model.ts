@@ -7,7 +7,7 @@ export interface ISkateparkModel extends Document {
     tags?: Tag[];
     location: Coords;
     size: Size;
-    level: SkaterLevel;
+    levels: SkaterLevel[];
     isPark: boolean;
     isApproved: boolean;
     rating: Rating[];
@@ -46,10 +46,11 @@ const SkateparkSchema = new mongoose.Schema({
         required: [true, "Missing size."],
         enum: Object.values(Size)
     },
-    level: {
-        type: String,
-        required: [true, "Missing level."],
-        enum: Object.values(SkaterLevel)
+    levels: {
+        type: [String],
+        required: [true, "Missing levels."],
+        enum: Object.values(SkaterLevel),
+        validate: [(arr: string[]) => arr.length > 0 && arr.length <= 5, "Must have 1-5 levels."]
     },
     isPark: {
         type: Boolean,

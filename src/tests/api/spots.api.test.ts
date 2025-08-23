@@ -37,7 +37,7 @@ describe('Spots API', () => {
       },
       type: 'street',
       size: 'medium',
-      level: 'beginner',
+      levels: ['beginner'],
       createdBy: 'mock-user-id'
     };
 

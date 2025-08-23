@@ -44,11 +44,12 @@ interface Skatepark {
         type: 'Point';
         coordinates: [number, number]; // [lng, lat]
     };
-    photoName: string[];
+    photoNames: string[];
     isPark: boolean;
     size: string;
-    level: string;
+    levels: string[];
     tags: string[];
+    avgRating: number;
     externalLinks?: {
         url: string;
         sentBy: { id: string; name: string };
@@ -175,10 +176,10 @@ export default function MapComponent({ userLocation }: MapProps) {
                     _id={selectedSpot._id}
                     title={selectedSpot.title}
                     description={selectedSpot.description}
-                    photoNames={selectedSpot.photoName || []}
+                    photoNames={selectedSpot.photoNames || []}
                     isPark={selectedSpot.isPark}
                     size={selectedSpot.size}
-                    level={selectedSpot.level}
+                    levels={selectedSpot.levels ? selectedSpot.levels.filter(level => level !== null && level !== undefined) : []}
                     tags={selectedSpot.tags}
                     coordinates={{
                         lat: selectedSpot.location.coordinates[1],

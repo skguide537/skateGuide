@@ -27,7 +27,7 @@ interface DeleteConfirmationDialogProps {
         photoNames: string[];
         isPark: boolean;
         size: string;
-        level: string;
+        levels: string[];
         tags: string[];
     } | null;
     isDeleting: boolean;
@@ -162,7 +162,8 @@ export default function DeleteConfirmationDialog({
                                 }}
                             />
                             <Chip 
-                                label={spot.level} 
+                                label={spot.levels && spot.levels.length > 0 && spot.levels.some(level => level !== null && level !== undefined) ? 
+                                    spot.levels.filter(level => level !== null && level !== undefined).join(', ') : 'Unknown'} 
                                 size="small"
                                 sx={{ 
                                     fontSize: '0.7rem', 
