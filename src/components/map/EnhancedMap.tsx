@@ -88,6 +88,8 @@ export default function EnhancedMap({ userLocation }: MapProps) {
     return () => setMapRef(null);
   }, [setMapRef]);
 
+
+  
   if (error) {
     return <div>Error: {error}</div>;
   }

@@ -107,6 +107,26 @@ export default function HomePage() {
     const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
          const [showHero, setShowHero] = useState(true);
 
+         // Load hero visibility preference from localStorage after component mounts
+         useEffect(() => {
+             const saved = localStorage.getItem('skateGuide_showHero');
+             if (saved !== null) {
+                 setShowHero(JSON.parse(saved));
+             }
+         }, []);
+
+         // Function to hide hero and save preference
+         const handleHideHero = () => {
+             setShowHero(false);
+             localStorage.setItem('skateGuide_showHero', 'false');
+         };
+
+         // Function to show hero and save preference
+         const handleShowHero = () => {
+             setShowHero(true);
+             localStorage.setItem('skateGuide_showHero', 'true');
+         };
+
           // Subscribe to cache invalidation events to refresh data when spots are added/deleted
      const refreshParks = useCallback(async () => {
        try {
@@ -437,7 +457,7 @@ export default function HomePage() {
     return (
         <Container maxWidth="lg" sx={{ mt: 6 }}>
             {/* Hero Section */}
-            {showHero && (
+            {showHero ? (
                 <Box 
                     textAlign="center" 
                     mb={8}
@@ -477,7 +497,7 @@ export default function HomePage() {
                 >
                     {/* Close Button */}
                     <IconButton
-                        onClick={() => setShowHero(false)}
+                        onClick={handleHideHero}
                         sx={{
                             position: 'absolute',
                             top: 16,
@@ -561,6 +581,42 @@ export default function HomePage() {
                 >
                     Explore the Map
                 </Button>
+                </Box>
+            ) : (
+                <Box sx={{ 
+                    textAlign: 'left', 
+                    mb: 6,
+                    p: 3,
+                    backgroundColor: 'var(--color-surface-elevated)',
+                    borderRadius: 'var(--radius-lg)',
+                    border: '1px solid var(--color-border)',
+                    boxShadow: 'var(--shadow-md)',
+                    background: 'linear-gradient(135deg, var(--color-surface-elevated) 0%, var(--color-surface) 100%)'
+                }}>
+                    
+                    <Button
+                        variant="contained"
+                        onClick={handleShowHero}
+                        size="small"
+                        sx={{
+                            backgroundColor: 'var(--color-accent-green)',
+                            color: 'var(--color-surface-elevated)',
+                            fontWeight: 'bold',
+                            px: 2,
+                            py: 1,
+                            borderRadius: 'var(--radius-md)',
+                            boxShadow: 'var(--shadow-sm)',
+                            transition: 'all var(--transition-fast)',
+                            textTransform: 'none',
+                            '&:hover': { 
+                                backgroundColor: 'var(--color-accent-green)',
+                                transform: 'translateY(-1px)',
+                                boxShadow: 'var(--shadow-md)',
+                            }
+                        }}
+                    >
+                        Show Welcome Message
+                    </Button>
                 </Box>
             )}
 
