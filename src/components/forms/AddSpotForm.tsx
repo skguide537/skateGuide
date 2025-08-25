@@ -171,26 +171,26 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                                 </MenuItem>
                             ))}
                     </Select>
-                    {isAllLevelsSelected && (
-                        <Typography variant="caption" sx={{ 
-                            color: 'var(--color-accent-blue)', 
-                            mt: 1, 
-                            display: 'block',
-                            fontStyle: 'italic'
-                        }}>
-                            ℹ️ "All Levels" selected - other options are disabled
-                        </Typography>
-                    )}
-                    {!isAllLevelsSelected && levelList.length > 0 && (
-                        <Typography variant="caption" sx={{ 
-                            color: 'var(--color-accent-green)', 
-                            mt: 1, 
-                            display: 'block',
-                            fontStyle: 'italic'
-                        }}>
-                            ℹ️ Specific levels selected - "All Levels" option is disabled
-                        </Typography>
-                    )}
+                                         {isAllLevelsSelected && (
+                         <Typography variant="caption" sx={{ 
+                             color: 'var(--color-accent-blue)', 
+                             mt: 1, 
+                             display: 'block',
+                             fontStyle: 'italic'
+                         }}>
+                             ℹ️ &ldquo;All Levels&rdquo; selected - other options are disabled
+                         </Typography>
+                     )}
+                     {!isAllLevelsSelected && levelList.length > 0 && (
+                         <Typography variant="caption" sx={{ 
+                             color: 'var(--color-accent-green)', 
+                             mt: 1, 
+                             display: 'block',
+                             fontStyle: 'italic'
+                         }}>
+                             ℹ️ Specific levels selected - &ldquo;All Levels&rdquo; option is disabled
+                         </Typography>
+                     )}
                 </FormControl>
 
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
