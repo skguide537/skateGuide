@@ -271,68 +271,71 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
     };
 
     // Debounced autocomplete functions
-    const debouncedFetchStreet = useCallback(
-        debounce(async (query: string) => {
-            if (query.length < 2) return;
-            
-            setIsLoadingStreet(true);
-            try {
-                const suggestions = await GeocodingService.searchStreetSuggestions(query);
-                setStreetSuggestions(suggestions);
-            } catch (error) {
-                setStreetSuggestions([]);
-            } finally {
-                setIsLoadingStreet(false);
-            }
-        }, 500),
-        []
-    );
+         const debouncedFetchStreet = useCallback(
+         async (query: string) => {
+             if (query.length < 2) return;
+             
+             setIsLoadingStreet(true);
+             try {
+                 const suggestions = await GeocodingService.searchStreetSuggestions(query);
+                 setStreetSuggestions(suggestions);
+             } catch (error) {
+                 setStreetSuggestions([]);
+             } finally {
+                 setIsLoadingStreet(false);
+             }
+         },
+         []
+     );
 
-    const debouncedFetchCity = useCallback(
-        debounce(async (query: string) => {
-            if (query.length < 2) return;
-            
-            setIsLoadingCity(true);
-            try {
-                const suggestions = await GeocodingService.searchCitySuggestions(query);
-                setCitySuggestions(suggestions);
-            } catch (error) {
-                setCitySuggestions([]);
-            } finally {
-                setIsLoadingCity(false);
-            }
-        }, 500),
-        []
-    );
+         const debouncedFetchCity = useCallback(
+         async (query: string) => {
+             if (query.length < 2) return;
+             
+             setIsLoadingCity(true);
+             try {
+                 const suggestions = await GeocodingService.searchCitySuggestions(query);
+                 setCitySuggestions(suggestions);
+             } catch (error) {
+                 setCitySuggestions([]);
+             } finally {
+                 setIsLoadingCity(false);
+             }
+         },
+         []
+     );
 
-    const debouncedFetchCountry = useCallback(
-        debounce(async (query: string) => {
-            if (query.length < 2) return;
-            
-            setIsLoadingCountry(true);
-            try {
-                const suggestions = await GeocodingService.searchCountrySuggestions(query);
-                setCountrySuggestions(suggestions);
-            } catch (error) {
-                setCountrySuggestions([]);
-            } finally {
-                setIsLoadingCountry(false);
-            }
-        }, 500),
-        []
-    );
+         const debouncedFetchCountry = useCallback(
+         async (query: string) => {
+             if (query.length < 2) return;
+             
+             setIsLoadingCountry(true);
+             try {
+                 const suggestions = await GeocodingService.searchCountrySuggestions(query);
+                 setCountrySuggestions(suggestions);
+             } catch (error) {
+                 setCountrySuggestions([]);
+             } finally {
+                 setIsLoadingCountry(false);
+             }
+         },
+         []
+     );
 
-    const fetchStreetSuggestions = useCallback((query: string) => {
-        debouncedFetchStreet(query);
-    }, [debouncedFetchStreet]);
-
-    const fetchCitySuggestions = useCallback((query: string) => {
-        debouncedFetchCity(query);
-    }, [debouncedFetchCity]);
-
-    const fetchCountrySuggestions = useCallback((query: string) => {
-        debouncedFetchCountry(query);
-    }, [debouncedFetchCountry]);
+         const fetchStreetSuggestions = useCallback((query: string) => {
+         const timeoutId = setTimeout(() => debouncedFetchStreet(query), 500);
+         return () => clearTimeout(timeoutId);
+     }, [debouncedFetchStreet]);
+ 
+     const fetchCitySuggestions = useCallback((query: string) => {
+         const timeoutId = setTimeout(() => debouncedFetchCity(query), 500);
+         return () => clearTimeout(timeoutId);
+     }, [debouncedFetchCity]);
+ 
+     const fetchCountrySuggestions = useCallback((query: string) => {
+         const timeoutId = setTimeout(() => debouncedFetchCountry(query), 500);
+         return () => clearTimeout(timeoutId);
+     }, [debouncedFetchCountry]);
 
     // External links
     const addExternalLink = () => {
