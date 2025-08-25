@@ -37,7 +37,7 @@ export const useSearchFilterBar = (
 
   // Get unique values for filter options
   const allSizes = ['Small', 'Medium', 'Large'];
-  const allLevels = ['Beginner', 'Intermediate', 'Expert'];
+  const allLevels = ['All Levels', 'Beginner', 'Intermediate', 'Expert'];
   const uniqueTags = ['Ramp', 'Rail', 'Stairs', 'Gap', 'Bowl', 'Halfpipe', 'Street', 'Park'];
 
   // Check if any filters are active
@@ -68,7 +68,11 @@ export const useSearchFilterBar = (
       activeFilters.push(`${state.sizeFilter.length} size(s)`);
     }
     if (state.levelFilter.length > 0) {
-      activeFilters.push(`${state.levelFilter.length} level(s)`);
+      if (state.levelFilter.includes('All Levels')) {
+        activeFilters.push('All Levels');
+      } else {
+        activeFilters.push(`${state.levelFilter.length} level(s)`);
+      }
     }
     if (state.tagFilter.length > 0) {
       activeFilters.push(`${state.tagFilter.length} tag(s)`);
@@ -122,7 +126,18 @@ export const useSearchFilterBar = (
   }, [updateFilter]);
 
   const updateLevelFilter = useCallback((levelFilter: string[]) => {
-    updateFilter('levelFilter', levelFilter);
+    // Handle mutual exclusivity: "All Levels" cannot be selected with other levels
+    if (levelFilter.includes('All Levels')) {
+      // If "All Levels" is selected, clear other selections
+      updateFilter('levelFilter', ['All Levels']);
+    } else if (levelFilter.length > 0) {
+      // If specific levels are selected, ensure "All Levels" is not included
+      const filteredLevels = levelFilter.filter(level => level !== 'All Levels');
+      updateFilter('levelFilter', filteredLevels);
+    } else {
+      // No levels selected
+      updateFilter('levelFilter', levelFilter);
+    }
   }, [updateFilter]);
 
   const updateTagFilter = useCallback((tagFilter: string[]) => {
@@ -172,9 +187,12 @@ export const useSearchFilterBar = (
 
   // Get current filter state for external use
   const getCurrentFilters = useCallback(() => {
+    // Handle "All Levels" - if selected, don't filter by specific levels
+    const effectiveLevelFilter = state.levelFilter.includes('All Levels') ? [] : state.levelFilter;
+    
     return {
       searchQuery: state.searchTerm,
-      levelFilter: state.levelFilter,
+      levelFilter: effectiveLevelFilter,
       sizeFilter: state.sizeFilter,
       tagFilter: state.tagFilter,
       isParkFilter: state.typeFilter === 'all' ? null : state.typeFilter === 'park'

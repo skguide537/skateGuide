@@ -244,25 +244,25 @@ export default function SearchFilterBar({
                         }}
                     >
                                                 <MenuItem value="default" sx={{ color: 'var(--color-text-primary)' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <Sort sx={{ fontSize: 20 }} />
                                 Default
                             </Box>
                         </MenuItem>
                         <MenuItem value="distance" sx={{ color: 'var(--color-text-primary)' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <LocationOn sx={{ fontSize: 20 }} />
                                 Distance
                             </Box>
                         </MenuItem>
                         <MenuItem value="rating" sx={{ color: 'var(--color-text-primary)' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <Star sx={{ fontSize: 20 }} />
                                 Rating
                             </Box>
                         </MenuItem>
                         <MenuItem value="recent" sx={{ color: 'var(--color-text-primary)' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <Schedule sx={{ fontSize: 20 }} />
                                 Recent
                             </Box>
@@ -522,12 +522,12 @@ export default function SearchFilterBar({
 
                     {/* Rating Filter */}
                     <Box sx={{ mb: 3 }}>
-                        <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)', mb: 1 }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Star sx={{ color: 'var(--color-accent-blue)', fontSize: 20 }} />
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                            <Star sx={{ color: 'var(--color-accent-blue)', fontSize: 20 }} />
+                            <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)' }}>
                                 Rating: {state.ratingFilter[0]} - {state.ratingFilter[1]} stars
-                            </Box>
-                </Typography>
+                            </Typography>
+                        </Box>
                         <Slider
                             value={state.ratingFilter}
                             onChange={(_, value) => updateRatingFilter(value as number[])}

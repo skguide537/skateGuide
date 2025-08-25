@@ -16,6 +16,7 @@ export enum Role {
 }
 
 export enum SkaterLevel {
+    AllLevels = "All Levels",
     Beginner = "Beginner",
     Intermediate = "Intermediate",
     Expert = "Expert"

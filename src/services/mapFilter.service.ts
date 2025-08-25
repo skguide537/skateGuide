@@ -69,10 +69,11 @@ export class MapFilterService {
       if (filters.sizeFilter.length > 0 && !filters.sizeFilter.includes(spot.size)) return false;
 
       // Level filter
-      if (filters.levelFilter.length > 0 && 
-          (!spot.levels || !spot.levels.some(level => 
-            level !== null && level !== undefined && filters.levelFilter.includes(level)
-          ))) return false;
+      if (filters.levelFilter.length > 0 && !filters.levelFilter.includes('All Levels')) {
+        if (!spot.levels || !spot.levels.some(level => 
+          level !== null && level !== undefined && filters.levelFilter.includes(level)
+        )) return false;
+      }
 
       // Tag filter
       if (filters.tagFilter.length > 0 && 
@@ -125,7 +126,11 @@ export class MapFilterService {
       activeFilters.push(`${filters.sizeFilter.length} size(s)`);
     }
     if (filters.levelFilter.length > 0) {
-      activeFilters.push(`${filters.levelFilter.length} level(s)`);
+      if (filters.levelFilter.includes('All Levels')) {
+        activeFilters.push('All Levels');
+      } else {
+        activeFilters.push(`${filters.levelFilter.length} level(s)`);
+      }
     }
     if (filters.tagFilter.length > 0) {
       activeFilters.push(`${filters.tagFilter.length} tag(s)`);

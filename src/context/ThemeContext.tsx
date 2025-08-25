@@ -14,33 +14,31 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
-    // Get the theme that was already set by the script in the HTML head
+    // Try to get theme from localStorage immediately if possible
     if (typeof window !== 'undefined') {
-      const currentTheme = document.documentElement.getAttribute('data-theme') as Theme;
-      if (currentTheme) {
-        return currentTheme;
-      }
+      const savedTheme = localStorage.getItem('skateGuide-theme') as Theme;
+      if (savedTheme) return savedTheme;
+      
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      return prefersDark ? 'dark' : 'light';
     }
     return 'light';
   });
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // Check localStorage for saved theme preference
-    const savedTheme = localStorage.getItem('skateGuide-theme') as Theme;
-    if (savedTheme) {
-      setThemeState(savedTheme);
-    } else {
-      // Check system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setThemeState(prefersDark ? 'dark' : 'light');
-    }
+    // Mark as initialized - theme is already set in initial state
+    setIsInitialized(true);
   }, []);
 
   useEffect(() => {
-    // Apply theme to document
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('skateGuide-theme', theme);
-  }, [theme]);
+    // Only apply theme after initialization to prevent hydration mismatch
+    if (isInitialized) {
+      // Set theme on body instead of html to avoid hydration issues
+      document.body.setAttribute('data-theme', theme);
+      localStorage.setItem('skateGuide-theme', theme);
+    }
+  }, [theme, isInitialized]);
 
   const toggleTheme = () => {
     setThemeState(prev => prev === 'light' ? 'dark' : 'light');

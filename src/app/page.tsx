@@ -347,7 +347,9 @@ export default function HomePage() {
                 if (sizeFilter.length > 0 && !sizeFilter.includes(park.size)) return false;
 
                 // Level filter
-                if (levelFilter.length > 0 && (!park.levels || !park.levels.some(level => level !== null && level !== undefined && levelFilter.includes(level)))) return false;
+                if (levelFilter.length > 0 && !levelFilter.includes('All Levels')) {
+                    if (!park.levels || !park.levels.some(level => level !== null && level !== undefined && levelFilter.includes(level))) return false;
+                }
 
                 // Tag filter
                 if (tagFilter.length > 0) {
