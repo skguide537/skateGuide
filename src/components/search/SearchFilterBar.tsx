@@ -122,7 +122,14 @@ export default function SearchFilterBar({
         updateDistanceFilter(distanceFilter);
         updateRatingFilter(ratingFilter);
         updateSortBy(sortBy);
-    }, []); // Only run once on mount
+    }, [
+        searchTerm, typeFilter, sizeFilter, levelFilter, tagFilter, 
+        showOnlyFavorites, distanceFilterEnabled, distanceFilter, 
+        ratingFilter, sortBy, updateSearchTerm, updateTypeFilter, 
+        updateSizeFilter, updateLevelFilter, updateTagFilter, 
+        updateShowOnlyFavorites, updateDistanceFilterEnabled, 
+        updateDistanceFilter, updateRatingFilter, updateSortBy
+    ]);
 
     // Sync hook state changes back to parent
     React.useEffect(() => {
