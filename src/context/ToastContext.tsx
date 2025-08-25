@@ -1,7 +1,7 @@
 'use client';
 
 import { Alert, AlertColor, Slide, SlideProps, Snackbar } from '@mui/material';
-import React, { createContext, ReactNode, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, ReactNode, useContext, useState, useEffect, useCallback, useRef } from 'react';
 
 interface ToastContextType {
   showToast: (message: string, severity?: AlertColor) => void;
@@ -22,11 +22,17 @@ export const useToast = (): ToastContextType => {
 // Custom hook for cache management
 export const useCache = (cacheKey: string, refreshCallback: () => void) => {
   const { subscribeToCache } = useToast();
+  const callbackRef = useRef(refreshCallback);
+  
+  // Update ref when callback changes
+  useEffect(() => {
+    callbackRef.current = refreshCallback;
+  }, [refreshCallback]);
   
   useEffect(() => {
-    const unsubscribe = subscribeToCache(cacheKey, refreshCallback);
+    const unsubscribe = subscribeToCache(cacheKey, () => callbackRef.current());
     return unsubscribe;
-  }, [cacheKey, subscribeToCache, refreshCallback]); // Include refreshCallback dependency
+  }, [cacheKey, subscribeToCache]); // Remove refreshCallback dependency
 };
 
 const SlideTransition = React.forwardRef(function Transition(

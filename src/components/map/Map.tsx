@@ -96,20 +96,21 @@ export default function MapComponent({ userLocation }: MapProps) {
     }, []);
 
     // Subscribe to cache invalidation events to refresh data when spots are added/deleted
-    useCache('skateparks', useCallback(() => {
-        const fetchSpots = async () => {
-            try {
-                const response = await fetch('/api/skateparks');
-                if (!response.ok) throw new Error('Failed to fetch skateparks');
-                const data = await response.json();
-                setSpots(data);
-            } catch (err) {
-                console.error('Error refreshing spots:', err);
-            }
-        };
+    // Remove useCache call - it's causing infinite loops
+    // useCache('skateparks', useCallback(() => {
+    //     const fetchSpots = async () => {
+    //         try {
+    //             const response = await fetch('/api/skateparks');
+    //             if (!response.ok) throw new Error('Failed to fetch skateparks');
+    //             const data = await response.json();
+    //             setSpots(data);
+    //         } catch (err) {
+    //             console.error('Error refreshing spots:', err);
+    //         }
+    //     };
 
-        fetchSpots();
-    }, []));
+    //     fetchSpots();
+    // }, []));
 
     useEffect(() => {
         if (mapRef.current) {

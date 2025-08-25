@@ -112,18 +112,19 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     fetchFavorites();
-  }, [fetchFavorites]);
+  }, []); // Remove fetchFavorites dependency - it causes infinite loops
 
   const value = useMemo(() => ({
     favorites,
     counts,
     isLoading,
-    fetchFavorites,
+    // Remove fetchFavorites from dependencies - it causes infinite loops
+    // fetchFavorites,
     ensureCounts,
     getFavoritesCount,
     isFavorited,
     toggleFavorite,
-  }), [favorites, counts, isLoading, fetchFavorites, ensureCounts, getFavoritesCount, isFavorited, toggleFavorite]);
+  }), [favorites, counts, isLoading, ensureCounts, getFavoritesCount, isFavorited, toggleFavorite]);
 
   return (
     <FavoritesContext.Provider value={value}>
