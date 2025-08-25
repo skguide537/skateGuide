@@ -14,8 +14,15 @@ import {
   Collapse,
   Switch,
   FormControlLabel,
-  Chip
+  Chip,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemButton,
+  Divider
 } from '@mui/material';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { useRef } from 'react';
 import { 
   Search, 
   FilterList, 
@@ -24,6 +31,8 @@ import {
   ExpandLess
 } from '@mui/icons-material';
 import { MapFilterOptions } from '@/services/mapFilter.service';
+import { Skatepark } from '@/services/map.service';
+import { Size } from '@/types/enums';
 
 interface MapSidebarProps {
   isMobile: boolean;
@@ -33,9 +42,11 @@ interface MapSidebarProps {
   hasActiveFilters: boolean;
   filterSummary: string[];
   resultsSummary: string;
+  filteredSpots: Skatepark[];
   allSizes: string[];
   allLevels: string[];
   uniqueTags: string[];
+  isLoading: boolean;
   onClose: () => void;
   onToggleFilters: () => void;
   onUpdateSearchTerm: (term: string) => void;
@@ -47,6 +58,7 @@ interface MapSidebarProps {
   onUpdateDistanceFilter: (distance: number) => void;
   onUpdateRatingFilter: (rating: number[]) => void;
   onClearAllFilters: () => void;
+  onSpotClick: (spot: Skatepark) => void;
 }
 
 export default function MapSidebar({
@@ -57,9 +69,11 @@ export default function MapSidebar({
   hasActiveFilters,
   filterSummary,
   resultsSummary,
+  filteredSpots,
   allSizes,
   allLevels,
   uniqueTags,
+  isLoading,
   onClose,
   onToggleFilters,
   onUpdateSearchTerm,
@@ -70,8 +84,19 @@ export default function MapSidebar({
   onUpdateDistanceFilterEnabled,
   onUpdateDistanceFilter,
   onUpdateRatingFilter,
-  onClearAllFilters
+  onClearAllFilters,
+  onSpotClick
 }: MapSidebarProps) {
+  const parentRef = useRef<HTMLDivElement>(null);
+  
+  // Virtual scrolling setup
+  const virtualizer = useVirtualizer({
+    count: filteredSpots?.length || 0,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 120, // Estimated height of each spot item
+    overscan: 5, // Number of items to render outside the visible area
+  });
+
   if (!sidebarOpen) return null;
 
   return (
@@ -132,36 +157,40 @@ export default function MapSidebar({
             🔍 Search & Discover
           </Typography>
           
-          <TextField
-            fullWidth
-            placeholder="Search spots, tags, locations..."
-            value={filters.searchTerm}
-            onChange={(e) => onUpdateSearchTerm(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search sx={{ color: 'var(--color-accent-blue)' }} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ 
-              mb: 2,
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 'var(--radius-md)',
-                backgroundColor: 'var(--color-surface)',
-                border: '1px solid var(--color-border)',
-                transition: 'all var(--transition-fast)',
-                '&:hover': {
-                  borderColor: 'var(--color-accent-blue)',
-                  backgroundColor: 'var(--color-surface-elevated)',
-                },
-                '&.Mui-focused': {
-                  borderColor: 'var(--color-accent-blue)',
-                  boxShadow: '0 0 0 2px rgba(93, 173, 226, 0.2)',
-                }
-              }
-            }}
-          />
+                     <TextField
+             fullWidth
+             placeholder="Search spots, tags, locations..."
+             value={filters.searchTerm}
+             onChange={(e) => onUpdateSearchTerm(e.target.value)}
+             InputProps={{
+               startAdornment: (
+                 <InputAdornment position="start">
+                   <Search sx={{ color: 'var(--color-accent-blue)' }} />
+                 </InputAdornment>
+               ),
+             }}
+             sx={{ 
+               mb: 2,
+               '& .MuiOutlinedInput-root': {
+                 borderRadius: 'var(--radius-md)',
+                 backgroundColor: 'var(--color-surface)',
+                 border: '1px solid var(--color-border)',
+                 transition: 'all var(--transition-fast)',
+                 '&:hover': {
+                   borderColor: 'var(--color-accent-blue)',
+                   backgroundColor: 'var(--color-surface-elevated)',
+                 },
+                 '&.Mui-focused': {
+                   borderColor: 'var(--color-accent-blue)',
+                   boxShadow: '0 0 0 2px rgba(93, 173, 226, 0.2)',
+                 }
+               },
+               '& .MuiInputBase-input::placeholder': {
+                 color: 'var(--color-text-secondary)',
+                 opacity: 1,
+               }
+             }}
+           />
           
           {/* Filter Toggle */}
           <Button
@@ -207,6 +236,9 @@ export default function MapSidebar({
                     },
                     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                       borderColor: 'var(--color-accent-blue)',
+                    },
+                    '& .MuiSelect-select': {
+                      color: 'var(--color-text-primary)',
                     }
                   }}
                 >
@@ -232,10 +264,13 @@ export default function MapSidebar({
                     },
                     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                       borderColor: 'var(--color-accent-blue)',
+                    },
+                    '& .MuiSelect-select': {
+                      color: 'var(--color-text-primary)',
                     }
                   }}
                 >
-                  {allSizes.map((size) => (
+                  {Object.values(Size).map((size) => (
                     <MenuItem key={size} value={size}>
                       {size}
                     </MenuItem>
@@ -259,6 +294,9 @@ export default function MapSidebar({
                     },
                     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                       borderColor: 'var(--color-accent-blue)',
+                    },
+                    '& .MuiSelect-select': {
+                      color: 'var(--color-text-primary)',
                     }
                   }}
                 >
@@ -286,6 +324,9 @@ export default function MapSidebar({
                     },
                     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                       borderColor: 'var(--color-accent-blue)',
+                    },
+                    '& .MuiSelect-select': {
+                      color: 'var(--color-text-primary)',
                     }
                   }}
                 >
@@ -405,6 +446,143 @@ export default function MapSidebar({
             {resultsSummary}
           </Typography>
         </Box>
+
+        {/* Loading State */}
+        {isLoading && (
+          <Box sx={{ mt: 2, textAlign: 'center', p: 3 }}>
+            <Typography variant="body1" sx={{ color: 'var(--color-text-secondary)' }}>
+              Loading spots...
+            </Typography>
+          </Box>
+        )}
+
+
+
+                {/* Spots List */}
+        {filteredSpots && filteredSpots.length > 0 && (
+          <Box sx={{ mt: 2, flex: 1 }}>
+            <Typography variant="h6" sx={{ color: 'var(--color-text-primary)', mb: 2, fontWeight: 600 }}>
+              Spots
+            </Typography>
+            
+            {/* Virtual Scrolling Container */}
+            <Box
+              ref={parentRef}
+              sx={{
+                height: '300px',
+                overflow: 'auto',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-md)',
+                backgroundColor: 'var(--color-surface)',
+              }}
+            >
+              <div
+                style={{
+                  height: `${virtualizer.getTotalSize()}px`,
+                  width: '100%',
+                  position: 'relative',
+                }}
+              >
+                {virtualizer.getVirtualItems().map((virtualRow) => {
+                  const spot = filteredSpots[virtualRow.index];
+                  if (!spot) return null;
+                  
+                  return (
+                    <div
+                      key={spot._id}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: `${virtualRow.size}px`,
+                        transform: `translateY(${virtualRow.start}px)`,
+                      }}
+                    >
+                      <Box sx={{ p: 1 }}>
+                        <ListItem disablePadding>
+                          <ListItemButton 
+                            onClick={() => onSpotClick(spot)}
+                            sx={{
+                              borderRadius: 'var(--radius-md)',
+                              '&:hover': {
+                                backgroundColor: 'var(--color-surface-elevated)',
+                              }
+                            }}
+                          >
+                            <ListItemText
+                              primary={spot.title}
+                              primaryTypographyProps={{
+                                variant: 'body1',
+                                sx: { fontWeight: 600, color: 'var(--color-text-primary)' }
+                              }}
+                              secondary={
+                                <>
+                                  <Box component="span" sx={{ display: 'block', color: 'var(--color-text-secondary)', mb: 0.5 }}>
+                                    {spot.isPark ? '🏟️ Park' : '🛹 Street Spot'}
+                                  </Box>
+                                  {spot.size && (
+                                    <Box component="span" sx={{ display: 'block', color: 'var(--color-text-secondary)', mb: 0.5 }}>
+                                      Size: {spot.size}
+                                    </Box>
+                                  )}
+                                  {spot.levels && spot.levels.length > 0 && (
+                                    <Box component="span" sx={{ display: 'block', color: 'var(--color-text-secondary)', mb: 0.5 }}>
+                                        Levels: {spot.levels.join(', ')}
+                                      </Box>
+                                  )}
+                                  {spot.avgRating && (
+                                    <Box component="span" sx={{ display: 'block', color: 'var(--color-text-secondary)' }}>
+                                      ⭐ {spot.avgRating.toFixed(1)} stars
+                                    </Box>
+                                  )}
+                                </>
+                              }
+                            />
+                          </ListItemButton>
+                        </ListItem>
+                        {virtualRow.index < filteredSpots.length - 1 && <Divider />}
+                      </Box>
+                    </div>
+                  );
+                })}
+              </div>
+            </Box>
+          </Box>
+        )}
+
+        {/* No Results Message */}
+        {filteredSpots && filteredSpots.length === 0 && !isLoading && (
+          <Box sx={{ mt: 2, textAlign: 'center', p: 3 }}>
+            <Typography variant="body1" sx={{ color: 'var(--color-text-secondary)' }}>
+              No spots found matching your filters.
+            </Typography>
+            <Button
+              variant="outlined"
+              onClick={onClearAllFilters}
+              sx={{ mt: 2 }}
+            >
+              Clear Filters
+            </Button>
+          </Box>
+        )}
+
+        {/* Virtual Scrolling Status */}
+        {filteredSpots && filteredSpots.length > 0 && (
+          <Box sx={{ 
+            textAlign: 'center', 
+            mt: 2, 
+            p: 2,
+            backgroundColor: 'var(--color-surface-elevated)',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--color-border)',
+            fontSize: '0.75rem'
+          }}>
+            <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)' }}>
+              🚀 Virtual scrolling enabled • Smooth performance with {filteredSpots.length} spots
+            </Typography>
+          </Box>
+        )}
       </Box>
     </Box>
   );

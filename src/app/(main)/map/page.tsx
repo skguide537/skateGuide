@@ -13,7 +13,7 @@ const MapLoading = () => (
     flexDirection: 'column', 
     alignItems: 'center', 
     justifyContent: 'center', 
-    minHeight: '60vh',
+    height: '100dvh',
     gap: 3,
     p: 4,
     backgroundColor: 'var(--color-surface-elevated)',
@@ -21,8 +21,8 @@ const MapLoading = () => (
     border: '1px solid var(--color-border)',
     boxShadow: 'var(--shadow-md)',
     background: 'linear-gradient(135deg, var(--color-surface-elevated) 0%, var(--color-surface) 100%)',
-    mx: 2,
-    my: 2
+    margin: 0,
+    overflow: 'hidden'
   }} id="map-loading-container">
     <CircularProgress size={48} sx={{ color: 'var(--color-accent-green)' }} />
     <Typography variant="h6" sx={{ color: 'var(--color-text-primary)', fontWeight: 600 }} id="map-loading-text">
@@ -57,15 +57,15 @@ export default function MapPage() {
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center', 
-        height: '100vh',
+        height: '100dvh',
         p: 4,
         backgroundColor: 'var(--color-surface-elevated)',
         borderRadius: 'var(--radius-lg)',
         border: '1px solid var(--color-border)',
         boxShadow: 'var(--shadow-md)',
         background: 'linear-gradient(135deg, var(--color-surface-elevated) 0%, var(--color-surface) 100%)',
-        mx: 2,
-        my: 2
+        margin: 0,
+        overflow: 'hidden'
       }} id="map-error-container">
         <Typography variant="h6" sx={{ color: 'var(--color-error)', fontWeight: 600 }} id="map-error-text">{error}</Typography>
       </Box>
@@ -77,7 +77,13 @@ export default function MapPage() {
   }
 
   return (
-    <Box sx={{ height: '100vh', width: '100%' }} id="map-container">
+    <Box sx={{ 
+      height: '100dvh',
+      width: '100%',
+      overflow: 'hidden',
+      margin: 0,
+      padding: 0
+    }} id="map-container" className="map-page">
       <Suspense fallback={<MapLoading />}>
         <EnhancedMap userLocation={userLocation} />
       </Suspense>

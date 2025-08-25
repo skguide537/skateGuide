@@ -50,6 +50,9 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
         tags,
         levels,
         
+        // State flags
+        isAllLevelsSelected,
+        
         // Functions
         handleSubmit,
         getMyLocation,
@@ -62,6 +65,7 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
         fetchCountrySuggestions,
         addExternalLink,
         removeExternalLink,
+        handleLevelChange,
         
         // Validation
         canSubmit
@@ -152,17 +156,41 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                     <Select 
                             multiple
                             value={levelList}
-                            onChange={(e) => setLevelList(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                            onChange={(e) => handleLevelChange(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
                             input={<OutlinedInput label="Difficulty Levels" />}
                             required
                             error={hasAttemptedSubmit && levelList.length === 0}
                         >
                             {levels.map((level) => (
-                                <MenuItem key={level} value={level}>
+                                <MenuItem 
+                                    key={level} 
+                                    value={level}
+                                    disabled={isAllLevelsSelected && level !== 'All Levels'}
+                                >
                                     {level}
                                 </MenuItem>
                             ))}
                     </Select>
+                    {isAllLevelsSelected && (
+                        <Typography variant="caption" sx={{ 
+                            color: 'var(--color-accent-blue)', 
+                            mt: 1, 
+                            display: 'block',
+                            fontStyle: 'italic'
+                        }}>
+                            ℹ️ "All Levels" selected - other options are disabled
+                        </Typography>
+                    )}
+                    {!isAllLevelsSelected && levelList.length > 0 && (
+                        <Typography variant="caption" sx={{ 
+                            color: 'var(--color-accent-green)', 
+                            mt: 1, 
+                            display: 'block',
+                            fontStyle: 'italic'
+                        }}>
+                            ℹ️ Specific levels selected - "All Levels" option is disabled
+                        </Typography>
+                    )}
                 </FormControl>
 
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
