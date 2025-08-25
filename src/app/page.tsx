@@ -16,8 +16,7 @@ import Grid from '@mui/material/Grid';
 import Pagination from '@mui/material/Pagination';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
-import { useMediaQuery, useTheme as useMuiTheme, IconButton } from '@mui/material';
-import { useCache } from '@/context/ToastContext';
+import { IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
@@ -72,20 +71,25 @@ export default function HomePage() {
     const { theme } = useTheme();
 
     // Responsive breakpoints for grid layout
-    const muiTheme = useMuiTheme();
-    const isXs = useMediaQuery(muiTheme.breakpoints.only('xs')); // Mobile
-    const isSm = useMediaQuery(muiTheme.breakpoints.only('sm')); // Small tablet
-    const isMd = useMediaQuery(muiTheme.breakpoints.only('md')); // Medium tablet
-    const isLg = useMediaQuery(muiTheme.breakpoints.up('lg'));  // Desktop and up
+    const [gridColumns, setGridColumns] = useState(2); // Default for mobile
 
-    // Grid columns calculation for virtual scrolling
-    const gridColumns = useMemo(() => {
-        if (isXs) return 2;  // Mobile: 2 columns
-        if (isSm) return 2;  // Small tablet: 2 columns
-        if (isMd) return 3;  // Medium tablet: 3 columns
-        if (isLg) return 3;  // Desktop: 3 columns
-        return 2; // Default fallback
-    }, [isXs, isSm, isMd, isLg]);
+    useEffect(() => {
+        const updateGridColumns = () => {
+            if (window.innerWidth < 600) { // Mobile
+                setGridColumns(2);
+            } else if (window.innerWidth < 900) { // Small tablet
+                setGridColumns(2);
+            } else if (window.innerWidth < 1200) { // Medium tablet
+                setGridColumns(3);
+            } else { // Desktop and up
+                setGridColumns(3);
+            }
+        };
+
+        updateGridColumns(); // Set initial value
+        window.addEventListener('resize', updateGridColumns);
+        return () => window.removeEventListener('resize', updateGridColumns);
+    }, []);
 
          const [parks, setParks] = useState<Skatepark[]>([]);
      const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -105,7 +109,19 @@ export default function HomePage() {
     const [ratingFilter, setRatingFilter] = useState<number[]>([0, 5]);
     const [sortBy, setSortBy] = useState<'default' | 'distance' | 'rating' | 'recent'>('default');
     const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-         const [showHero, setShowHero] = useState(true);
+    const [showHero, setShowHero] = useState(true);
+
+    // Stabilize state setter functions to prevent infinite loops
+    const handleSearchChange = useCallback((term: string) => setSearchTerm(term), []);
+    const handleTypeFilterChange = useCallback((type: 'all' | 'park' | 'street') => setTypeFilter(type), []);
+    const handleSizeFilterChange = useCallback((sizes: string[]) => setSizeFilter(sizes), []);
+    const handleLevelFilterChange = useCallback((levels: string[]) => setLevelFilter(levels), []);
+    const handleTagFilterChange = useCallback((tags: string[]) => setTagFilter(tags), []);
+    const handleShowOnlyFavoritesChange = useCallback((show: boolean) => setShowOnlyFavorites(show), []);
+    const handleDistanceFilterEnabledChange = useCallback((enabled: boolean) => setDistanceFilterEnabled(enabled), []);
+    const handleDistanceFilterChange = useCallback((distance: number) => setDistanceFilter(distance), []);
+    const handleRatingFilterChange = useCallback((rating: number[]) => setRatingFilter(rating), []);
+    const handleSortByChange = useCallback((sort: 'default' | 'distance' | 'rating' | 'recent') => setSortBy(sort), []);
 
          // Load hero visibility preference from localStorage after component mounts
          useEffect(() => {
@@ -155,7 +171,8 @@ export default function HomePage() {
        }
      }, []);
 
-    useCache('skateparks', refreshParks);
+    // Remove useCache call - it's causing infinite loops
+    // useCache('skateparks', refreshParks);
 
     // Background refresh - periodically update data based on user preference
     useEffect(() => {
@@ -170,8 +187,9 @@ export default function HomePage() {
         }, refreshInterval);
 
         return () => clearInterval(interval);
+        // Remove problematic dependencies - they cause infinite loops
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [refreshParks, showToast]);
+    }, []); // Empty dependency array - this effect should only run once
 
 
 
@@ -197,6 +215,23 @@ export default function HomePage() {
     
 
     // Handle spot deletion with optimistic updates
+    const parksRef = useRef(parks);
+    const showToastRef = useRef(showToast);
+    const invalidateCacheRef = useRef(invalidateCache);
+    
+    // Update refs when values change
+    useEffect(() => {
+        parksRef.current = parks;
+    }, [parks]);
+    
+    useEffect(() => {
+        showToastRef.current = showToast;
+    }, [showToast]);
+    
+    useEffect(() => {
+        invalidateCacheRef.current = invalidateCache;
+    }, [invalidateCache]);
+
     const handleSpotDelete = useCallback(async (spotId: string) => {
         // Optimistically mark as deleting
         setDeletingSpotIds(prev => new Set([...prev, spotId]));
@@ -238,11 +273,11 @@ export default function HomePage() {
             });
             
                          // Get spot title for better toast message
-             const deletedSpot = parks.find(park => park._id === spotId);
+             const deletedSpot = parksRef.current.find(park => park._id === spotId);
              const spotTitle = deletedSpot?.title || 'Spot';
              
              // Show success toast
-             showToast(`"${spotTitle}" deleted successfully!`, 'success');
+             showToastRef.current(`"${spotTitle}" deleted successfully!`, 'success');
              
              // Remove from local state FIRST
              setParks(prev => prev.filter(park => park._id !== spotId));
@@ -252,9 +287,9 @@ export default function HomePage() {
             
             // Invalidate caches AFTER state updates are complete to prevent race conditions
             setTimeout(() => {
-                invalidateCache('skateparks');
-                invalidateCache('spots');
-                invalidateCache('map-markers');
+                invalidateCacheRef.current('skateparks');
+                invalidateCacheRef.current('spots');
+                invalidateCacheRef.current('map-markers');
             }, 500); // Increased delay to ensure database transaction is committed
             
         } catch (error: any) {
@@ -268,9 +303,9 @@ export default function HomePage() {
             });
             
             // Show error to user (we'll add toast later)
-            showToast(`Failed to delete spot: ${error.message}`, 'error');
+            showToastRef.current(`Failed to delete spot: ${error.message}`, 'error');
         }
-    }, [showToast, parks, invalidateCache]);
+    }, []); // No dependencies needed - using refs
 
     // Check for newly added spots when component mounts (only once)
     useEffect(() => {
@@ -292,7 +327,7 @@ export default function HomePage() {
         checkForNewSpots();
         const timer = setTimeout(checkForNewSpots, 2000);
         return () => clearTimeout(timer);
-    }, [fetchParks]);
+    }, []); // Remove fetchParks dependency - it causes infinite loops
 
     useEffect(() => {
         navigator.geolocation.getCurrentPosition(
@@ -308,7 +343,7 @@ export default function HomePage() {
     useEffect(() => {
         // Always fetch parks immediately for virtual scrolling
         fetchParks();
-    }, [fetchParks]);
+    }, []); // Remove fetchParks dependency - it causes infinite loops
 
 
 
@@ -373,6 +408,7 @@ export default function HomePage() {
 
                 // Favorites filter (only if user is logged in and filter is enabled)
                 if (showOnlyFavorites) {
+                    // Use current favorites from context to avoid stale closure issues
                     if (!favorites.includes(park._id)) return false;
                 }
 
@@ -424,26 +460,26 @@ export default function HomePage() {
         }
         // For 'default' without distance filter, maintain original order
 
-                 // No pagination needed with virtual scrolling - return all filtered results
+        // No pagination needed with virtual scrolling - return all filtered results
 
         return filtered;
-              }, [
-         userCoords, 
-         deletedSpotIds, 
-         deletingSpotIds,
-         searchTerm,
-         typeFilter,
-         sizeFilter,
-         levelFilter,
-         tagFilter,
-         showOnlyFavorites,
-         favorites,
-         distanceFilterEnabled,
-         distanceFilter,
-         ratingFilter,
-         sortBy,
-                   parks
-     ]);
+    }, [
+        userCoords, 
+        deletedSpotIds, 
+        deletingSpotIds,
+        searchTerm,
+        typeFilter,
+        sizeFilter,
+        levelFilter,
+        tagFilter,
+        showOnlyFavorites,
+        favorites, // Re-add favorites dependency to ensure data is current
+        distanceFilterEnabled,
+        distanceFilter,
+        ratingFilter,
+        sortBy,
+        parks
+    ]);
 
      // Virtual scrolling setup
      const parentRef = useRef<HTMLDivElement>(null);
@@ -674,25 +710,25 @@ export default function HomePage() {
                                                               {/* Search and Filter Bar */}
                      <SearchFilterBar
                          searchTerm={searchTerm}
-                         onSearchChange={setSearchTerm}
+                         onSearchChange={handleSearchChange}
                          typeFilter={typeFilter}
-                         onTypeFilterChange={setTypeFilter}
+                         onTypeFilterChange={handleTypeFilterChange}
                          sizeFilter={sizeFilter}
-                         onSizeFilterChange={setSizeFilter}
+                         onSizeFilterChange={handleSizeFilterChange}
                          levelFilter={levelFilter}
-                         onLevelFilterChange={setLevelFilter}
+                         onLevelFilterChange={handleLevelFilterChange}
                          tagFilter={tagFilter}
-                         onTagFilterChange={setTagFilter}
+                         onTagFilterChange={handleTagFilterChange}
                          showOnlyFavorites={showOnlyFavorites}
-                         onShowOnlyFavoritesChange={setShowOnlyFavorites}
+                         onShowOnlyFavoritesChange={handleShowOnlyFavoritesChange}
                          distanceFilterEnabled={distanceFilterEnabled}
-                         onDistanceFilterEnabledChange={setDistanceFilterEnabled}
+                         onDistanceFilterEnabledChange={handleDistanceFilterEnabledChange}
                          distanceFilter={distanceFilter}
-                         onDistanceFilterChange={setDistanceFilter}
+                         onDistanceFilterChange={handleDistanceFilterChange}
                          ratingFilter={ratingFilter}
-                         onRatingFilterChange={setRatingFilter}
+                         onRatingFilterChange={handleRatingFilterChange}
                          sortBy={sortBy}
-                         onSortByChange={setSortBy}
+                         onSortByChange={handleSortByChange}
                          filteredCount={parksWithDistance.length}
                          totalCount={parks.length}
                          userLocation={userCoords}
