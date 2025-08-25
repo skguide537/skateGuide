@@ -150,8 +150,12 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
             const location = await GeocodingService.getCurrentLocation();
             if (setValidatedCoords(location.lat, location.lng)) {
                 setLocationMethod('gps');
-                // Clear address fields when using GPS
-                clearAddressFields();
+                // Clear address fields when using GPS but keep map visible
+                setStreet('');
+                setCity('');
+                setState('');
+                setCountry('');
+                setShowMap(true); // Keep map open when using GPS
                 showToast(`Location set: ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`, 'success');
             }
         } catch (error: any) {
