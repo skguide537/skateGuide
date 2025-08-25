@@ -125,35 +125,80 @@ export default function SearchFilterBar({
     }, [
         searchTerm, typeFilter, sizeFilter, levelFilter, tagFilter, 
         showOnlyFavorites, distanceFilterEnabled, distanceFilter, 
-        ratingFilter, sortBy, updateSearchTerm, updateTypeFilter, 
-        updateSizeFilter, updateLevelFilter, updateTagFilter, 
-        updateShowOnlyFavorites, updateDistanceFilterEnabled, 
-        updateDistanceFilter, updateRatingFilter, updateSortBy
+        ratingFilter, sortBy
+        // Remove update* functions from dependencies - they cause infinite loops
+        // updateSearchTerm, updateTypeFilter, updateSizeFilter, updateLevelFilter, 
+        // updateTagFilter, updateShowOnlyFavorites, updateDistanceFilterEnabled, 
+        // updateDistanceFilter, updateRatingFilter, updateSortBy
     ]);
 
-    // Sync hook state changes back to parent
-    React.useEffect(() => {
-        onSearchChange(state.searchTerm);
-        onTypeFilterChange(state.typeFilter);
-        onSizeFilterChange(state.sizeFilter);
-        onLevelFilterChange(state.levelFilter);
-        onTagFilterChange(state.tagFilter);
-        onShowOnlyFavoritesChange(state.showOnlyFavorites);
-        onDistanceFilterEnabledChange(state.distanceFilterEnabled);
-        onDistanceFilterChange(state.distanceFilter);
-        onRatingFilterChange(state.ratingFilter);
-        onSortByChange(state.sortBy);
-    }, [
-        state.searchTerm, state.typeFilter, state.sizeFilter, state.levelFilter, 
-        state.tagFilter, state.showOnlyFavorites, state.distanceFilterEnabled,
-        state.distanceFilter, state.ratingFilter, state.sortBy,
-        onSearchChange, onTypeFilterChange, onSizeFilterChange, onLevelFilterChange,
-        onTagFilterChange, onShowOnlyFavoritesChange, onDistanceFilterEnabledChange,
-        onDistanceFilterChange, onRatingFilterChange, onSortByChange
-    ]);
+    // Remove the problematic useEffect that was causing infinite loops
+    // The component should only sync from props to internal state, not back to parent
+
+    // Create wrapper functions that update both internal state and parent state
+    const handleSearchChange = (value: string) => {
+        updateSearchTerm(value);
+        onSearchChange(value);
+    };
+
+    const handleTypeFilterChange = (value: 'all' | 'park' | 'street') => {
+        updateTypeFilter(value);
+        onTypeFilterChange(value);
+    };
+
+    const handleSizeFilterChange = (value: string[]) => {
+        updateSizeFilter(value);
+        onSizeFilterChange(value);
+    };
+
+    const handleLevelFilterChange = (value: string[]) => {
+        updateLevelFilter(value);
+        onLevelFilterChange(value);
+    };
+
+    const handleTagFilterChange = (value: string[]) => {
+        updateTagFilter(value);
+        onTagFilterChange(value);
+    };
+
+    const handleShowOnlyFavoritesChange = (value: boolean) => {
+        updateShowOnlyFavorites(value);
+        onShowOnlyFavoritesChange(value);
+    };
+
+    const handleDistanceFilterEnabledChange = (value: boolean) => {
+        updateDistanceFilterEnabled(value);
+        onDistanceFilterEnabledChange(value);
+    };
+
+    const handleDistanceFilterChange = (value: number) => {
+        updateDistanceFilter(value);
+        onDistanceFilterChange(value);
+    };
+
+    const handleRatingFilterChange = (value: number[]) => {
+        updateRatingFilter(value);
+        onRatingFilterChange(value);
+    };
+
+    const handleSortByChange = (value: 'default' | 'distance' | 'rating' | 'recent') => {
+        updateSortBy(value);
+        onSortByChange(value);
+    };
 
     const handleClearFilters = () => {
         clearAllFilters();
+        // Also call parent callbacks to sync the cleared state
+        onSearchChange('');
+        onTypeFilterChange('all');
+        onSizeFilterChange([]);
+        onLevelFilterChange([]);
+        onTagFilterChange([]);
+        onShowOnlyFavoritesChange(false);
+        onDistanceFilterEnabledChange(false);
+        onDistanceFilterChange(10);
+        onRatingFilterChange([0, 5]);
+        onSortByChange('default');
     };
 
     return (
@@ -195,7 +240,7 @@ export default function SearchFilterBar({
                                         <TextField
                         placeholder="Search spots, tags, locations..."
                         value={state.searchTerm}
-                        onChange={(e) => updateSearchTerm(e.target.value)}
+                        onChange={(e) => handleSearchChange(e.target.value)}
                         InputProps={{
                             startAdornment: (
                                 <InputAdornment position="start">
@@ -234,7 +279,7 @@ export default function SearchFilterBar({
                     <InputLabel sx={{ color: 'var(--color-text-secondary)' }}>Sort By</InputLabel>
                     <Select
                         value={state.sortBy}
-                        onChange={(e) => updateSortBy(e.target.value as 'default' | 'distance' | 'rating' | 'recent')}
+                        onChange={(e) => handleSortByChange(e.target.value as 'default' | 'distance' | 'rating' | 'recent')}
                         sx={{ 
                             '& .MuiOutlinedInput-notchedOutline': {
                                 borderColor: 'var(--color-border)',
@@ -312,7 +357,7 @@ export default function SearchFilterBar({
                         <InputLabel sx={{ color: 'var(--color-text-secondary)' }}>Type</InputLabel>
                         <Select
                             value={state.typeFilter}
-                            onChange={(e) => updateTypeFilter(e.target.value as 'all' | 'park' | 'street')}
+                            onChange={(e) => handleTypeFilterChange(e.target.value as 'all' | 'park' | 'street')}
                             sx={{
                                 '& .MuiOutlinedInput-notchedOutline': {
                                     borderColor: 'var(--color-border)',
@@ -355,7 +400,7 @@ export default function SearchFilterBar({
                         <Select
                             multiple
                             value={state.sizeFilter}
-                            onChange={(e) => updateSizeFilter(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                            onChange={(e) => handleSizeFilterChange(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
                             sx={{
                                 '& .MuiOutlinedInput-notchedOutline': {
                                     borderColor: 'var(--color-border)',
@@ -394,7 +439,7 @@ export default function SearchFilterBar({
                         <Select
                             multiple
                             value={state.levelFilter}
-                            onChange={(e) => updateLevelFilter(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                            onChange={(e) => handleLevelFilterChange(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
                             sx={{
                                 '& .MuiOutlinedInput-notchedOutline': {
                                     borderColor: 'var(--color-border)',
@@ -430,7 +475,7 @@ export default function SearchFilterBar({
                         <Select
                             multiple
                             value={state.tagFilter}
-                            onChange={(e) => updateTagFilter(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                            onChange={(e) => handleTagFilterChange(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
                             sx={{
                                 '& .MuiOutlinedInput-notchedOutline': {
                                     borderColor: 'var(--color-border)',
@@ -469,7 +514,7 @@ export default function SearchFilterBar({
                             control={
                                 <Switch
                                     checked={state.showOnlyFavorites}
-                                    onChange={(e) => updateShowOnlyFavorites(e.target.checked)}
+                                    onChange={(e) => handleShowOnlyFavoritesChange(e.target.checked)}
                                     color="primary"
                                 />
                             }
@@ -492,7 +537,7 @@ export default function SearchFilterBar({
                         control={
                             <Switch
                                 checked={state.distanceFilterEnabled}
-                                onChange={(e) => updateDistanceFilterEnabled(e.target.checked)}
+                                onChange={(e) => handleDistanceFilterEnabledChange(e.target.checked)}
                                 color="primary"
                             />
                         }
@@ -512,7 +557,7 @@ export default function SearchFilterBar({
                             </Typography>
                             <Slider
                                 value={state.distanceFilter}
-                                onChange={(_, value) => updateDistanceFilter(value as number)}
+                                onChange={(_, value) => handleDistanceFilterChange(value as number)}
                                 min={1}
                                 max={50}
                                 step={1}
@@ -537,7 +582,7 @@ export default function SearchFilterBar({
                         </Box>
                         <Slider
                             value={state.ratingFilter}
-                            onChange={(_, value) => updateRatingFilter(value as number[])}
+                            onChange={(_, value) => handleRatingFilterChange(value as number[])}
                             min={0}
                             max={5}
                             step={0.5}
