@@ -13,7 +13,16 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('light');
+  const [theme, setThemeState] = useState<Theme>(() => {
+    // Get the theme that was already set by the script in the HTML head
+    if (typeof window !== 'undefined') {
+      const currentTheme = document.documentElement.getAttribute('data-theme') as Theme;
+      if (currentTheme) {
+        return currentTheme;
+      }
+    }
+    return 'light';
+  });
 
   useEffect(() => {
     // Check localStorage for saved theme preference
