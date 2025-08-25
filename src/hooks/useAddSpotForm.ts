@@ -24,6 +24,21 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
     const [description, setDescription] = useState('');
     const [size, setSize] = useState('');
     const [levelList, setLevelList] = useState<string[]>([]);
+
+    // Handle level selection with mutual exclusivity
+    const handleLevelChange = useCallback((selectedLevels: string[]) => {
+        if (selectedLevels.includes('All Levels')) {
+            // If "All Levels" is selected, clear other selections
+            setLevelList(['All Levels']);
+        } else {
+            // If specific levels are selected, ensure "All Levels" is not included
+            const filteredLevels = selectedLevels.filter(level => level !== 'All Levels');
+            setLevelList(filteredLevels);
+        }
+    }, []);
+
+    // Check if "All Levels" is selected to disable other options
+    const isAllLevelsSelected = levelList.includes('All Levels');
     const [isPark, setIsPark] = useState(false);
     const [tagList, setTagList] = useState<string[]>([]);
     const [photos, setPhotos] = useState<FileList | null>(null);
@@ -368,6 +383,9 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
         tags,
         levels,
         
+        // State flags
+        isAllLevelsSelected,
+        
         // Functions
         handleSubmit,
         getMyLocation,
@@ -380,6 +398,7 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
         fetchCountrySuggestions,
         addExternalLink,
         removeExternalLink,
+        handleLevelChange,
         
         // Validation
         canSubmit: () => FormValidationService.canSubmit({

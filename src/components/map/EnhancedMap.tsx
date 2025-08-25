@@ -98,7 +98,14 @@ export default function EnhancedMap({ userLocation }: MapProps) {
   const defaultZoom = MapService.getDefaultZoom();
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh', position: 'relative' }}>
+    <Box sx={{ 
+      display: 'flex', 
+      height: '100dvh', // Dynamic viewport height for mobile
+      position: 'relative',
+      overflow: 'hidden',
+      width: '100vw',
+      maxHeight: '100dvh'
+    }}>
       {/* Sidebar */}
       <MapSidebar
         isMobile={isMobile}
@@ -108,9 +115,11 @@ export default function EnhancedMap({ userLocation }: MapProps) {
         hasActiveFilters={hasActiveFilters}
         filterSummary={filterSummary}
         resultsSummary={resultsSummary}
+        filteredSpots={filteredSpots}
         allSizes={allSizes}
         allLevels={allLevels}
         uniqueTags={uniqueTags}
+        isLoading={isLoading}
         onClose={toggleSidebar}
         onToggleFilters={toggleFilters}
         onUpdateSearchTerm={updateSearchTerm}
@@ -122,10 +131,11 @@ export default function EnhancedMap({ userLocation }: MapProps) {
         onUpdateDistanceFilter={updateDistanceFilter}
         onUpdateRatingFilter={updateRatingFilter}
         onClearAllFilters={clearAllFilters}
+        onSpotClick={handleSpotClick}
       />
 
       {/* Map Container */}
-      <Box sx={{ flexGrow: 1, position: 'relative' }}>
+      <Box sx={{ flexGrow: 1, position: 'relative', zIndex: 1 }}>
         <MapContainer
           center={mapCenter}
           zoom={defaultZoom}
@@ -185,7 +195,9 @@ export default function EnhancedMap({ userLocation }: MapProps) {
           right: 16, 
           display: 'flex', 
           flexDirection: 'column', 
-          gap: 1 
+          gap: 1,
+          zIndex: 9999,
+          pointerEvents: 'auto'
         }}>
           {/* Map Style Toggle */}
           <Tooltip title="Change Map Style">
@@ -199,10 +211,14 @@ export default function EnhancedMap({ userLocation }: MapProps) {
               sx={{
                 backgroundColor: 'var(--color-surface-elevated)',
                 color: 'var(--color-text-primary)',
-                boxShadow: 'var(--shadow-md)',
+                boxShadow: 'var(--shadow-lg)',
+                border: '2px solid var(--color-border)',
+                minWidth: 48,
+                minHeight: 48,
                 '&:hover': {
                   backgroundColor: 'var(--color-surface)',
                   transform: 'translateY(-1px)',
+                  boxShadow: 'var(--shadow-xl)',
                 }
               }}
             >
@@ -217,10 +233,14 @@ export default function EnhancedMap({ userLocation }: MapProps) {
               sx={{
                 backgroundColor: 'var(--color-surface-elevated)',
                 color: 'var(--color-text-primary)',
-                boxShadow: 'var(--shadow-md)',
+                boxShadow: 'var(--shadow-lg)',
+                border: '2px solid var(--color-border)',
+                minWidth: 48,
+                minHeight: 48,
                 '&:hover': {
                   backgroundColor: 'var(--color-surface)',
                   transform: 'translateY(-1px)',
+                  boxShadow: 'var(--shadow-xl)',
                 }
               }}
             >
@@ -274,9 +294,11 @@ export default function EnhancedMap({ userLocation }: MapProps) {
             hasActiveFilters={hasActiveFilters}
             filterSummary={filterSummary}
             resultsSummary={resultsSummary}
+            filteredSpots={filteredSpots}
             allSizes={allSizes}
             allLevels={allLevels}
             uniqueTags={uniqueTags}
+            isLoading={isLoading}
             onClose={toggleSidebar}
             onToggleFilters={toggleFilters}
             onUpdateSearchTerm={updateSearchTerm}
@@ -288,6 +310,7 @@ export default function EnhancedMap({ userLocation }: MapProps) {
             onUpdateDistanceFilter={updateDistanceFilter}
             onUpdateRatingFilter={updateRatingFilter}
             onClearAllFilters={clearAllFilters}
+            onSpotClick={handleSpotClick}
           />
         </Drawer>
       )}

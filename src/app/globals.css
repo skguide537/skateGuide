@@ -50,7 +50,7 @@
   --transition-slow: 0.35s ease;
 }
 
-[data-theme="dark"] {
+body[data-theme="dark"] {
   /* Dark Theme Colors */
   --color-primary: #1A1A1A;       /* Asphalt Black - Primary */
   --color-secondary: #2C3E50;     /* Concrete Gray - Secondary */
@@ -86,6 +86,13 @@
   box-sizing: border-box;
 }
 
+/* Default theme (light) - prevents flash */
+body:not([data-theme]) {
+  color-scheme: light;
+  background-color: #FFFFFF;
+  color: #1A1A1A;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -94,6 +101,18 @@ body {
   color: var(--color-text-primary);
   transition: background-color var(--transition-normal), color var(--transition-normal);
   line-height: 1.6;
+}
+
+/* Ensure theme variables are applied to body */
+body[data-theme="light"] {
+  /* Light theme is already defined in :root, but we can override if needed */
+}
+
+/* Map page specific styles to prevent scrolling */
+.map-page {
+  overflow: hidden !important;
+  height: 100vh !important;
+  height: 100dvh !important;
 }
 
 /* Typography */

@@ -31,11 +31,12 @@ export class SearchFilterService {
     static filterSkateparks(skateparks: SkateparkData[], filters: FilterOptions): SkateparkData[] {
         return skateparks.filter(park => {
             // Level filter
-            if (filters.levelFilter.length > 0 && 
-                (!park.levels || !park.levels.some(level => 
+            if (filters.levelFilter.length > 0 && !filters.levelFilter.includes('All Levels')) {
+                if (!park.levels || !park.levels.some(level => 
                     level !== null && level !== undefined && filters.levelFilter.includes(level)
-                ))) {
-                return false;
+                )) {
+                    return false;
+                }
             }
 
             // Size filter
@@ -105,6 +106,8 @@ export class SearchFilterService {
     // Get unique values for filter options
     static getUniqueLevels(skateparks: SkateparkData[]): string[] {
         const levels = new Set<string>();
+        // Always include "All Levels" option
+        levels.add('All Levels');
         skateparks.forEach(park => {
             if (park.levels) {
                 park.levels.forEach(level => {
