@@ -14,28 +14,28 @@ import { HOME_PAGE_CONSTANTS } from '@/constants/homePage';
 
 export default function HomePage() {
     // Get user's location
-    const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+     const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
     
     // Hero visibility state
     const [showHero, setShowHero] = useState(true);
 
-    // Load hero visibility preference from localStorage after component mounts
-    useEffect(() => {
+         // Load hero visibility preference from localStorage after component mounts
+         useEffect(() => {
         const saved = localStorage.getItem(HOME_PAGE_CONSTANTS.LOCAL_STORAGE_KEYS.SHOW_HERO);
-        if (saved !== null) {
-            setShowHero(JSON.parse(saved));
-        }
-    }, []);
+             if (saved !== null) {
+                 setShowHero(JSON.parse(saved));
+             }
+         }, []);
 
-    // Function to hide hero and save preference
-    const handleHideHero = () => {
-        setShowHero(false);
+         // Function to hide hero and save preference
+         const handleHideHero = () => {
+             setShowHero(false);
         localStorage.setItem(HOME_PAGE_CONSTANTS.LOCAL_STORAGE_KEYS.SHOW_HERO, 'false');
-    };
+         };
 
-    // Function to show hero and save preference
-    const handleShowHero = () => {
-        setShowHero(true);
+         // Function to show hero and save preference
+         const handleShowHero = () => {
+             setShowHero(true);
         localStorage.setItem(HOME_PAGE_CONSTANTS.LOCAL_STORAGE_KEYS.SHOW_HERO, 'true');
     };
 
@@ -52,7 +52,7 @@ export default function HomePage() {
     const {
         parks,
         isLoading,
-        deletedSpotIds,
+        deletedSpotIds, 
         deletingSpotIds,
         lastUpdated,
         handleSpotDelete,
@@ -68,6 +68,7 @@ export default function HomePage() {
         showOnlyFavorites,
         distanceFilterEnabled,
         distanceFilter,
+        ratingFilterEnabled,
         ratingFilter,
         sortBy,
         handleSearchChange,
@@ -78,6 +79,7 @@ export default function HomePage() {
         handleShowOnlyFavoritesChange,
         handleDistanceFilterEnabledChange,
         handleDistanceFilterChange,
+        handleRatingFilterEnabledChange,
         handleRatingFilterChange,
         handleSortByChange,
         parksWithDistance,
@@ -101,32 +103,34 @@ export default function HomePage() {
                 <LoadingSection userCoords={userCoords} />
             ) : (
                 <>
-                    {/* Search and Filter Bar */}
-                    <SearchFilterBar
-                        searchTerm={searchTerm}
-                        onSearchChange={handleSearchChange}
-                        typeFilter={typeFilter}
-                        onTypeFilterChange={handleTypeFilterChange}
-                        sizeFilter={sizeFilter}
-                        onSizeFilterChange={handleSizeFilterChange}
-                        levelFilter={levelFilter}
-                        onLevelFilterChange={handleLevelFilterChange}
-                        tagFilter={tagFilter}
-                        onTagFilterChange={handleTagFilterChange}
-                        showOnlyFavorites={showOnlyFavorites}
-                        onShowOnlyFavoritesChange={handleShowOnlyFavoritesChange}
-                        distanceFilterEnabled={distanceFilterEnabled}
-                        onDistanceFilterEnabledChange={handleDistanceFilterEnabledChange}
-                        distanceFilter={distanceFilter}
-                        onDistanceFilterChange={handleDistanceFilterChange}
-                        ratingFilter={ratingFilter}
-                        onRatingFilterChange={handleRatingFilterChange}
-                        sortBy={sortBy}
-                        onSortByChange={handleSortByChange}
-                        filteredCount={parksWithDistance.length}
-                        totalCount={parks.length}
-                        userLocation={userCoords}
-                    />
+                                                              {/* Search and Filter Bar */}
+                     <SearchFilterBar
+                         searchTerm={searchTerm}
+                         onSearchChange={handleSearchChange}
+                         typeFilter={typeFilter}
+                         onTypeFilterChange={handleTypeFilterChange}
+                         sizeFilter={sizeFilter}
+                         onSizeFilterChange={handleSizeFilterChange}
+                         levelFilter={levelFilter}
+                         onLevelFilterChange={handleLevelFilterChange}
+                         tagFilter={tagFilter}
+                         onTagFilterChange={handleTagFilterChange}
+                         showOnlyFavorites={showOnlyFavorites}
+                         onShowOnlyFavoritesChange={handleShowOnlyFavoritesChange}
+                         distanceFilterEnabled={distanceFilterEnabled}
+                         onDistanceFilterEnabledChange={handleDistanceFilterEnabledChange}
+                         distanceFilter={distanceFilter}
+                         onDistanceFilterChange={handleDistanceFilterChange}
+                         ratingFilterEnabled={ratingFilterEnabled}
+                         onRatingFilterEnabledChange={handleRatingFilterEnabledChange}
+                         ratingFilter={ratingFilter}
+                         onRatingFilterChange={handleRatingFilterChange}
+                         sortBy={sortBy}
+                         onSortByChange={handleSortByChange}
+                         filteredCount={parksWithDistance.length}
+                         totalCount={parks.length}
+                         userLocation={userCoords}
+                     />
 
                     {/* Status Indicators */}
                     <StatusIndicators
@@ -141,8 +145,8 @@ export default function HomePage() {
                         virtualizer={virtualizer}
                         parksWithDistance={parksWithDistance}
                         gridColumns={gridColumns}
-                        onDelete={handleSpotDelete}
-                    />
+                                                 onDelete={handleSpotDelete}
+                                             />
                 </>
             )}
         </Container>

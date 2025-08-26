@@ -30,8 +30,9 @@ export interface FilterState {
     showOnlyFavorites: boolean;
     distanceFilterEnabled: boolean;
     distanceFilter: number;
+    ratingFilterEnabled: boolean;
     ratingFilter: number[];
-    sortBy: 'default' | 'distance' | 'rating' | 'recent';
+    sortBy: 'distance' | 'rating' | 'recent';
 }
 
 export class ParksFilterService {
@@ -108,7 +109,7 @@ export class ParksFilterService {
         }
 
         // Rating filter
-        if (park.avgRating < filterState.ratingFilter[0] || park.avgRating > filterState.ratingFilter[1]) return false;
+        if (filterState.ratingFilterEnabled && (park.avgRating < filterState.ratingFilter[0] || park.avgRating > filterState.ratingFilter[1])) return false;
 
         // Favorites filter
         if (filterState.showOnlyFavorites) {
@@ -149,7 +150,7 @@ export class ParksFilterService {
         sortBy: string,
         distanceFilterEnabled: boolean
     ): FilteredSkatepark[] {
-        if (sortBy === 'distance' || (distanceFilterEnabled && sortBy === 'default')) {
+        if (sortBy === 'distance') {
             // Sort by distance (closest first)
             return parks.sort((a, b) => a.distanceKm - b.distanceKm);
         } else if (sortBy === 'rating') {
