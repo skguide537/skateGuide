@@ -103,6 +103,19 @@ export class UtilityService {
         return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     }
 
+    // Calculate distance between two coordinates in kilometers
+    static getDistanceKm(userLat: number, userLng: number, parkLat: number, parkLng: number): number {
+        const R = 6371; // Earth's radius in kilometers
+        const toRad = (x: number) => (x * Math.PI) / 180;
+        const dLat = toRad(parkLat - userLat);
+        const dLng = toRad(parkLng - userLng);
+        const a =
+            Math.sin(dLat / 2) ** 2 +
+            Math.cos(toRad(userLat)) * Math.cos(toRad(parkLat)) * Math.sin(dLng / 2) ** 2;
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
     // Generate random ID
     static generateId(length: number = 8): string {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
