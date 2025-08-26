@@ -11,8 +11,9 @@ export interface SearchFilterBarState {
   showOnlyFavorites: boolean;
   distanceFilterEnabled: boolean;
   distanceFilter: number;
+  ratingFilterEnabled: boolean;
   ratingFilter: number[];
-  sortBy: 'default' | 'distance' | 'rating' | 'recent';
+  sortBy: 'distance' | 'rating' | 'recent';
   showFilters: boolean;
 }
 
@@ -30,28 +31,25 @@ export const useSearchFilterBar = (
     showOnlyFavorites: false,
     distanceFilterEnabled: false,
     distanceFilter: 10, // km
+    ratingFilterEnabled: false,
     ratingFilter: [0, 5],
-    sortBy: 'default',
-    showFilters: false
+    sortBy: 'distance',
+    showFilters: false // Start with filters hidden by default
   });
 
-  // Get unique values for filter options
-  const allSizes = ['Small', 'Medium', 'Large'];
-  const allLevels = ['All Levels', 'Beginner', 'Intermediate', 'Expert'];
-  const uniqueTags = ['Ramp', 'Rail', 'Stairs', 'Gap', 'Bowl', 'Halfpipe', 'Street', 'Park'];
+  // Note: Filter options are now passed as props from constants
 
   // Check if any filters are active
   const hasActiveFilters = useMemo(() => {
     return state.searchTerm.trim().length > 0 ||
            state.typeFilter !== 'all' ||
-           state.sizeFilter.length > 0 ||
-           state.levelFilter.length > 0 ||
+           (state.sizeFilter.length > 0 && !state.sizeFilter.includes('All Sizes')) ||
+           (state.levelFilter.length > 0 && !state.levelFilter.includes('All Levels')) ||
            state.tagFilter.length > 0 ||
            state.showOnlyFavorites ||
            state.distanceFilterEnabled ||
-           state.ratingFilter[0] !== 0 ||
-           state.ratingFilter[1] !== 5 ||
-           state.sortBy !== 'default';
+           (state.ratingFilterEnabled && (state.ratingFilter[0] !== 0 || state.ratingFilter[1] !== 5)) ||
+           state.sortBy !== 'distance';
   }, [state]);
 
   // Get filter summary for display
@@ -64,18 +62,14 @@ export const useSearchFilterBar = (
     if (state.typeFilter !== 'all') {
       activeFilters.push(state.typeFilter === 'park' ? 'Parks only' : 'Street only');
     }
-    if (state.sizeFilter.length > 0) {
-      activeFilters.push(`${state.sizeFilter.length} size(s)`);
+    if (state.sizeFilter.length > 0 && !state.sizeFilter.includes('All Sizes')) {
+      activeFilters.push(`Size: ${state.sizeFilter[0]}`);
     }
-    if (state.levelFilter.length > 0) {
-      if (state.levelFilter.includes('All Levels')) {
-        activeFilters.push('All Levels');
-      } else {
-        activeFilters.push(`${state.levelFilter.length} level(s)`);
-      }
+    if (state.levelFilter.length > 0 && !state.levelFilter.includes('All Levels')) {
+      activeFilters.push(`Level: ${state.levelFilter[0]}`);
     }
     if (state.tagFilter.length > 0) {
-      activeFilters.push(`${state.tagFilter.length} tag(s)`);
+      activeFilters.push(`Tag: ${state.tagFilter[0]}`);
     }
     if (state.showOnlyFavorites) {
       activeFilters.push('Favorites only');
@@ -83,7 +77,7 @@ export const useSearchFilterBar = (
     if (state.distanceFilterEnabled) {
       activeFilters.push(`Within ${state.distanceFilter}km`);
     }
-    if (state.ratingFilter[0] > 0 || state.ratingFilter[1] < 5) {
+    if (state.ratingFilterEnabled && (state.ratingFilter[0] > 0 || state.ratingFilter[1] < 5)) {
       const min = state.ratingFilter[0];
       const max = state.ratingFilter[1];
       if (min === max) {
@@ -92,16 +86,15 @@ export const useSearchFilterBar = (
         activeFilters.push(`${min}-${max} stars`);
       }
     }
-    if (state.sortBy !== 'default') {
+    if (state.sortBy !== 'distance') {
       const sortLabels = {
-        distance: 'By distance',
         rating: 'By rating',
         recent: 'By recent'
       };
       activeFilters.push(sortLabels[state.sortBy]);
     }
     
-    return activeFilters;
+    return activeFilters.join(', ');
   }, [state]);
 
   // Update individual filter
@@ -126,18 +119,7 @@ export const useSearchFilterBar = (
   }, [updateFilter]);
 
   const updateLevelFilter = useCallback((levelFilter: string[]) => {
-    // Handle mutual exclusivity: "All Levels" cannot be selected with other levels
-    if (levelFilter.includes('All Levels')) {
-      // If "All Levels" is selected, clear other selections
-      updateFilter('levelFilter', ['All Levels']);
-    } else if (levelFilter.length > 0) {
-      // If specific levels are selected, ensure "All Levels" is not included
-      const filteredLevels = levelFilter.filter(level => level !== 'All Levels');
-      updateFilter('levelFilter', filteredLevels);
-    } else {
-      // No levels selected
-      updateFilter('levelFilter', levelFilter);
-    }
+    updateFilter('levelFilter', levelFilter);
   }, [updateFilter]);
 
   const updateTagFilter = useCallback((tagFilter: string[]) => {
@@ -160,12 +142,19 @@ export const useSearchFilterBar = (
     updateFilter('ratingFilter', rating);
   }, [updateFilter]);
 
-  const updateSortBy = useCallback((sortBy: 'default' | 'distance' | 'rating' | 'recent') => {
+  const updateRatingFilterEnabled = useCallback((enabled: boolean) => {
+    updateFilter('ratingFilterEnabled', enabled);
+  }, [updateFilter]);
+
+  const updateSortBy = useCallback((sortBy: 'distance' | 'rating' | 'recent') => {
     updateFilter('sortBy', sortBy);
   }, [updateFilter]);
 
   const toggleFilters = useCallback(() => {
-    setState(prev => ({ ...prev, showFilters: !prev.showFilters }));
+    setState(prev => {
+      const newShowFilters = !prev.showFilters;
+      return { ...prev, showFilters: newShowFilters };
+    });
   }, []);
 
   // Clear all filters
@@ -179,20 +168,18 @@ export const useSearchFilterBar = (
       showOnlyFavorites: false,
       distanceFilterEnabled: false,
       distanceFilter: 10,
+      ratingFilterEnabled: false,
       ratingFilter: [0, 5],
-      sortBy: 'default',
+      sortBy: 'distance',
       showFilters: state.showFilters // Keep filter visibility state
     });
   }, [state.showFilters]);
 
   // Get current filter state for external use
   const getCurrentFilters = useCallback(() => {
-    // Handle "All Levels" - if selected, don't filter by specific levels
-    const effectiveLevelFilter = state.levelFilter.includes('All Levels') ? [] : state.levelFilter;
-    
     return {
       searchQuery: state.searchTerm,
-      levelFilter: effectiveLevelFilter,
+      levelFilter: state.levelFilter,
       sizeFilter: state.sizeFilter,
       tagFilter: state.tagFilter,
       isParkFilter: state.typeFilter === 'all' ? null : state.typeFilter === 'park'
@@ -201,10 +188,9 @@ export const useSearchFilterBar = (
 
   // Get sort options
   const sortOptions = [
-    { value: 'default', label: 'Default', icon: null },
     { value: 'distance', label: 'Distance', icon: 'LocationOn' },
     { value: 'rating', label: 'Rating', icon: 'Star' },
-    { value: 'recent', label: 'Recent', icon: 'Schedule' }
+    { value: 'recent', label: 'Recently Added', icon: 'Schedule' }
   ];
 
   return {
@@ -212,11 +198,9 @@ export const useSearchFilterBar = (
     state,
     
     // Computed values
-    allSizes,
-    allLevels,
-    uniqueTags,
     hasActiveFilters,
     filterSummary,
+    filtersExpanded: state.showFilters, // Alias for component compatibility
     sortOptions,
     
     // Actions
@@ -229,6 +213,7 @@ export const useSearchFilterBar = (
     updateDistanceFilterEnabled,
     updateDistanceFilter,
     updateRatingFilter,
+    updateRatingFilterEnabled,
     updateSortBy,
     toggleFilters,
     clearAllFilters,

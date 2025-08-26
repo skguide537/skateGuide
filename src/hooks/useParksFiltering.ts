@@ -15,8 +15,9 @@ export function useParksFiltering(parks: Skatepark[], userCoords: { lat: number;
     const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
     const [distanceFilterEnabled, setDistanceFilterEnabled] = useState(false);
     const [distanceFilter, setDistanceFilter] = useState<number>(10);
+    const [ratingFilterEnabled, setRatingFilterEnabled] = useState<boolean>(false);
     const [ratingFilter, setRatingFilter] = useState<number[]>([0, 5]);
-    const [sortBy, setSortBy] = useState<'default' | 'distance' | 'rating' | 'recent'>('default');
+    const [sortBy, setSortBy] = useState<'distance' | 'rating' | 'recent'>('distance');
 
     // Stabilize state setter functions to prevent infinite loops
     const handleSearchChange = useCallback((term: string) => setSearchTerm(term), []);
@@ -27,8 +28,9 @@ export function useParksFiltering(parks: Skatepark[], userCoords: { lat: number;
     const handleShowOnlyFavoritesChange = useCallback((show: boolean) => setShowOnlyFavorites(show), []);
     const handleDistanceFilterEnabledChange = useCallback((enabled: boolean) => setDistanceFilterEnabled(enabled), []);
     const handleDistanceFilterChange = useCallback((distance: number) => setDistanceFilter(distance), []);
+    const handleRatingFilterEnabledChange = useCallback((enabled: boolean) => setRatingFilterEnabled(enabled), []);
     const handleRatingFilterChange = useCallback((rating: number[]) => setRatingFilter(rating), []);
-    const handleSortByChange = useCallback((sort: 'default' | 'distance' | 'rating' | 'recent') => setSortBy(sort), []);
+    const handleSortByChange = useCallback((sort: 'distance' | 'rating' | 'recent') => setSortBy(sort), []);
 
     // Create filter state object for the service
     const filterState: FilterState = useMemo(() => ({
@@ -40,6 +42,7 @@ export function useParksFiltering(parks: Skatepark[], userCoords: { lat: number;
         showOnlyFavorites,
         distanceFilterEnabled,
         distanceFilter,
+        ratingFilterEnabled,
         ratingFilter,
         sortBy,
     }), [
@@ -51,6 +54,7 @@ export function useParksFiltering(parks: Skatepark[], userCoords: { lat: number;
         showOnlyFavorites,
         distanceFilterEnabled,
         distanceFilter,
+        ratingFilterEnabled,
         ratingFilter,
         sortBy,
     ]);
@@ -84,6 +88,7 @@ export function useParksFiltering(parks: Skatepark[], userCoords: { lat: number;
         showOnlyFavorites,
         distanceFilterEnabled,
         distanceFilter,
+        ratingFilterEnabled,
         ratingFilter,
         sortBy,
         
@@ -96,6 +101,7 @@ export function useParksFiltering(parks: Skatepark[], userCoords: { lat: number;
         handleShowOnlyFavoritesChange,
         handleDistanceFilterEnabledChange,
         handleDistanceFilterChange,
+        handleRatingFilterEnabledChange,
         handleRatingFilterChange,
         handleSortByChange,
         
