@@ -18,60 +18,7 @@ interface LQIPImageProps {
     quality?: number;
 }
 
-// Generate a skatepark-themed blur placeholder
-const generateSkateparkPlaceholder = (width: number = 400, height: number = 200) => {
-    if (typeof window === 'undefined') return null;
-    
-    try {
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        
-        if (ctx) {
-            // Create a realistic skatepark gradient
-            const gradient = ctx.createLinearGradient(0, 0, width, height);
-            gradient.addColorStop(0, '#8A8A8A'); // Concrete
-            gradient.addColorStop(0.25, '#A7A9AC'); // Asphalt
-            gradient.addColorStop(0.5, '#B8B9BC'); // Light concrete
-            gradient.addColorStop(0.75, '#6E7763'); // Dark asphalt
-            gradient.addColorStop(1, '#8A8A8A'); // Back to concrete
-            
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, width, height);
-            
-            // Add subtle texture patterns
-            for (let i = 0; i < 30; i++) {
-                ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.08})`;
-                ctx.fillRect(
-                    Math.random() * width,
-                    Math.random() * height,
-                    Math.random() * 15 + 3,
-                    Math.random() * 15 + 3
-                );
-            }
-            
-            // Add some darker spots for realism
-            for (let i = 0; i < 20; i++) {
-                ctx.fillStyle = `rgba(0, 0, 0, ${Math.random() * 0.1})`;
-                ctx.fillRect(
-                    Math.random() * width,
-                    Math.random() * height,
-                    Math.random() * 10 + 2,
-                    Math.random() * 10 + 2
-                );
-            }
-        }
-        
-        return canvas.toDataURL('image/jpeg', 0.15);
-    } catch (error) {
-        console.warn('Failed to generate custom placeholder:', error);
-        return null;
-    }
-};
-
-// Fallback blur data URL
-const fallbackBlurDataURL = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q==";
+import { generatePlaceholder, FALLBACK_BLUR_DATA_URL } from '@/utils/placeholder';
 
 export default function LQIPImage({
     src,
@@ -103,7 +50,7 @@ export default function LQIPImage({
     };
 
     // Generate custom placeholder or use fallback
-    const blurDataURL = generateSkateparkPlaceholder(width || 400, height || 200) || fallbackBlurDataURL;
+    const blurDataURL = generatePlaceholder(width || 400, height || 200) || FALLBACK_BLUR_DATA_URL;
 
     return (
         <Box sx={{ position: 'relative', width: fill ? '100%' : width, height: fill ? '100%' : height }}>
