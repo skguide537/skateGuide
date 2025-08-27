@@ -4,6 +4,7 @@ import { Map } from 'leaflet';
 import { useCache } from '@/context/ToastContext';
 import { MapService, Skatepark } from '@/services/map.service';
 import { MapFilterService, MapFilterOptions, MapFilterState } from '@/services/mapFilter.service';
+import { skateparkClient } from '@/services/skateparkClient';
 
 export const useEnhancedMap = (userLocation: [number, number] | null) => {
   // Core state
@@ -18,15 +19,13 @@ export const useEnhancedMap = (userLocation: [number, number] | null) => {
     MapFilterService.getDefaultFilterState()
   );
 
-  // Refs
+    // Refs
   const mapRef = useRef<Map | null>(null);
 
   // Fetch spots data
   const fetchSpots = useCallback(async () => {
     try {
-      const response = await fetch('/api/skateparks');
-      if (!response.ok) throw new Error('Failed to fetch skateparks');
-      const data = await response.json();
+      const data = await skateparkClient.getAll();
       setSpots(data);
     } catch (err) {
       setError('Unable to load skateparks');

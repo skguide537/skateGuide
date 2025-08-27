@@ -12,6 +12,7 @@ import { useUser } from '@/context/UserContext';
 import { useTheme } from '@/context/ThemeContext';
 import FavoriteButton from '../common/FavoriteButton';
 import { LocationOn, Park, Streetview, Star, Link as LinkIcon } from '@mui/icons-material';
+import { skateparkClient } from '@/services/skateparkClient';
 
 interface SkateparkModalProps {
   open: boolean;
@@ -490,16 +491,7 @@ export default function SkateparkModal({
 
                 setIsRatingLoading(true);
                 try {
-                  const res = await fetch(`/api/skateparks/${_id}/rate`, {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      "x-user-id": user._id
-                    },
-                    body: JSON.stringify({ rating: value })
-                  });
-                  const result = await res.json();
-                  if (!res.ok) throw new Error(result.error);
+                  await skateparkClient.rate(_id, value, user._id);
                   setUserRating(value);
                 } catch (err: any) {
                   showToast(err.message, "error");

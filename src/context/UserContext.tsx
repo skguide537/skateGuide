@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { authClient } from '@/services/skateparkClient';
 
 export interface User {
     _id: string;
@@ -25,22 +26,23 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         const restoreSession = async () => {
+            // Check if we have the JWT token cookie
+            const hasTokenCookie = document.cookie.includes('token=');
+            
+            if (!hasTokenCookie) {
+                // No token cookie = definitely not logged in
+                // Don't waste an API call
+                setIsLoading(false);
+                return;
+            }
+            
             setIsLoading(true);
             try {
-                const res = await fetch('/api/auth/me');
-                if (!res.ok) {
-                    if (res.status !== 401) {
-                        // Only log non-401 errors in non-test environments
-                        if (process.env.NODE_ENV !== 'test') {
-                            console.error('Auth check failed');
-                        }
-                    }
-                    return;
-                }
-
-                const userData = await res.json();
+                const userData = await authClient.getCurrentUser();
                 setUser(userData);
             } catch (err) {
+                // Token expired or invalid - clear user state
+                setUser(null);
                 // Only log errors in non-test environments
                 if (process.env.NODE_ENV !== 'test') {
                     console.error("Failed to restore session", err);
@@ -55,7 +57,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     const logout = async () => {
         try {
-            await fetch('/api/auth/logout', { method: 'POST' });
+            await authClient.logout();
         } catch (err) {
             // Only log errors in non-test environments
             if (process.env.NODE_ENV !== 'test') {

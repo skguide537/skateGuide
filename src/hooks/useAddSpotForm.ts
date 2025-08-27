@@ -5,6 +5,7 @@ import { useUser } from '@/context/UserContext';
 import { GeocodingService, GeocodingResult, AddressField } from '@/services/geocoding.service';
 import { FormValidationService, SpotFormData } from '@/services/formValidation.service';
 import { Size, Tag, SkaterLevel } from '@/types/enums';
+import { skateparkClient } from '@/services/skateparkClient';
 
 // Debounce utility function
 function debounce<T extends (...args: any[]) => any>(
@@ -127,18 +128,7 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
         if (photos) Array.from(photos).forEach(photo => formDataToSend.append('photos', photo));
 
         try {
-            const res = await fetch('/api/skateparks', {
-                method: 'POST',
-                headers: { 'x-user-id': user._id },
-                body: formDataToSend
-            });
-
-            if (!res.ok) {
-                const text = await res.text();
-                console.error('Error response text:', text);
-                showToast('Failed to add skatepark', 'error');
-                return;
-            }
+            await skateparkClient.create(formDataToSend, user._id);
 
             showToast('Skatepark added!', 'success');
             

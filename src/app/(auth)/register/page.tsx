@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Box, Button, Container, TextField, Typography, Alert, Link } from '@mui/material';
 import { useToast } from '@/context/ToastContext';
 import { useTheme } from '@/context/ThemeContext';
+import { authClient } from '@/services/skateparkClient';
 
 export default function RegisterPage() {
     const [name, setName] = useState('');
@@ -19,22 +20,14 @@ export default function RegisterPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch('/api/auth/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password }),
-            });
-
-            if (res.ok) {
-                showToast('Account created successfully!', 'success');
-                setTimeout(() => router.push('/map'), 1000);
-            } else {
-                const data = await res.json();
-                setError(data.error);
-                showToast(data.error || 'Registration failed', 'error');
-            }
-        } catch {
-            setError('An error occurred. Please try again.');
+            const data = await authClient.register({ name, email, password });
+            showToast('Account created successfully!', 'success');
+            await authClient.login({ email, password });
+            setTimeout(() => router.push('/map'), 1000);
+        } catch (error: any) {
+            const errorMessage = error.message || 'Registration failed';
+            setError(errorMessage);
+            showToast(errorMessage, 'error');
         }
     };
 
