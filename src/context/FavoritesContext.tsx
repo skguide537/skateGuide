@@ -4,6 +4,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { useUser } from '@/context/UserContext';
 import { useToast } from '@/context/ToastContext';
 import { favoritesClient } from '@/services/skateparkClient';
+import { logger } from '@/utils/logger';
 
 type FavoritesCounts = Record<string, number>;
 
@@ -39,7 +40,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       const data = await favoritesClient.getUserFavorites(user._id);
       setFavorites(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error('Favorites fetch failed:', err);
+      logger.error('Favorites fetch failed', err as Error, { component: 'FavoritesContext' });
     } finally {
       setIsLoading(false);
     }
@@ -59,7 +60,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       const data = await favoritesClient.getFavoriteCounts(idsToFetch);
       setCounts((prev) => ({ ...prev, ...(data?.counts || {}) }));
     } catch (err) {
-      console.error('Favorites counts fetch failed:', err);
+      logger.error('Favorites counts fetch failed', err as Error, { component: 'FavoritesContext' });
     } finally {
       inProgressRef.current.delete(key);
     }
@@ -90,7 +91,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 
       return data.action as 'added' | 'removed';
     } catch (err) {
-      console.error('Toggle favorite failed:', err);
+      logger.error('Toggle favorite failed', err as Error, { component: 'FavoritesContext' });
       showToast('Failed to update favorites', 'error');
       // Best-effort refresh
       await fetchFavorites();

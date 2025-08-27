@@ -6,6 +6,7 @@ import { ISkateparkModel, SkateparkModel } from "../models/skatepark.model";
 import { Coords, ExternalLinks, IReport, Size, SkaterLevel, Tag } from "../types/enums";
 import { DEFAULT_IMAGE_URL } from "../types/constants";
 import "@/models/User";
+import { logger } from '@/utils/logger';
 
 class SkateparkService {
     // 1. Helper Functions:
@@ -240,33 +241,24 @@ class SkateparkService {
         const skatepark = await this.checkSkatepark(_id);
         const photoNames = skatepark.photoNames;
 
-        console.log(`Deleting skatepark: ${skatepark.title} with ${photoNames.length} photos`);
-
         // Delete from database first
         await SkateparkModel.findByIdAndDelete(_id);
-        console.log(`Skatepark deleted from database`);
 
         // Delete photos from Cloudinary
         for (const url of photoNames) {
-            console.log(`Processing photo URL: ${url}`);
-            
             // Don't delete default/fallback images from Cloudinary
             if (!this.isDefaultImage(url)) {
                 const publicId = this.extractCloudinaryPublicId(url);
                 if (publicId) {
                     try {
-                        console.log(`Attempting to delete from Cloudinary with public ID: ${publicId}`);
                         const result = await cloudinary.uploader.destroy(publicId);
-                        console.log(`Cloudinary deletion result:`, result);
                     } catch (error) {
-                        console.error(`Failed to delete image from Cloudinary: ${publicId}`, error);
+                        logger.error(`Failed to delete image from Cloudinary: ${publicId}`, error as Error, { component: 'SkateparkService' });
                     }
-                } else {
-                    console.log(`Could not extract public ID from URL: ${url}`);
                 }
-            } else {
-                console.log(`Protecting default/fallback image: ${url}`);
+                // Could not extract public ID from URL - this is expected for some URLs
             }
+            // Protecting default/fallback image
         }
 
         return `Skatepark ${skatepark.title} has been deleted.`;
@@ -277,30 +269,22 @@ class SkateparkService {
             const skatepark = await this.checkSkatepark(_id);
             const photoUrls = await this.getPhotoNames(_id);
 
-            console.log(`Deleting multiple skatepark: ${skatepark.title} with ${photoUrls.length} photos`);
-
             await SkateparkModel.findByIdAndDelete(_id);
 
             for (const url of photoUrls) {
-                console.log(`Processing photo URL: ${url}`);
-                
                 // Don't delete default/fallback images from Cloudinary
                 if (!this.isDefaultImage(url)) {
                     const publicId = this.extractCloudinaryPublicId(url);
                     if (publicId) {
                         try {
-                            console.log(`Attempting to delete from Cloudinary with public ID: ${publicId}`);
                             const result = await cloudinary.uploader.destroy(publicId);
-                            console.log(`Cloudinary deletion result:`, result);
                         } catch (error) {
-                            console.error(`Failed to delete image from Cloudinary: ${publicId}`, error);
+                            logger.error(`Failed to delete image from Cloudinary: ${publicId}`, error as Error, { component: 'SkateparkService' });
                         }
-                    } else {
-                        console.log(`Could not extract public ID from URL: ${url}`);
                     }
-                } else {
-                    console.log(`Protecting default/fallback image: ${url}`);
+                    // Could not extract public ID from URL - this is expected for some URLs
                 }
+                // Protecting default/fallback image
             }
         }
 

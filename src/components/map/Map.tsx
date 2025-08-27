@@ -9,6 +9,7 @@ import { Box, CircularProgress, Typography } from '@mui/material';
 import { useCache } from '@/context/ToastContext';
 import SkateparkModal from '../modals/SkateparkModal';
 import { skateparkClient } from '@/services/skateparkClient';
+import { logger } from '@/utils/logger';
 
 
 const icon = L.icon({
@@ -85,7 +86,7 @@ export default function MapComponent({ userLocation }: MapProps) {
                 setSpots(data);
             } catch (err) {
                 setError('Unable to load skateparks');
-                console.error(err);
+                logger.error('Unable to load skateparks', err as Error, { component: 'Map' });
             } finally {
                 setIsLoading(false);
             }

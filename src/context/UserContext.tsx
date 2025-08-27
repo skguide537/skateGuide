@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { authClient } from '@/services/skateparkClient';
+import { logger } from '@/utils/logger';
 
 export interface User {
     _id: string;
@@ -45,7 +46,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 setUser(null);
                 // Only log errors in non-test environments
                 if (process.env.NODE_ENV !== 'test') {
-                    console.error("Failed to restore session", err);
+                    logger.error("Failed to restore session", err as Error, { component: 'UserContext' });
                 }
             } finally {
                 setIsLoading(false);
@@ -61,7 +62,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         } catch (err) {
             // Only log errors in non-test environments
             if (process.env.NODE_ENV !== 'test') {
-                console.error("Logout failed", err);
+                logger.error("Logout failed", err as Error, { component: 'UserContext' });
             }
         }
         setUser(null);

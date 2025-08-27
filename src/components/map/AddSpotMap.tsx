@@ -8,6 +8,7 @@ import { Box, ToggleButton, ToggleButtonGroup, Typography, Fab, Tooltip } from '
 import MapIcon from '@mui/icons-material/Map';
 import SatelliteIcon from '@mui/icons-material/Satellite';
 import MyLocationIcon from '@mui/icons-material/MyLocation';
+import { logger } from '@/utils/logger';
 
 // 🎯 Custom hook to recenter map when coords change
 function RecenterMap({ coords }: { coords: { lat: number; lng: number } | null }) {
@@ -47,7 +48,7 @@ function CenterOnLocation() {
           map.setView([lat, lng], 16);
         },
         (err) => {
-          console.error('Error getting location:', err);
+          logger.error('Error getting location', err as unknown as Error, { component: 'AddSpotMap' });
         }
       );
     }

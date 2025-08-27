@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
 import { cookies } from 'next/headers';
+import { logger } from '@/utils/logger';
 
 export async function GET(req: NextRequest) {
     try {
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
             role: user.role // Add role to response for admin checking
         });
     } catch (err) {
-        console.error('GET /api/auth/me error:', err);
+        logger.error('GET /api/auth/me error', err as Error, { component: 'auth/me' });
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 }

@@ -2,6 +2,7 @@
 
 import { Suspense, lazy, useEffect, useState } from 'react';
 import { Box, Typography, CircularProgress } from '@mui/material';
+import { logger } from '@/utils/logger';
 
 // Lazy load the heavy map component
 const EnhancedMap = lazy(() => import('@/components/map/EnhancedMap'));
@@ -43,7 +44,7 @@ export default function MapPage() {
         },
         (error) => {
           setError('Unable to retrieve your location');
-          console.error('Error getting location:', error);
+          logger.error('Error getting location', error as unknown as Error, { component: 'MapPage' });
         }
       );
     } else {

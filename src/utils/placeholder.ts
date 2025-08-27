@@ -3,6 +3,8 @@
  * Used by FastCarousel and LQIPImage components
  */
 
+import { logger } from './logger';
+
 /**
  * Generate a skatepark-themed blur placeholder with realistic colors and textures
  * @param width - Width of the placeholder (default: 400)
@@ -56,7 +58,8 @@ export const generatePlaceholder = (width: number = 400, height: number = 200): 
         
         return canvas.toDataURL('image/jpeg', 0.15);
     } catch (error) {
-        console.warn('Failed to generate custom placeholder:', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        logger.warn('Failed to generate custom placeholder:', { component: 'placeholder', error: errorMessage });
         return null;
     }
 };

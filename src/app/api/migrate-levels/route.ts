@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { SkateparkModel } from '@/models/skatepark.model';
+import { logger } from '@/utils/logger';
 
 export async function POST(request: NextRequest) {
     try {
@@ -26,21 +27,17 @@ export async function POST(request: NextRequest) {
         
         // Update each skatepark
         for (const skatepark of oldSkateparks) {
-            console.log(`Migrating skatepark: ${skatepark.title}`);
-            
             let newLevels: string[] = [];
             
             // Check if it has the old level field with a valid value
             if ((skatepark as any).level && (skatepark as any).level !== null && (skatepark as any).level !== undefined) {
                 const oldLevel = (skatepark as any).level;
                 newLevels = [oldLevel];
-                console.log(`  Converting old level '${oldLevel}' to ['${oldLevel}']`);
             }
             // Check if it has levels array with null values
             else if ((skatepark as any).levels && Array.isArray((skatepark as any).levels) && (skatepark as any).levels.some((level: any) => level === null)) {
                 // If we have null levels but no valid old level, default to beginner
                 newLevels = ['beginner'];
-                console.log(`  Setting default level 'beginner' for null levels`);
             }
             
             if (newLevels.length > 0) {
@@ -53,7 +50,6 @@ export async function POST(request: NextRequest) {
                 );
                 
                 migratedCount++;
-                console.log(`  Successfully migrated to levels: [${newLevels.join(', ')}]`);
             }
         }
 
@@ -81,7 +77,7 @@ export async function POST(request: NextRequest) {
         });
 
     } catch (error) {
-        console.error('Migration failed:', error);
+        logger.error('Migration failed', error as Error, { component: 'migrate-levels' });
         return NextResponse.json(
             { error: 'Migration failed', details: error instanceof Error ? error.message : 'Unknown error' },
             { status: 500 }

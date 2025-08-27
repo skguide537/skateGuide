@@ -5,6 +5,7 @@ import { useCache } from '@/context/ToastContext';
 import { MapService, Skatepark } from '@/services/map.service';
 import { MapFilterService, MapFilterOptions, MapFilterState } from '@/services/mapFilter.service';
 import { skateparkClient } from '@/services/skateparkClient';
+import { logger } from '@/utils/logger';
 
 export const useEnhancedMap = (userLocation: [number, number] | null) => {
   // Core state
@@ -29,7 +30,7 @@ export const useEnhancedMap = (userLocation: [number, number] | null) => {
       setSpots(data);
     } catch (err) {
       setError('Unable to load skateparks');
-      console.error(err);
+      logger.error('Unable to load skateparks', err as Error, { component: 'useEnhancedMap' });
     } finally {
       setIsLoading(false);
     }

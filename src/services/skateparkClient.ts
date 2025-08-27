@@ -3,6 +3,8 @@
  * Class-based approach for better organization and encapsulation
  */
 
+import { logger } from '@/utils/logger';
+
 // Base API configuration
 const API_BASE = '/api';
 
@@ -34,7 +36,7 @@ const apiRequest = async <T>(
 
         return await response.json();
     } catch (error) {
-        console.error(`API request failed for ${endpoint}:`, error);
+        logger.error(`API request failed for ${endpoint}`, error as Error, { component: 'skateparkClient' });
         throw error;
     }
 };

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
+import { logger } from '@/utils/logger';
 
 // GET user's favorites or public counts per spot
 export async function GET(request: NextRequest) {
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
         const favoritesStrings = favoritesArray.map((fav: any) => fav.toString());
         return NextResponse.json({ favorites: favoritesStrings });
     } catch (error: any) {
-        console.error('Get favorites error:', error);
+        logger.error('Get favorites error', error as Error, { component: 'favorites' });
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
@@ -123,7 +124,7 @@ export async function POST(request: NextRequest) {
             favorites: newFavorites.map((fav: any) => fav.toString())
         });
     } catch (error: any) {
-        console.error('Toggle favorite error:', error);
+        logger.error('Toggle favorite error', error as Error, { component: 'favorites' });
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

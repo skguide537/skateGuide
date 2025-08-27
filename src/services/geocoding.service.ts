@@ -1,4 +1,7 @@
 // Geocoding service for handling address searches and coordinate validation
+
+import { logger } from '@/utils/logger';
+
 export interface GeocodingResult {
     lat: number;
     lng: number;
@@ -117,7 +120,7 @@ export class GeocodingService {
                     }
                 },
                 (err) => {
-                    console.error('Geolocation error:', err);
+                    logger.error('Geolocation error', err as unknown as Error, { component: 'GeocodingService' });
                     reject(new Error("Unable to get location"));
                 }
             );
@@ -137,11 +140,11 @@ export class GeocodingService {
                 const data = await response.json();
                 return Array.isArray(data) ? data : [];
             } else {
-                console.error('Street autocomplete error:', response.status);
+                logger.warn('Street autocomplete error', { component: 'GeocodingService', status: response.status });
                 return [];
             }
         } catch (error) {
-            console.error('Street autocomplete error:', error);
+            logger.error('Street autocomplete error', error as Error, { component: 'GeocodingService' });
             return [];
         }
     }
@@ -159,11 +162,11 @@ export class GeocodingService {
                 const data = await response.json();
                 return Array.isArray(data) ? data : [];
             } else {
-                console.error('City autocomplete error:', response.status);
+                logger.warn('City autocomplete error', { component: 'GeocodingService', status: response.status });
                 return [];
             }
         } catch (error) {
-            console.error('City autocomplete error:', error);
+            logger.error('City autocomplete error', error as Error, { component: 'GeocodingService' });
             return [];
         }
     }
@@ -181,11 +184,11 @@ export class GeocodingService {
                 const data = await response.json();
                 return Array.isArray(data) ? data : [];
             } else {
-                console.error('Country autocomplete error:', response.status);
+                logger.warn('Country autocomplete error', { component: 'GeocodingService', status: response.status });
                 return [];
             }
         } catch (error) {
-            console.error('Country autocomplete error:', error);
+            logger.error('Country autocomplete error', error as Error, { component: 'GeocodingService' });
             return [];
         }
     }

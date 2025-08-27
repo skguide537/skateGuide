@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cache } from '@/lib/cache';
+import { logger } from '@/utils/logger';
 
 // Rate limiting configuration
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
@@ -163,7 +164,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(processedResults);
 
   } catch (error: any) {
-    console.error('Geocoding API error:', error);
+    logger.error('Geocoding API error', error as Error, { component: 'geocoding/search' });
     
     // Return appropriate error response
     if (error.message.includes('OpenStreetMap API')) {

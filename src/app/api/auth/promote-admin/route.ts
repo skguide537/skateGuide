@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { logger } from '@/utils/logger';
 
 export async function POST(req: NextRequest) {
     try {
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
             userId: userId
         });
     } catch (error: any) {
-        console.error('Promote admin error:', error);
+        logger.error('Promote admin error', error as Error, { component: 'auth/promote-admin' });
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { registerUser } from '@/services/auth';
+import { logger } from '@/utils/logger';
 
 export async function POST(req: Request) {
   try {
@@ -8,7 +9,7 @@ export async function POST(req: Request) {
     return NextResponse.json(user);
   } catch (error: any) {
     // Log all errors for debugging
-    console.error('Registration error:', error);
+    logger.error('Registration error', error as Error, { component: 'auth/register' });
     
     // Return 400 for all user-related errors
     return NextResponse.json(

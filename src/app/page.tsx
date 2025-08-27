@@ -11,6 +11,7 @@ import { useParksData } from '@/hooks/useParksData';
 import { useParksFiltering } from '@/hooks/useParksFiltering';
 import { useResponsiveGrid, useVirtualGrid } from '@/hooks/useVirtualGrid';
 import { HOME_PAGE_CONSTANTS } from '@/constants/homePage';
+import { logger } from '@/utils/logger';
 
 export default function HomePage() {
     // Get user's location
@@ -43,7 +44,7 @@ export default function HomePage() {
     useEffect(() => {
         navigator.geolocation.getCurrentPosition(
             pos => setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-            err => console.error(err),
+            err => logger.error('Geolocation error', err as unknown as Error, { component: 'HomePage' }),
             { enableHighAccuracy: true }
         );
     }, []);
