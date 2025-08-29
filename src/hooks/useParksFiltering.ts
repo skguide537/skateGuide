@@ -1,9 +1,9 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useFavorites } from '@/hooks/useFavorites';
 import { ParksFilterService, FilterState, FilteredSkatepark } from '@/services/parksFilter.service';
-import { Skatepark } from './useParksData';
+import { SkateparkBasic } from '@/types/skatepark';
 
-export function useParksFiltering(parks: Skatepark[], userCoords: { lat: number; lng: number } | null, deletedSpotIds: Set<string>, deletingSpotIds: Set<string>) {
+export function useParksFiltering(parks: SkateparkBasic[], userCoords: { lat: number; lng: number } | null, deletedSpotIds: Set<string>, deletingSpotIds: Set<string>) {
     const { favorites } = useFavorites();
 
     // Search and filter state

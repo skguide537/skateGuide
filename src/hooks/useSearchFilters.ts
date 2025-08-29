@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { SearchFilterService, FilterOptions, SkateparkData } from '@/services/searchFilter.service';
+import { Tag } from '@/types/enums';
 
 export const useSearchFilters = (initialSkateparks: SkateparkData[]) => {
     // Filter state
@@ -40,7 +41,7 @@ export const useSearchFilters = (initialSkateparks: SkateparkData[]) => {
         setFilters(prev => ({ ...prev, sizeFilter: sizes }));
     }, []);
 
-    const updateTagFilter = useCallback((tags: string[]) => {
+    const updateTagFilter = useCallback((tags: Tag[]) => {
         setFilters(prev => ({ ...prev, tagFilter: tags }));
     }, []);
 

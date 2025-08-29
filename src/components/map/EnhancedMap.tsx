@@ -1,30 +1,16 @@
 'use client';
 
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { useEnhancedMap } from '@/hooks/useEnhancedMap';
+import { MapService } from '@/services/map.service';
+import {Layers,Menu as MenuIcon} from '@mui/icons-material';
+import {Box,Drawer,IconButton,Tooltip,Typography,useMediaQuery,useTheme} from '@mui/material';
 import 'leaflet/dist/leaflet.css';
-import { useEffect, useRef } from 'react';
-import { Map } from 'leaflet';
-import { 
-  Box, 
-  IconButton, 
-  Tooltip, 
-  Drawer,
-  useMediaQuery,
-  useTheme,
-  Typography
-} from '@mui/material';
-import { 
-  Layers, 
-  Menu as MenuIcon, 
-  MyLocation
-} from '@mui/icons-material';
+import { useEffect } from 'react';
+import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
 import SkateparkModal from '../modals/SkateparkModal';
 import MapSidebar from './MapSidebar';
-import RichPopup from './RichPopup';
 import MapStyleController from './MapStyleController';
-import { useEnhancedMap } from '@/hooks/useEnhancedMap';
-import { MapService, Skatepark } from '@/services/map.service';
-import { MapService as MapServiceInstance } from '@/services/map.service';
+import RichPopup from './RichPopup';
 
 interface MapProps {
   userLocation: [number, number] | null;

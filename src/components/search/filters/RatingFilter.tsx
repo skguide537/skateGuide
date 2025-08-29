@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Box, Typography, Slider, Switch } from '@mui/material';
+import { Box, Typography, Slider, Switch, SliderProps } from '@mui/material';
 import { Star } from '@mui/icons-material';
 import { SEARCH_FILTER_CONSTANTS } from '@/constants/searchFilters';
 
@@ -48,7 +48,7 @@ export default function RatingFilter({
                             min={SEARCH_FILTER_CONSTANTS.RATING_RANGE.min}
                             max={SEARCH_FILTER_CONSTANTS.RATING_RANGE.max}
                             step={SEARCH_FILTER_CONSTANTS.RATING_RANGE.step}
-                            marks={SEARCH_FILTER_CONSTANTS.RATING_RANGE.marks}
+                            marks={SEARCH_FILTER_CONSTANTS.RATING_RANGE.marks as unknown as SliderProps['marks']}
                             valueLabelDisplay="auto"
                             sx={{
                                 color: 'var(--color-accent-rust)',

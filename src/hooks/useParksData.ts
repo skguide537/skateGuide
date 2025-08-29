@@ -3,27 +3,10 @@ import { useToast } from '@/context/ToastContext';
 import { HOME_PAGE_CONSTANTS } from '@/constants/homePage';
 import { skateparkClient, authClient } from '@/services/skateparkClient';
 import { logger } from '@/utils/logger';
-
-export interface Skatepark {
-    _id: string;
-    title: string;
-    description: string;
-    tags: string[];
-    photoNames: string[];
-    location: { coordinates: [number, number] };
-    isPark: boolean;
-    size: string;
-    levels: string[];
-    avgRating: number;
-    externalLinks?: {
-        url: string;
-        sentBy: { id: string; name: string };
-        sentAt: string;
-    }[];
-}
+import { SkateparkBasic } from '@/types/skatepark';
 
 export function useParksData() {
-    const [parks, setParks] = useState<Skatepark[]>([]);
+    const [parks, setParks] = useState<SkateparkBasic[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [deletedSpotIds, setDeletedSpotIds] = useState<Set<string>>(new Set());
     const [deletingSpotIds, setDeletingSpotIds] = useState<Set<string>>(new Set());

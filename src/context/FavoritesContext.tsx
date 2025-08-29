@@ -38,7 +38,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       const data = await favoritesClient.getUserFavorites(user._id);
-      setFavorites(Array.isArray(data) ? data : []);
+      setFavorites(Array.isArray(data) ? data.map(spot => spot._id) : []);
     } catch (err) {
       logger.error('Favorites fetch failed', err as Error, { component: 'FavoritesContext' });
     } finally {
@@ -83,7 +83,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     try {
       const data = await favoritesClient.toggleFavorite(spotId, user._id);
 
-      setFavorites(Array.isArray(data?.favorites) ? data.favorites : []);
+      setFavorites(Array.isArray(data?.favorites) ? data.favorites.map((spot: { _id: string }) => spot._id) : []);
       setCounts((prev) => ({ ...prev, [spotId]: typeof data?.count === 'number' ? data.count : (prev[spotId] ?? 0) }));
 
       if (data.action === 'added') showToast('Added to favorites!', 'success');

@@ -1,10 +1,10 @@
 // Rich popup component for map markers
 import { Box, Chip, Rating, Typography, Button } from '@mui/material';
-import { Skatepark } from '@/services/map.service';
+import { SkateparkBasic } from '@/types/skatepark';
 
 interface RichPopupProps {
-  spot: Skatepark;
-  onViewDetails: (spot: Skatepark) => void;
+  spot: SkateparkBasic;
+  onViewDetails: (spot: SkateparkBasic) => void;
 }
 
 export default function RichPopup({ spot, onViewDetails }: RichPopupProps) {

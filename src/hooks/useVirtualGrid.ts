@@ -20,7 +20,7 @@ export function useVirtualGrid(parksWithDistance: any[], gridColumns: number) {
 }
 
 export function useResponsiveGrid() {
-    const [gridColumns, setGridColumns] = useState(HOME_PAGE_CONSTANTS.GRID_COLUMNS.MOBILE);
+    const [gridColumns, setGridColumns] = useState<number>(HOME_PAGE_CONSTANTS.GRID_COLUMNS.MOBILE);
 
     useEffect(() => {
         const updateGridColumns = () => {

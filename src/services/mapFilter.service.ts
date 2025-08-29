@@ -1,12 +1,15 @@
 // Map filter service for handling map filtering logic
-import { MapService, Skatepark } from './map.service';
+import { MapService } from './map.service';
+import { SkateparkBasic } from '@/types/skatepark';
+
+import { Tag } from '@/types/enums';
 
 export interface MapFilterOptions {
   searchTerm: string;
   typeFilter: 'all' | 'park' | 'street';
   sizeFilter: string[];
   levelFilter: string[];
-  tagFilter: string[];
+  tagFilter: Tag[];
   distanceFilterEnabled: boolean;
   distanceFilter: number; // km
   ratingFilter: number[]; // [min, max]
@@ -43,11 +46,11 @@ export class MapFilterService {
   }
 
   // Apply all filters to skatepark data
-  static filterSkateparks(
-    skateparks: Skatepark[], 
-    filters: MapFilterOptions, 
+    static filterSkateparks(
+    skateparks: SkateparkBasic[],
+    filters: MapFilterOptions,
     userLocation: [number, number] | null
-  ): Skatepark[] {
+  ): SkateparkBasic[] {
     return skateparks.filter(spot => {
       // Search filter
       if (filters.searchTerm) {
@@ -206,7 +209,7 @@ export class MapFilterService {
   }
 
   // Get filter counts for UI display
-  static getFilterCounts(skateparks: Skatepark[]): {
+  static getFilterCounts(skateparks: SkateparkBasic[]): {
     total: number;
     byType: { parks: number; street: number };
     bySize: Record<string, number>;

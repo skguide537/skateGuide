@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Box, Typography, Switch, Slider } from '@mui/material';
+import { Box, Typography, Switch, Slider, SliderProps } from '@mui/material';
 import { LocationOn } from '@mui/icons-material';
 import { SEARCH_FILTER_CONSTANTS, SEARCH_FILTER_STYLES } from '@/constants/searchFilters';
 
@@ -48,7 +48,7 @@ export default function DistanceFilter({
                             min={SEARCH_FILTER_CONSTANTS.DISTANCE_RANGE.min}
                             max={SEARCH_FILTER_CONSTANTS.DISTANCE_RANGE.max}
                             step={SEARCH_FILTER_CONSTANTS.DISTANCE_RANGE.step}
-                            marks={SEARCH_FILTER_CONSTANTS.DISTANCE_RANGE.marks}
+                            marks={SEARCH_FILTER_CONSTANTS.DISTANCE_RANGE.marks as unknown as SliderProps['marks']}
                             sx={{
                                 color: 'var(--color-accent-blue)',
                                 '& .MuiSlider-thumb': {

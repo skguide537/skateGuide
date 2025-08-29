@@ -1,29 +1,15 @@
-// Search and filter service for handling skatepark filtering and search logic
+
+import { SkateparkBasic } from '@/types/skatepark';
+import { Tag } from '@/types/enums';
+
+export type SkateparkData = SkateparkBasic;
+
 export interface FilterOptions {
     levelFilter: string[];
     sizeFilter: string[];
-    tagFilter: string[];
+    tagFilter: Tag[]; // Changed from string[] to Tag[]
     isParkFilter: boolean | null;
     searchQuery: string;
-}
-
-export interface SkateparkData {
-    _id: string;
-    title: string;
-    description: string;
-    size: string;
-    levels: string[];
-    isPark: boolean;
-    tags: string[];
-    rating: number;
-    avgRating: number;
-    location: {
-        type: string;
-        coordinates: number[];
-    };
-    photoNames: string[];
-    createdAt: string;
-    updatedAt: string;
 }
 
 export class SearchFilterService {
@@ -78,12 +64,12 @@ export class SearchFilterService {
         switch (sortBy) {
             case 'newest':
                 return sorted.sort((a, b) => 
-                    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                    new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()
                 );
             
             case 'oldest':
                 return sorted.sort((a, b) => 
-                    new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                    new Date(a.createdAt || '').getTime() - new Date(b.createdAt || '').getTime()
                 );
             
             case 'rating':

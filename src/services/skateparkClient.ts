@@ -3,6 +3,12 @@
  * Class-based approach for better organization and encapsulation
  */
 
+import {
+    GeocodingResult,
+    SkateparkBasic,
+    SkateparkDetailed,
+    SkateparksResponse
+} from '@/types/skatepark';
 import { logger } from '@/utils/logger';
 
 // Base API configuration
@@ -48,37 +54,37 @@ export class SkateparkClient {
     /**
      * Get all skateparks
      */
-    async getAll(): Promise<any[]> {
-        return apiRequest<any[]>('/skateparks');
-    }
+      async getAll(): Promise<SkateparkBasic[]> {
+    return apiRequest<SkateparkBasic[]>('/skateparks');
+  }
     
     /**
      * Get skateparks with pagination
      */
-    async getPaginated(page: number, limit: number): Promise<{ data: any[], totalCount: number }> {
-        return apiRequest<{ data: any[], totalCount: number }>(`/skateparks?page=${page}&limit=${limit}`);
-    }
+      async getPaginated(page: number, limit: number): Promise<SkateparksResponse> {
+    return apiRequest<SkateparksResponse>(`/skateparks?page=${page}&limit=${limit}`);
+  }
     
     /**
      * Get skateparks with limit (for virtual scrolling)
      */
-    async getWithLimit(limit: number): Promise<any[]> {
-        const response = await apiRequest<{ data: any[], totalCount: number }>(`/skateparks?limit=${limit}`);
+    async getWithLimit(limit: number): Promise<SkateparkBasic[]> {
+        const response = await apiRequest<SkateparksResponse>(`/skateparks?limit=${limit}`);
         return response.data || [];
     }
     
     /**
      * Get single skatepark by ID
      */
-    async getById(id: string): Promise<any> {
-        return apiRequest<any>(`/skateparks/${id}`);
+    async getById(id: string): Promise<SkateparkDetailed> {
+        return apiRequest<SkateparkDetailed>(`/skateparks/${id}`);
     }
     
     /**
      * Create new skatepark
      */
-    async create(data: FormData, userId: string): Promise<any> {
-        return apiRequest<any>('/skateparks', {
+    async create(data: FormData, userId: string): Promise<SkateparkDetailed> {
+        return apiRequest<SkateparkDetailed>('/skateparks', {
             method: 'POST',
             headers: { 'x-user-id': userId },
             body: data,
@@ -88,8 +94,8 @@ export class SkateparkClient {
     /**
      * Update skatepark
      */
-    async update(id: string, data: FormData, userId: string): Promise<any> {
-        return apiRequest<any>(`/skateparks/${id}`, {
+    async update(id: string, data: FormData, userId: string): Promise<SkateparkDetailed> {
+        return apiRequest<SkateparkDetailed>(`/skateparks/${id}`, {
             method: 'PUT',
             headers: { 'x-user-id': userId },
             body: data,
@@ -131,43 +137,43 @@ export class SkateparkClient {
     /**
      * Search skateparks
      */
-    async search(query: Record<string, any>): Promise<any[]> {
-        return apiRequest<any[]>(`/skateparks?${new URLSearchParams(query).toString()}`);
+    async search(query: Record<string, any>): Promise<SkateparkBasic[]> {
+        return apiRequest<SkateparkBasic[]>(`/skateparks?${new URLSearchParams(query).toString()}`);
     }
     
     /**
      * Advanced search
      */
-    async advancedSearch(filters: Record<string, any>): Promise<any[]> {
-        return apiRequest<any[]>(`/skateparks?advanced=true&${new URLSearchParams(filters).toString()}`);
+    async advancedSearch(filters: Record<string, any>): Promise<SkateparkBasic[]> {
+        return apiRequest<SkateparkBasic[]>(`/skateparks?advanced=true&${new URLSearchParams(filters).toString()}`);
     }
     
     /**
      * Get skateparks by tags
      */
-    async getByTags(tags: string[]): Promise<any[]> {
-        return apiRequest<any[]>(`/skateparks?tags=${tags.join(',')}`);
+    async getByTags(tags: string[]): Promise<SkateparkBasic[]> {
+        return apiRequest<SkateparkBasic[]>(`/skateparks?tags=${tags.join(',')}`);
     }
     
     /**
      * Get skateparks near location
      */
-    async getNearLocation(lat: number, lng: number, radius: number): Promise<any[]> {
-        return apiRequest<any[]>(`/skateparks?near=${lat},${lng},${radius}`);
+    async getNearLocation(lat: number, lng: number, radius: number): Promise<SkateparkBasic[]> {
+        return apiRequest<SkateparkBasic[]>(`/skateparks?near=${lat},${lng},${radius}`);
     }
     
     /**
      * Get top rated skateparks
      */
-    async getTopRated(limit?: number): Promise<any[]> {
-        return apiRequest<any[]>(`/skateparks?top-rated=true${limit ? `&limit=${limit}` : ''}`);
+    async getTopRated(limit?: number): Promise<SkateparkBasic[]> {
+        return apiRequest<SkateparkBasic[]>(`/skateparks?top-rated=true${limit ? `&limit=${limit}` : ''}`);
     }
     
     /**
      * Get recent skateparks
      */
-    async getRecent(limit: number = 3): Promise<any[]> {
-        return apiRequest<any[]>(`/skateparks?recent=true&limit=${limit}`);
+    async getRecent(limit: number = 3): Promise<SkateparkBasic[]> {
+        return apiRequest<SkateparkBasic[]>(`/skateparks?recent=true&limit=${limit}`);
     }
 }
 
@@ -217,15 +223,15 @@ export class FavoritesClient {
     /**
      * Get user favorites
      */
-    async getUserFavorites(userId: string): Promise<any[]> {
-        return apiRequest<any[]>(`/favorites?${new URLSearchParams({ 'x-user-id': userId }).toString()}`);
+    async getUserFavorites(userId: string): Promise<SkateparkBasic[]> {
+        return apiRequest<SkateparkBasic[]>(`/favorites?${new URLSearchParams({ 'x-user-id': userId }).toString()}`);
     }
     
     /**
      * Get favorites with filters
      */
-    async getFavoritesWithFilters(filters: Record<string, any>): Promise<any[]> {
-        return apiRequest<any[]>(`/favorites?${new URLSearchParams(filters).toString()}`);
+    async getFavoritesWithFilters(filters: Record<string, any>): Promise<SkateparkBasic[]> {
+        return apiRequest<SkateparkBasic[]>(`/favorites?${new URLSearchParams(filters).toString()}`);
     }
     
     /**
@@ -257,8 +263,8 @@ export class GeocodingClient {
     /**
      * Search for addresses/places
      */
-    async search(query: string): Promise<any[]> {
-        return apiRequest<any[]>(`/geocoding/search?q=${encodeURIComponent(query)}`);
+    async search(query: string): Promise<GeocodingResult[]> {
+        return apiRequest<GeocodingResult[]>(`/geocoding/search?q=${encodeURIComponent(query)}`);
     }
     
     /**

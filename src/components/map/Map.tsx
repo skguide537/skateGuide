@@ -10,6 +10,7 @@ import { useCache } from '@/context/ToastContext';
 import SkateparkModal from '../modals/SkateparkModal';
 import { skateparkClient } from '@/services/skateparkClient';
 import { logger } from '@/utils/logger';
+import { SkateparkBasic } from '@/types/skatepark';
 
 
 const icon = L.icon({
@@ -38,30 +39,11 @@ interface MapProps {
     userLocation: [number, number] | null;
 }
 
-interface Skatepark {
-    _id: string;
-    title: string;
-    description: string;
-    location: {
-        type: 'Point';
-        coordinates: [number, number]; // [lng, lat]
-    };
-    photoNames: string[];
-    isPark: boolean;
-    size: string;
-    levels: string[];
-    tags: string[];
-    avgRating: number;
-    externalLinks?: {
-        url: string;
-        sentBy: { id: string; name: string };
-        sentAt: string;
-    }[];
-}
+
 
 export default function MapComponent({ userLocation }: MapProps) {
-    const [spots, setSpots] = useState<Skatepark[]>([]);
-    const [selectedSpot, setSelectedSpot] = useState<Skatepark | null>(null);
+    const [spots, setSpots] = useState<SkateparkBasic[]>([]);
+    const [selectedSpot, setSelectedSpot] = useState<SkateparkBasic | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const mapRef = useRef<Map | null>(null);
@@ -171,7 +153,7 @@ export default function MapComponent({ userLocation }: MapProps) {
                         lat: selectedSpot.location.coordinates[1],
                         lng: selectedSpot.location.coordinates[0]
                     }}
-                    externalLinks={selectedSpot.externalLinks}
+                    externalLinks={[]}
                     distanceKm={userLocation ? calculateDistance(
                         userLocation[0], userLocation[1],
                         selectedSpot.location.coordinates[1], selectedSpot.location.coordinates[0]

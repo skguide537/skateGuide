@@ -12,26 +12,7 @@ export interface MapLocation {
   lng: number;
 }
 
-export interface Skatepark {
-  _id: string;
-  title: string;
-  description: string;
-  location: {
-    type: 'Point';
-    coordinates: [number, number]; // [lng, lat]
-  };
-  photoNames: string[];
-  isPark: boolean;
-  size: string;
-  levels: string[];
-  tags: string[];
-  avgRating: number;
-  externalLinks?: {
-    url: string;
-    sentBy: { id: string; name: string };
-    sentAt: string;
-  }[];
-}
+import { SkateparkBasic, SkateparkDetailed } from '@/types/skatepark';
 
 export class MapService {
   // Map style definitions
@@ -175,7 +156,7 @@ export class MapService {
   }
 
   // Get unique values for filter options
-  static getUniqueSizes(skateparks: Skatepark[]): string[] {
+  static getUniqueSizes(skateparks: SkateparkBasic[]): string[] {
     const sizes = new Set<string>();
     skateparks.forEach(spot => {
       if (spot.size) {
@@ -185,7 +166,7 @@ export class MapService {
     return Array.from(sizes).sort();
   }
 
-  static getUniqueLevels(skateparks: Skatepark[]): string[] {
+  static getUniqueLevels(skateparks: SkateparkBasic[]): string[] {
     const levels = new Set<string>();
     skateparks.forEach(spot => {
       if (spot.levels) {
@@ -199,7 +180,7 @@ export class MapService {
     return Array.from(levels).sort();
   }
 
-  static getUniqueTags(skateparks: Skatepark[]): string[] {
+  static getUniqueTags(skateparks: SkateparkBasic[]): string[] {
     const tags = new Set<string>();
     skateparks.forEach(spot => {
       spot.tags.forEach(tag => {
