@@ -4,12 +4,13 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
 interface StatusIndicatorsProps {
+    totalSpots: number;
+    filteredSpots: number;
     lastUpdated: Date;
-    parksWithDistance: any[];
-    parks: any[];
+    onRefresh: () => void;
 }
 
-export default function StatusIndicators({ lastUpdated, parksWithDistance, parks }: StatusIndicatorsProps) {
+export default function StatusIndicators({ totalSpots, filteredSpots, lastUpdated, onRefresh }: StatusIndicatorsProps) {
     return (
         <>
             {/* Last Updated Indicator */}
@@ -41,7 +42,7 @@ export default function StatusIndicators({ lastUpdated, parksWithDistance, parks
                 background: 'linear-gradient(135deg, var(--color-surface) 0%, var(--color-surface-elevated) 100%)'
             }}>
                 <Typography variant="body2" color="var(--color-text-secondary)" fontWeight={500}>
-                    🚀 Virtual scrolling enabled • Smooth performance with {parksWithDistance.length} spots
+                    🚀 Virtual scrolling enabled • {filteredSpots} of {totalSpots} spots loaded
                 </Typography>
             </Box>
         </>

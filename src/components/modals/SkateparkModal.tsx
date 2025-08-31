@@ -13,6 +13,7 @@ import { useTheme } from '@/context/ThemeContext';
 import FavoriteButton from '../common/FavoriteButton';
 import { LocationOn, Park, Streetview, Star, Link as LinkIcon } from '@mui/icons-material';
 import { skateparkClient } from '@/services/skateparkClient';
+import { ErrorHandler } from '@/utils/errorHandler';
 
 interface SkateparkModalProps {
   open: boolean;
@@ -81,6 +82,26 @@ export default function SkateparkModal({
   const safeExternalLinks = externalLinks || [];
   
   if (isLoading) return <Loading />;
+
+  const handleRatingError = (err: any) => {
+    const appError = ErrorHandler.handleApiError(err, 'SkateparkModal.rating');
+    ErrorHandler.logError(appError, 'SkateparkModal');
+    showToast(appError.userMessage, 'error');
+  };
+
+  const handleRetryRating = async () => {
+    if (!userRating || !user) return;
+    
+    setIsRatingLoading(true);
+    try {
+      await skateparkClient.rate(_id, userRating, user._id);
+      setUserRating(value);
+    } catch (err: any) {
+      handleRatingError(err);
+    } finally {
+      setIsRatingLoading(false);
+    }
+  };
 
   return (
     <Dialog 
@@ -494,7 +515,7 @@ export default function SkateparkModal({
                   await skateparkClient.rate(_id, value, user._id);
                   setUserRating(value);
                 } catch (err: any) {
-                  showToast(err.message, "error");
+                  handleRatingError(err);
                 } finally {
                   setIsRatingLoading(false);
                 }

@@ -4,8 +4,10 @@ import { useToast } from '@/context/ToastContext';
 import { useUser } from '@/context/UserContext';
 import { GeocodingService, GeocodingResult, AddressField } from '@/services/geocoding.service';
 import { FormValidationService, SpotFormData } from '@/services/formValidation.service';
-import { Size, Tag, SkaterLevel } from '@/types/enums';
+import { Size, Tag, SkaterLevel, ErrorCode, ErrorSeverity } from '@/types/enums';
 import { skateparkClient } from '@/services/skateparkClient';
+import { ErrorHandler } from '@/utils/errorHandler';
+import { AppError } from '@/types/error-models';
 
 // Debounce utility function
 function debounce<T extends (...args: any[]) => any>(
@@ -70,6 +72,8 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
     const { showToast, invalidateCache } = useToast();
     const router = useRouter();
 
+    const [error, setError] = useState<AppError | null>(null);
+
     // Constants
     const sizes = Object.values(Size);
     const tags = Object.values(Tag);
@@ -102,32 +106,33 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
         }
 
         setIsSubmitting(true);
-
-        const spotData = {
-            title,
-            description,
-            size,
-            levels: levelList,
-            isPark,
-            tags: tagList,
-            location: {
-                type: 'Point',
-                coordinates: [coords!.lng, coords!.lat]
-            },
-            externalLinks: externalLinks
-                .filter(link => link.trim())
-                .map(link => ({
-                    url: link,
-                    sentBy: { id: user._id, name: user.name },
-                    sentAt: new Date()
-                }))
-        };
-
-        const formDataToSend = new FormData();
-        formDataToSend.append('data', JSON.stringify(spotData));
-        if (photos) Array.from(photos).forEach(photo => formDataToSend.append('photos', photo));
+        setError(null); // Clear any previous errors
 
         try {
+            const spotData = {
+                title,
+                description,
+                size,
+                levels: levelList,
+                isPark,
+                tags: tagList,
+                location: {
+                    type: 'Point',
+                    coordinates: [coords!.lng, coords!.lat]
+                },
+                externalLinks: externalLinks
+                    .filter(link => link.trim())
+                    .map(link => ({
+                        url: link,
+                        sentBy: { id: user._id, name: user.name },
+                        sentAt: new Date()
+                    }))
+            };
+
+            const formDataToSend = new FormData();
+            formDataToSend.append('data', JSON.stringify(spotData));
+            if (photos) Array.from(photos).forEach(photo => formDataToSend.append('photos', photo));
+
             await skateparkClient.create(formDataToSend, user._id);
 
             showToast('Skatepark added!', 'success');
@@ -143,7 +148,10 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
             
             setTimeout(() => router.push('/'), 1000);
         } catch (err: any) {
-            showToast(err.message || 'Unexpected error', 'error');
+            const appError = ErrorHandler.handleApiError(err, 'useAddSpotForm.submit');
+            ErrorHandler.logError(appError, 'useAddSpotForm');
+            setError(appError);
+            showToast(appError.userMessage, 'error');
         } finally {
             setIsSubmitting(false);
         }
@@ -164,7 +172,9 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
                 showToast(`Location set: ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`, 'success');
             }
         } catch (error: any) {
-            showToast(error.message, 'error');
+            const appError = ErrorHandler.handleApiError(error, 'useAddSpotForm.getMyLocation');
+            ErrorHandler.logError(appError, 'useAddSpotForm');
+            showToast(appError.userMessage, 'error');
         }
     };
 
@@ -182,7 +192,9 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
                 showToast(`Location found: ${shortAddress}`, 'success');
             }
         } catch (error: any) {
-            showToast(error.message, 'error');
+            const appError = ErrorHandler.handleApiError(error, 'useAddSpotForm.searchAddress');
+            ErrorHandler.logError(appError, 'useAddSpotForm');
+            showToast(appError.userMessage, 'error');
         } finally {
             setIsGeocoding(false);
         }
@@ -202,7 +214,15 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
             setCoords({ lat, lng });
             return true;
         } else {
-            showToast('Invalid coordinates received. Please try again.', 'error');
+            const appError = ErrorHandler.createError(
+                ErrorCode.VALIDATION_ERROR,
+                ErrorSeverity.MEDIUM,
+                `Invalid coordinates: ${lat}, ${lng}`,
+                'Invalid coordinates received. Please try again.',
+                { lat, lng }
+            );
+            ErrorHandler.logError(appError, 'useAddSpotForm');
+            showToast(appError.userMessage, 'error');
             return false;
         }
     };
@@ -270,6 +290,8 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
                  const suggestions = await GeocodingService.searchStreetSuggestions(query);
                  setStreetSuggestions(suggestions);
              } catch (error) {
+                 const appError = ErrorHandler.handleApiError(error, 'useAddSpotForm.fetchStreetSuggestions');
+                 ErrorHandler.logError(appError, 'useAddSpotForm');
                  setStreetSuggestions([]);
              } finally {
                  setIsLoadingStreet(false);
@@ -287,6 +309,8 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
                  const suggestions = await GeocodingService.searchCitySuggestions(query);
                  setCitySuggestions(suggestions);
              } catch (error) {
+                 const appError = ErrorHandler.handleApiError(error, 'useAddSpotForm.fetchCitySuggestions');
+                 ErrorHandler.logError(appError, 'useAddSpotForm');
                  setCitySuggestions([]);
              } finally {
                  setIsLoadingCity(false);
@@ -304,6 +328,8 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
                  const suggestions = await GeocodingService.searchCountrySuggestions(query);
                  setCountrySuggestions(suggestions);
              } catch (error) {
+                 const appError = ErrorHandler.handleApiError(error, 'useAddSpotForm.fetchCountrySuggestions');
+                 ErrorHandler.logError(appError, 'useAddSpotForm');
                  setCountrySuggestions([]);
              } finally {
                  setIsLoadingCountry(false);
@@ -338,6 +364,10 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
     const removeExternalLink = (index: number) => {
         setExternalLinks(prev => prev.filter((_, i) => i !== index));
     };
+
+    const clearError = useCallback(() => {
+        setError(null);
+    }, []);
 
     return {
         // Form state
@@ -405,6 +435,10 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
             locationMethod,
             fullAddress,
             structuredAddress: { street, city, state, country }
-        })
+        }),
+        
+        // Error handling
+        error,
+        clearError
     };
 };

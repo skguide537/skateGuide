@@ -9,6 +9,32 @@ export enum StatusCode {
     InternalServerError = 500
 }
 
+export enum ErrorSeverity {
+    LOW = 'LOW',      // Favorites, ratings - silent retry
+    MEDIUM = 'MEDIUM', // Search, filters - show retry status
+    HIGH = 'HIGH'      // Add/delete spots - show we care
+}
+
+export enum ErrorCode {
+    // User Errors (4xx)
+    VALIDATION_ERROR = 'VALIDATION_ERROR',
+    AUTHENTICATION_FAILED = 'AUTHENTICATION_FAILED',
+    PERMISSION_DENIED = 'PERMISSION_DENIED',
+    RESOURCE_NOT_FOUND = 'RESOURCE_NOT_FOUND',
+    
+    // System Errors (5xx)
+    DATABASE_ERROR = 'DATABASE_ERROR',
+    EXTERNAL_SERVICE_ERROR = 'EXTERNAL_SERVICE_ERROR',
+    NETWORK_ERROR = 'NETWORK_ERROR',
+    
+    // Business Logic Errors
+    DUPLICATE_RESOURCE = 'DUPLICATE_RESOURCE',
+    INVALID_OPERATION = 'INVALID_OPERATION',
+    
+    // Generic
+    UNKNOWN_ERROR = 'UNKNOWN_ERROR'
+}
+
 export enum Role {
     Admin = "Admin",
     User = "User",

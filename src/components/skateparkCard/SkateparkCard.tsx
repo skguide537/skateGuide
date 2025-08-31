@@ -15,6 +15,10 @@ import SkateparkModal from '../modals/SkateparkModal';
 import FastCarousel from '../ui/FastCarousel';
 import { useUser } from '@/context/UserContext';
 import { skateparkClient } from '@/services/skateparkClient';
+import { ErrorModal } from '../ui/ErrorModal';
+import { ErrorHandler } from '@/utils/errorHandler';
+import { ErrorSeverity } from '@/types/enums';
+import { AppError } from '@/types/error-models';
 
 
 interface SkateparkCardProps {
@@ -48,6 +52,7 @@ const SkateparkCard = memo(function SkateparkCard({
 }: SkateparkCardProps) {
     const [open, setOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [error, setError] = useState<AppError | null>(null);
     const { user } = useUser();
     const isAdmin = user?.role === 'admin';
     
@@ -70,10 +75,30 @@ const SkateparkCard = memo(function SkateparkCard({
             // Refresh the page or remove from list
             window.location.reload();
         } catch (error: any) {
-            alert(`Error deleting skatepark: ${error.message}`);
+            // Use new error handling system
+            const appError = ErrorHandler.handleApiError(error, 'SkateparkCard');
+            
+            // Set error severity to HIGH since this is a major operation
+            appError.severity = ErrorSeverity.HIGH;
+            appError.showRetryToUser = true;
+            
+            // Log technical details for developer
+            ErrorHandler.logError(appError, 'SkateparkCard');
+            
+            // Show error modal for user
+            setError(appError);
         } finally {
             setIsDeleting(false);
         }
+    };
+
+    const handleRetryDelete = async () => {
+        setError(null);
+        await handleDelete({} as React.MouseEvent);
+    };
+
+    const closeErrorModal = () => {
+        setError(null);
     };
 
     const hasPhotos = photoNames && photoNames.length > 0;
@@ -257,6 +282,15 @@ const SkateparkCard = memo(function SkateparkCard({
                     coordinates={coordinates}
                     externalLinks={externalLinks}
                     distanceKm={distanceKm}
+                />
+
+                {/* Error Modal for delete operations */}
+                <ErrorModal
+                    error={error}
+                    open={!!error}
+                    onClose={closeErrorModal}
+                    onRetry={handleRetryDelete}
+                    title="Delete Failed"
                 />
         </>
     );

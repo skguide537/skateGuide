@@ -10,6 +10,7 @@ import {
     SkateparksResponse
 } from '@/types/skatepark';
 import { logger } from '@/utils/logger';
+import { HttpError } from '@/types/error-models';
 
 // Base API configuration
 const API_BASE = '/api';
@@ -21,12 +22,12 @@ const getAuthHeaders = (): HeadersInit => {
     };
 };
 
-// Generic API request helper
-const apiRequest = async <T>(
-    endpoint: string, 
-    options: RequestInit = {}
-): Promise<T> => {
+/**
+ * Make an API request with authentication
+ */
+async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_BASE}${endpoint}`;
+    
     const config: RequestInit = {
         headers: getAuthHeaders(),
         ...options,
@@ -37,7 +38,13 @@ const apiRequest = async <T>(
         
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-            throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+            
+            // Create HttpError to preserve response data for better error handling
+            throw new HttpError(
+                errorData.error || `HTTP ${response.status}: ${response.statusText}`,
+                response.status,
+                errorData
+            );
         }
 
         return await response.json();
@@ -45,7 +52,7 @@ const apiRequest = async <T>(
         logger.error(`API request failed for ${endpoint}`, error as Error, { component: 'skateparkClient' });
         throw error;
     }
-};
+}
 
 /**
  * Skatepark API client class

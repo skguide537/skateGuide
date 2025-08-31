@@ -4,6 +4,8 @@ import { HOME_PAGE_CONSTANTS } from '@/constants/homePage';
 import { skateparkClient, authClient } from '@/services/skateparkClient';
 import { logger } from '@/utils/logger';
 import { SkateparkBasic } from '@/types/skatepark';
+import { ErrorHandler } from '@/utils/errorHandler';
+import { AppError } from '@/types/error-models';
 
 export function useParksData() {
     const [parks, setParks] = useState<SkateparkBasic[]>([]);
@@ -11,6 +13,7 @@ export function useParksData() {
     const [deletedSpotIds, setDeletedSpotIds] = useState<Set<string>>(new Set());
     const [deletingSpotIds, setDeletingSpotIds] = useState<Set<string>>(new Set());
     const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+    const [error, setError] = useState<AppError | null>(null);
     
     const { showToast, invalidateCache } = useToast();
     
@@ -35,13 +38,17 @@ export function useParksData() {
     const fetchParks = useCallback(async () => {
         try {
             setIsLoading(true);
+            setError(null); // Clear any previous errors
             
+            // Fetch parks data for virtual scrolling
             const data = await skateparkClient.getWithLimit(1000);
 
             // Update parks data for virtual scrolling
             setParks(Array.isArray(data) ? data : []);
         } catch (err) {
-            logger.error('Failed to fetch parks', err as Error, { component: 'useParksData' });
+            const appError = ErrorHandler.handleApiError(err, 'useParksData.fetchParks');
+            ErrorHandler.logError(appError, 'useParksData');
+            setError(appError);
             setParks([]);
         } finally {
             setIsLoading(false);
@@ -66,9 +73,13 @@ export function useParksData() {
             
             // Update last updated timestamp
             setLastUpdated(new Date());
+            
+            setError(null); // Clear any previous errors
 
         } catch (err) {
-            logger.error('Error refreshing parks', err as Error, { component: 'useParksData' });
+            const appError = ErrorHandler.handleApiError(err, 'useParksData.refreshParks');
+            ErrorHandler.logError(appError, 'useParksData');
+            setError(appError);
             // Don't clear existing data on error - keep what we have
         }
     }, []);
@@ -117,7 +128,9 @@ export function useParksData() {
             }, HOME_PAGE_CONSTANTS.TIMEOUTS.CACHE_INVALIDATION);
             
         } catch (error: any) {
-            logger.error('Delete failed', error as Error, { component: 'useParksData' });
+            const appError = ErrorHandler.handleApiError(error, 'useParksData.handleSpotDelete');
+            ErrorHandler.logError(appError, 'useParksData');
+            setError(appError);
             
             // Remove from deleting state
             setDeletingSpotIds(prev => {
@@ -127,7 +140,7 @@ export function useParksData() {
             });
             
             // Show error to user
-            showToastRef.current(`Failed to delete spot: ${error.message}`, 'error');
+            showToastRef.current(appError.userMessage, 'error');
         }
     }, []);
 
@@ -182,6 +195,10 @@ export function useParksData() {
         fetchParks();
     }, [fetchParks]);
 
+    const clearError = useCallback(() => {
+        setError(null);
+    }, []);
+
     return {
         parks,
         isLoading,
@@ -191,5 +208,7 @@ export function useParksData() {
         fetchParks,
         refreshParks,
         handleSpotDelete,
+        error,
+        clearError
     };
 }

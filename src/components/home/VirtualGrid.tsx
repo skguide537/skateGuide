@@ -8,18 +8,42 @@ import { FilteredSkatepark } from '@/services/parksFilter.service';
 interface VirtualGridProps {
     parentRef: React.RefObject<HTMLDivElement>;
     virtualizer: any;
-    parksWithDistance: FilteredSkatepark[];
+    parks: FilteredSkatepark[]; // Changed from parksWithDistance to match usage
     gridColumns: number;
-    onDelete: (spotId: string) => void;
+    onSpotDelete: (spotId: string) => void; // Changed from onDelete to match usage
+    deletingSpotIds: string[] | Set<string>; // Updated to handle both types
 }
 
 export default function VirtualGrid({ 
     parentRef, 
     virtualizer, 
-    parksWithDistance, 
+    parks, 
     gridColumns, 
-    onDelete 
+    onSpotDelete,
+    deletingSpotIds
 }: VirtualGridProps) {
+    // Safety check: don't render if parks is undefined or empty
+    if (!parks || parks.length === 0) {
+        return (
+            <Box
+                sx={{
+                    height: '600px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 'var(--radius-lg)',
+                    backgroundColor: 'var(--color-surface)',
+                    p: 2,
+                }}
+            >
+                <Box sx={{ textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                    No skate spots available
+                </Box>
+            </Box>
+        );
+    }
+
     return (
         <Box
             ref={parentRef}
@@ -46,7 +70,7 @@ export default function VirtualGrid({
                     // Render all cards in this row
                     return Array.from({ length: gridColumns }, (_, colIndex) => {
                         const parkIndex = startIndex + colIndex;
-                        const park = parksWithDistance[parkIndex];
+                        const park = parks[parkIndex];
                         
                         if (!park) return null;
                         
@@ -76,8 +100,8 @@ export default function VirtualGrid({
                                     levels={park.levels ? park.levels.filter(level => level !== null && level !== undefined) : []}
                                     avgRating={park.avgRating}
                                     externalLinks={park.externalLinks || []}
-                                    isDeleting={park.isDeleting}
-                                    onDelete={onDelete}
+                                    isDeleting={deletingSpotIds instanceof Set ? deletingSpotIds.has(park._id) : deletingSpotIds.includes(park._id)}
+                                    onDelete={onSpotDelete}
                                 />
                             </div>
                         );

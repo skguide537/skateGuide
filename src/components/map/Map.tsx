@@ -11,6 +11,9 @@ import SkateparkModal from '../modals/SkateparkModal';
 import { skateparkClient } from '@/services/skateparkClient';
 import { logger } from '@/utils/logger';
 import { SkateparkBasic } from '@/types/skatepark';
+import { ErrorHandler } from '@/utils/errorHandler';
+import { ErrorState } from '../ui/ErrorState';
+import { AppError } from '@/types/error-models';
 
 
 const icon = L.icon({
@@ -45,7 +48,7 @@ export default function MapComponent({ userLocation }: MapProps) {
     const [spots, setSpots] = useState<SkateparkBasic[]>([]);
     const [selectedSpot, setSelectedSpot] = useState<SkateparkBasic | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<AppError | null>(null);
     const mapRef = useRef<Map | null>(null);
 
     // Calculate distance between two coordinates using Haversine formula
@@ -67,8 +70,9 @@ export default function MapComponent({ userLocation }: MapProps) {
                 const data = await skateparkClient.getAll();
                 setSpots(data);
             } catch (err) {
-                setError('Unable to load skateparks');
-                logger.error('Unable to load skateparks', err as Error, { component: 'Map' });
+                const appError = ErrorHandler.handleApiError(err, 'Map.fetchSpots');
+                ErrorHandler.logError(appError, 'Map');
+                setError(appError);
             } finally {
                 setIsLoading(false);
             }
@@ -77,7 +81,20 @@ export default function MapComponent({ userLocation }: MapProps) {
         fetchSpots();
     }, []);
 
-   
+    const handleRetryFetch = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const data = await skateparkClient.getAll();
+            setSpots(data);
+        } catch (err) {
+            const appError = ErrorHandler.handleApiError(err, 'Map.retryFetch');
+            ErrorHandler.logError(appError, 'Map');
+            setError(appError);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
         if (mapRef.current) {
@@ -96,47 +113,55 @@ export default function MapComponent({ userLocation }: MapProps) {
             overflow="hidden"
             maxWidth={1200}
         >
-            <MapContainer
-                center={userLocation || [32.073, 34.789]}
-                zoom={13}
-                style={{ height: '100%', width: '100%' }}
-                scrollWheelZoom
-                zoomControl
-                whenReady={() => {
-                    if (mapRef.current) {
-                        mapRef.current.invalidateSize();
-                    }
-                }}
-                ref={mapRef}
-            >
-                <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            {error ? (
+                <ErrorState
+                    error={error}
+                    onRetry={handleRetryFetch}
+                    className="map-error-state"
                 />
+            ) : (
+                <MapContainer
+                    center={userLocation || [32.073, 34.789]}
+                    zoom={13}
+                    style={{ height: '100%', width: '100%' }}
+                    scrollWheelZoom
+                    zoomControl
+                    whenReady={() => {
+                        if (mapRef.current) {
+                            mapRef.current.invalidateSize();
+                        }
+                    }}
+                    ref={mapRef}
+                >
+                    <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
 
-                {userLocation && (
-                    <Marker position={userLocation} icon={myLocationIcon}>
-                        <Popup>Your location</Popup>
-                    </Marker>
-                )}
+                    {userLocation && (
+                        <Marker position={userLocation} icon={myLocationIcon}>
+                            <Popup>Your location</Popup>
+                        </Marker>
+                    )}
 
-                {spots.map((spot) => (
-                    <Marker
-                        key={spot._id}
-                        position={[spot.location.coordinates[1], spot.location.coordinates[0]]}
-                        icon={icon}
-                        eventHandlers={{
-                            click: () => setSelectedSpot(spot),
-                        }}
-                    >
-                        <Popup>
-                            <strong>{spot.title}</strong>
-                            <br />
-                            {spot.description}
-                        </Popup>
-                    </Marker>
-                ))}
-            </MapContainer>
+                    {spots.map((spot) => (
+                        <Marker
+                            key={spot._id}
+                            position={[spot.location.coordinates[1], spot.location.coordinates[0]]}
+                            icon={icon}
+                            eventHandlers={{
+                                click: () => setSelectedSpot(spot),
+                            }}
+                        >
+                            <Popup>
+                                <strong>{spot.title}</strong>
+                                <br />
+                                {spot.description}
+                            </Popup>
+                        </Marker>
+                    ))}
+                </MapContainer>
+            )}
             {selectedSpot && (
                 <SkateparkModal
                     open={!!selectedSpot}
@@ -158,6 +183,7 @@ export default function MapComponent({ userLocation }: MapProps) {
                         userLocation[0], userLocation[1],
                         selectedSpot.location.coordinates[1], selectedSpot.location.coordinates[0]
                     ) : undefined}
+                    avgRating={selectedSpot.avgRating}
                 />
             )}
         </Box>

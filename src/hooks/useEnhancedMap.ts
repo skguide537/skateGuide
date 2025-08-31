@@ -8,13 +8,15 @@ import { Tag } from '@/types/enums';
 import { MapFilterService, MapFilterOptions, MapFilterState } from '@/services/mapFilter.service';
 import { skateparkClient } from '@/services/skateparkClient';
 import { logger } from '@/utils/logger';
+import { ErrorHandler } from '@/utils/errorHandler';
+import { AppError } from '@/types/error-models';
 
 export const useEnhancedMap = (userLocation: [number, number] | null) => {
   // Core state
       const [spots, setSpots] = useState<SkateparkBasic[]>([]);
     const [selectedSpot, setSelectedSpot] = useState<SkateparkBasic | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<AppError | null>(null);
   const [currentMapStyle, setCurrentMapStyle] = useState('street');
 
   // Filter state
@@ -30,9 +32,11 @@ export const useEnhancedMap = (userLocation: [number, number] | null) => {
     try {
       const data = await skateparkClient.getAll();
       setSpots(data);
+      setError(null); // Clear any previous errors
     } catch (err) {
-      setError('Unable to load skateparks');
-      logger.error('Unable to load skateparks', err as Error, { component: 'useEnhancedMap' });
+      const appError = ErrorHandler.handleApiError(err, 'useEnhancedMap.fetchSpots');
+      ErrorHandler.logError(appError, 'useEnhancedMap');
+      setError(appError);
     } finally {
       setIsLoading(false);
     }
@@ -178,6 +182,11 @@ export const useEnhancedMap = (userLocation: [number, number] | null) => {
     mapRef.current = map;
   }, []);
 
+  // Clear error state
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
   return {
     // State
     spots,
@@ -220,6 +229,9 @@ export const useEnhancedMap = (userLocation: [number, number] | null) => {
     setMapRef,
     
     // Data refresh
-    fetchSpots
+    fetchSpots,
+    
+    // Error handling
+    clearError
   };
 };
