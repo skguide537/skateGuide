@@ -36,7 +36,10 @@ export async function GET(req: NextRequest) {
             role: user.role // Add role to response for admin checking
         });
     } catch (err) {
-        console.error('GET /api/auth/me error:', err);
+        // Log error in development only
+        if (process.env.NODE_ENV === 'development') {
+            console.error('GET /api/auth/me error:', err);
+        }
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 }

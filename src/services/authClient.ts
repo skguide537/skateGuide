@@ -3,6 +3,8 @@
  * Replaces direct fetch calls with centralized API methods
  */
 
+import { logger } from '@/lib/logger';
+
 export interface User {
   _id: string;
   name: string;
@@ -51,7 +53,10 @@ class AuthClient {
       const data: AuthResponse = await response.json();
       return data.user || null;
     } catch (error) {
-      console.error('Error fetching current user:', error);
+      // Only log in development
+      if (process.env.NODE_ENV === 'development') {
+        logger.error('Error fetching current user', error, 'AuthClient');
+      }
       return null;
     }
   }
@@ -110,7 +115,9 @@ class AuthClient {
       });
     } catch (error) {
       // Logout should not throw errors - user might already be logged out
-      console.warn('Logout request failed:', error);
+      if (process.env.NODE_ENV === 'development') {
+        logger.warn('Logout request failed', error, 'AuthClient');
+      }
     }
   }
 

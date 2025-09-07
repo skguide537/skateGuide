@@ -163,7 +163,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(processedResults);
 
   } catch (error: any) {
-    console.error('Geocoding API error:', error);
+    // Log error in development, but don't expose details in production
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Geocoding API error:', error);
+    }
     
     // Return appropriate error response
     if (error.message.includes('OpenStreetMap API')) {

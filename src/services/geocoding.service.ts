@@ -1,5 +1,6 @@
 // Geocoding service for handling address searches and coordinate validation
 import { geocodingClient } from './geocodingClient';
+import { logger } from '@/lib/logger';
 
 export interface GeocodingResult {
     lat: number;
@@ -111,7 +112,7 @@ export class GeocodingService {
                     }
                 },
                 (err) => {
-                    console.error('Geolocation error:', err);
+                    logger.error('Geolocation error', err, 'GeocodingService');
                     reject(new Error("Unable to get location"));
                 }
             );
@@ -126,7 +127,7 @@ export class GeocodingService {
             const results = await geocodingClient.searchStreets(query, 5);
             return results.map(result => result.display_name);
         } catch (error) {
-            console.error('Street autocomplete error:', error);
+            logger.error('Street autocomplete error', error, 'GeocodingService');
             return [];
         }
     }
@@ -139,7 +140,7 @@ export class GeocodingService {
             const results = await geocodingClient.searchCities(query, 5);
             return results.map(result => result.display_name);
         } catch (error) {
-            console.error('City autocomplete error:', error);
+            logger.error('City autocomplete error', error, 'GeocodingService');
             return [];
         }
     }
@@ -152,7 +153,7 @@ export class GeocodingService {
             const results = await geocodingClient.searchCountries(query, 5);
             return results.map(result => result.display_name);
         } catch (error) {
-            console.error('Country autocomplete error:', error);
+            logger.error('Country autocomplete error', error, 'GeocodingService');
             return [];
         }
     }
