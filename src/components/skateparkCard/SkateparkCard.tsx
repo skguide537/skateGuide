@@ -14,6 +14,7 @@ import Image from 'next/image';
 import SkateparkModal from '../modals/SkateparkModal';
 import FastCarousel from '../ui/FastCarousel';
 import { useUser } from '@/context/UserContext';
+import { skateparkClient } from '@/services/skateparkClient';
 
 
 interface SkateparkCardProps {
@@ -64,17 +65,11 @@ const SkateparkCard = memo(function SkateparkCard({
 
         setIsDeleting(true);
         try {
-            const response = await fetch(`/api/skateparks/${_id}`, {
-                method: 'DELETE',
-                headers: {
-                    'x-user-id': user?._id || '',
-                },
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || 'Failed to delete skatepark');
+            if (!user?._id) {
+                throw new Error('User not authenticated');
             }
+            
+            await skateparkClient.deleteSkatepark(_id, user._id);
 
             // Refresh the page or remove from list
             window.location.reload();

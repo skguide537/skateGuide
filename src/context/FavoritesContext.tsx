@@ -3,6 +3,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState, useRef } from 'react';
 import { useUser } from '@/context/UserContext';
 import { useToast } from '@/context/ToastContext';
+import { favoritesClient } from '@/services/favoritesClient';
 
 type FavoritesCounts = Record<string, number>;
 
@@ -35,10 +36,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     }
     setIsLoading(true);
     try {
-      const res = await fetch('/api/favorites', { headers: { 'x-user-id': user._id } });
-      if (!res.ok) throw new Error('Failed to fetch favorites');
-      const data = await res.json();
-      setFavorites(Array.isArray(data?.favorites) ? data.favorites : []);
+      const data = await favoritesClient.getFavorites(user._id);
+      setFavorites(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Favorites fetch failed:', err);
     } finally {
@@ -57,13 +56,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     inProgressRef.current.add(key);
     
     try {
-      const params = new URLSearchParams();
-      params.set('counts', 'true');
-      params.set('spotIds', idsToFetch.join(','));
-      const res = await fetch(`/api/favorites?${params.toString()}`);
-      if (!res.ok) throw new Error('Failed to fetch favorite counts');
-      const data = await res.json(); // { counts: Record<spotId, number> }
-      setCounts((prev) => ({ ...prev, ...(data?.counts || {}) }));
+      const data = await favoritesClient.getFavoriteCounts(idsToFetch);
+      setCounts((prev) => ({ ...prev, ...data }));
     } catch (err) {
       console.error('Favorites counts fetch failed:', err);
     } finally {
@@ -86,21 +80,25 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const res = await fetch('/api/favorites', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-user-id': user._id },
-        body: JSON.stringify({ spotId })
-      });
-      if (!res.ok) throw new Error('Failed to update favorites');
-      const data = await res.json(); // { action, favorites, count }
+      const action = await favoritesClient.toggleFavorite(spotId, user._id);
+      
+      // Update local state optimistically
+      setFavorites(prev => 
+        action === 'added' 
+          ? [...prev, spotId]
+          : prev.filter(id => id !== spotId)
+      );
+      setCounts(prev => ({ 
+        ...prev, 
+        [spotId]: action === 'added' 
+          ? (prev[spotId] ?? 0) + 1 
+          : Math.max(0, (prev[spotId] ?? 1) - 1)
+      }));
 
-      setFavorites(Array.isArray(data?.favorites) ? data.favorites : []);
-      setCounts((prev) => ({ ...prev, [spotId]: typeof data?.count === 'number' ? data.count : (prev[spotId] ?? 0) }));
-
-      if (data.action === 'added') showToast('Added to favorites!', 'success');
+      if (action === 'added') showToast('Added to favorites!', 'success');
       else showToast('Removed from favorites', 'info');
 
-      return data.action as 'added' | 'removed';
+      return action;
     } catch (err) {
       console.error('Toggle favorite failed:', err);
       showToast('Failed to update favorites', 'error');
@@ -118,8 +116,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     favorites,
     counts,
     isLoading,
-    // Remove fetchFavorites from dependencies - it causes infinite loops
-    // fetchFavorites,
+    fetchFavorites,
     ensureCounts,
     getFavoritesCount,
     isFavorited,

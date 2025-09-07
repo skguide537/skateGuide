@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { authClient } from '@/services/authClient';
 
 export interface User {
     _id: string;
@@ -27,19 +28,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
         const restoreSession = async () => {
             setIsLoading(true);
             try {
-                const res = await fetch('/api/auth/me');
-                if (!res.ok) {
-                    if (res.status !== 401) {
-                        // Only log non-401 errors in non-test environments
-                        if (process.env.NODE_ENV !== 'test') {
-                            console.error('Auth check failed');
-                        }
-                    }
-                    return;
+                const userData = await authClient.getCurrentUser();
+                if (userData) {
+                    setUser(userData);
                 }
-
-                const userData = await res.json();
-                setUser(userData);
             } catch (err) {
                 // Only log errors in non-test environments
                 if (process.env.NODE_ENV !== 'test') {
@@ -55,7 +47,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     const logout = async () => {
         try {
-            await fetch('/api/auth/logout', { method: 'POST' });
+            await authClient.logout();
         } catch (err) {
             // Only log errors in non-test environments
             if (process.env.NODE_ENV !== 'test') {

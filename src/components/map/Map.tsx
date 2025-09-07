@@ -7,6 +7,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { Map } from 'leaflet';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { useCache } from '@/context/ToastContext';
+import { skateparkClient } from '@/services/skateparkClient';
 import SkateparkModal from '../modals/SkateparkModal';
 
 
@@ -80,9 +81,7 @@ export default function MapComponent({ userLocation }: MapProps) {
     useEffect(() => {
         const fetchSpots = async () => {
             try {
-                const response = await fetch('/api/skateparks');
-                if (!response.ok) throw new Error('Failed to fetch skateparks');
-                const data = await response.json();
+                const data = await skateparkClient.getAllSkateparks();
                 setSpots(data);
             } catch (err) {
                 setError('Unable to load skateparks');

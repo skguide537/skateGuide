@@ -1,0 +1,141 @@
+/**
+ * Frontend API client for authentication operations
+ * Replaces direct fetch calls with centralized API methods
+ */
+
+export interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role?: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  user?: User;
+  message?: string;
+  error?: string;
+}
+
+/**
+ * Authentication API client for frontend operations
+ */
+class AuthClient {
+  private baseUrl = '/api/auth';
+
+  /**
+   * Get current user information
+   */
+  async getCurrentUser(): Promise<User | null> {
+    try {
+      const response = await fetch(`${this.baseUrl}/me`);
+      
+      if (response.status === 401) {
+        return null; // Not authenticated
+      }
+      
+      if (!response.ok) {
+        throw new Error(`Failed to get current user: ${response.statusText}`);
+      }
+      
+      const data: AuthResponse = await response.json();
+      return data.user || null;
+    } catch (error) {
+      console.error('Error fetching current user:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Login user
+   */
+  async login(credentials: LoginRequest): Promise<AuthResponse> {
+    const response = await fetch(`${this.baseUrl}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(credentials),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.message || `Login failed: ${response.statusText}`
+      );
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Register new user
+   */
+  async register(userData: RegisterRequest): Promise<AuthResponse> {
+    const response = await fetch(`${this.baseUrl}/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.message || `Registration failed: ${response.statusText}`
+      );
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Logout user
+   */
+  async logout(): Promise<void> {
+    try {
+      await fetch(`${this.baseUrl}/logout`, {
+        method: 'POST',
+      });
+    } catch (error) {
+      // Logout should not throw errors - user might already be logged out
+      console.warn('Logout request failed:', error);
+    }
+  }
+
+  /**
+   * Promote user to admin (admin only)
+   */
+  async promoteToAdmin(userId: string): Promise<AuthResponse> {
+    const response = await fetch(`${this.baseUrl}/promote-admin`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.message || `Failed to promote user: ${response.statusText}`
+      );
+    }
+
+    return await response.json();
+  }
+}
+
+// Export singleton instance
+export const authClient = new AuthClient();
