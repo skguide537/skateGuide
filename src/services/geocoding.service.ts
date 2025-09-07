@@ -1,4 +1,6 @@
 // Geocoding service for handling address searches and coordinate validation
+import { geocodingClient } from './geocodingClient';
+
 export interface GeocodingResult {
     lat: number;
     lng: number;
@@ -70,27 +72,19 @@ export class GeocodingService {
         }
         
         // Use our backend geocoding API
-        const response = await fetch(
-            `/api/geocoding/search?type=address&q=${encodeURIComponent(searchQuery)}&limit=1`
-        );
+        const results = await geocodingClient.searchAddress(searchQuery, 1);
         
-        if (!response.ok) {
-            if (response.status === 429) {
-                throw new Error('Too many requests. Please wait a moment and try again.');
-            } else if (response.status === 503) {
-                throw new Error('Geocoding service temporarily unavailable. Please try again later.');
-            } else {
-                throw new Error('Geocoding service unavailable');
-            }
+        if (results.length === 0) {
+            throw new Error('No results found for this address');
         }
         
-        const data = await response.json();
+        const result = results[0];
         
-        if (data && data.lat && data.lng) {
+        if (result && result.lat && result.lon) {
             return {
-                lat: data.lat,
-                lng: data.lng,
-                displayName: data.displayName || searchQuery
+                lat: parseFloat(result.lat),
+                lng: parseFloat(result.lon),
+                displayName: result.display_name || searchQuery
             };
         } else {
             throw new Error('Address not found. Please try a different address or use the map.');
@@ -129,17 +123,8 @@ export class GeocodingService {
         if (query.length < 2) return [];
         
         try {
-            const response = await fetch(
-                `/api/geocoding/search?type=street&q=${encodeURIComponent(query)}&limit=5`
-            );
-            
-            if (response.ok) {
-                const data = await response.json();
-                return Array.isArray(data) ? data : [];
-            } else {
-                console.error('Street autocomplete error:', response.status);
-                return [];
-            }
+            const results = await geocodingClient.searchStreets(query, 5);
+            return results.map(result => result.display_name);
         } catch (error) {
             console.error('Street autocomplete error:', error);
             return [];
@@ -151,17 +136,8 @@ export class GeocodingService {
         if (query.length < 2) return [];
         
         try {
-            const response = await fetch(
-                `/api/geocoding/search?type=city&q=${encodeURIComponent(query)}&limit=5`
-            );
-            
-            if (response.ok) {
-                const data = await response.json();
-                return Array.isArray(data) ? data : [];
-            } else {
-                console.error('City autocomplete error:', response.status);
-                return [];
-            }
+            const results = await geocodingClient.searchCities(query, 5);
+            return results.map(result => result.display_name);
         } catch (error) {
             console.error('City autocomplete error:', error);
             return [];
@@ -173,17 +149,8 @@ export class GeocodingService {
         if (query.length < 2) return [];
         
         try {
-            const response = await fetch(
-                `/api/geocoding/search?type=country&q=${encodeURIComponent(query)}&limit=5`
-            );
-            
-            if (response.ok) {
-                const data = await response.json();
-                return Array.isArray(data) ? data : [];
-            } else {
-                console.error('Country autocomplete error:', response.status);
-                return [];
-            }
+            const results = await geocodingClient.searchCountries(query, 5);
+            return results.map(result => result.display_name);
         } catch (error) {
             console.error('Country autocomplete error:', error);
             return [];
