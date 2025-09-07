@@ -4,6 +4,7 @@ import { Map } from 'leaflet';
 import { useCache } from '@/context/ToastContext';
 import { MapService, Skatepark } from '@/services/map.service';
 import { MapFilterService, MapFilterOptions, MapFilterState } from '@/services/mapFilter.service';
+import { logger } from '@/lib/logger';
 import { skateparkClient } from '@/services/skateparkClient';
 
 export const useEnhancedMap = (userLocation: [number, number] | null) => {
@@ -29,7 +30,7 @@ export const useEnhancedMap = (userLocation: [number, number] | null) => {
       setSpots(data);
     } catch (err) {
       setError('Unable to load skateparks');
-      console.error(err);
+      logger.error('Failed to load skateparks', err, 'useEnhancedMap');
     } finally {
       setIsLoading(false);
     }

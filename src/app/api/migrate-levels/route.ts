@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { SkateparkModel } from '@/models/skatepark.model';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
     try {
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
         
         // Update each skatepark
         for (const skatepark of oldSkateparks) {
-            console.log(`Migrating skatepark: ${skatepark.title}`);
+            logger.info(`Migrating skatepark: ${skatepark.title}`, undefined, 'MigrateLevels');
             
             let newLevels: string[] = [];
             
@@ -34,13 +35,13 @@ export async function POST(request: NextRequest) {
             if ((skatepark as any).level && (skatepark as any).level !== null && (skatepark as any).level !== undefined) {
                 const oldLevel = (skatepark as any).level;
                 newLevels = [oldLevel];
-                console.log(`  Converting old level '${oldLevel}' to ['${oldLevel}']`);
+                logger.debug(`  Converting old level '${oldLevel}' to ['${oldLevel}']`, undefined, 'MigrateLevels');
             }
             // Check if it has levels array with null values
             else if ((skatepark as any).levels && Array.isArray((skatepark as any).levels) && (skatepark as any).levels.some((level: any) => level === null)) {
                 // If we have null levels but no valid old level, default to beginner
                 newLevels = ['beginner'];
-                console.log(`  Setting default level 'beginner' for null levels`);
+                logger.debug(`  Setting default level 'beginner' for null levels`, undefined, 'MigrateLevels');
             }
             
             if (newLevels.length > 0) {
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
                 );
                 
                 migratedCount++;
-                console.log(`  Successfully migrated to levels: [${newLevels.join(', ')}]`);
+                logger.debug(`  Successfully migrated to levels: [${newLevels.join(', ')}]`, undefined, 'MigrateLevels');
             }
         }
 
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
         });
 
     } catch (error) {
-        console.error('Migration failed:', error);
+        logger.error('Migration failed', error, 'MigrateLevels');
         return NextResponse.json(
             { error: 'Migration failed', details: error instanceof Error ? error.message : 'Unknown error' },
             { status: 500 }

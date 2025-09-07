@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-lea
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useState } from 'react';
 import L from 'leaflet';
+import { logger } from '@/lib/logger';
 import { Box, ToggleButton, ToggleButtonGroup, Typography, Fab, Tooltip } from '@mui/material';
 import MapIcon from '@mui/icons-material/Map';
 import SatelliteIcon from '@mui/icons-material/Satellite';
@@ -47,7 +48,7 @@ function CenterOnLocation() {
           map.setView([lat, lng], 16);
         },
         (err) => {
-          console.error('Error getting location:', err);
+          logger.error('Error getting location', err, 'AddSpotMap');
         }
       );
     }

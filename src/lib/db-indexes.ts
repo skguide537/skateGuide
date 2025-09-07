@@ -1,12 +1,13 @@
 // Database indexes for performance optimization
 import { connectToDatabase } from './mongodb';
+import { logger } from './logger';
 
 export async function createDatabaseIndexes() {
     try {
         const { db } = await connectToDatabase();
         
         if (!db) {
-            console.warn('No database connection available for index creation');
+            logger.warn('No database connection available for index creation', undefined, 'DatabaseIndexes');
             return;
         }
         
@@ -35,11 +36,11 @@ export async function createDatabaseIndexes() {
             }
         );
         
-        console.log('🎉 Essential database indexes created successfully!');
+        logger.info('🎉 Essential database indexes created successfully!', undefined, 'DatabaseIndexes');
     } catch (error) {
         // Only log in non-test environments
         if (process.env.NODE_ENV !== 'test') {
-            console.error('Failed to create database indexes:', error);
+            logger.error('Failed to create database indexes', error, 'DatabaseIndexes');
         }
     }
 }
@@ -51,10 +52,10 @@ export async function listDatabaseIndexes() {
     if (!db) return [];
     
     const indexes = await db.collection('skateparks').listIndexes().toArray();
-    console.log('Current database indexes:', indexes);
+    logger.debug('Current database indexes', indexes, 'DatabaseIndexes');
     return indexes;
   } catch (error) {
-    console.error('Error listing indexes:', error);
+    logger.error('Error listing indexes', error, 'DatabaseIndexes');
     return [];
   }
 }
