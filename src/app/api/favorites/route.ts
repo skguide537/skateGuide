@@ -48,7 +48,10 @@ export async function GET(request: NextRequest) {
         const favoritesStrings = favoritesArray.map((fav: any) => fav.toString());
         return NextResponse.json({ favorites: favoritesStrings });
     } catch (error: any) {
-        console.error('Get favorites error:', error);
+        // Log error in development only
+        if (process.env.NODE_ENV === 'development') {
+            console.error('Get favorites error:', error);
+        }
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
@@ -123,7 +126,10 @@ export async function POST(request: NextRequest) {
             favorites: newFavorites.map((fav: any) => fav.toString())
         });
     } catch (error: any) {
-        console.error('Toggle favorite error:', error);
+        // Log error in development only
+        if (process.env.NODE_ENV === 'development') {
+            console.error('Toggle favorite error:', error);
+        }
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

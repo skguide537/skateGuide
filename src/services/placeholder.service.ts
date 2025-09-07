@@ -3,6 +3,8 @@
  * Used by FastCarousel and LQIPImage components to avoid code duplication
  */
 
+import { logger } from '@/lib/logger';
+
 // Fallback blur data URL for when canvas is not available
 export const FALLBACK_BLUR_DATA_URL = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q==";
 
@@ -61,7 +63,7 @@ export const generateSkateparkPlaceholder = (width: number = 400, height: number
         
         return canvas.toDataURL('image/jpeg', 0.15);
     } catch (error) {
-        console.warn('Failed to generate custom placeholder:', error);
+        logger.warn('Failed to generate custom placeholder', error, 'PlaceholderService');
         return null;
     }
 };

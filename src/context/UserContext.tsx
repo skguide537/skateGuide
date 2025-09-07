@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import { authClient } from '@/services/authClient';
 
 export interface User {
@@ -35,7 +36,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             } catch (err) {
                 // Only log errors in non-test environments
                 if (process.env.NODE_ENV !== 'test') {
-                    console.error("Failed to restore session", err);
+                    logger.error("Failed to restore session", err, 'UserContext');
                 }
             } finally {
                 setIsLoading(false);
@@ -51,7 +52,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         } catch (err) {
             // Only log errors in non-test environments
             if (process.env.NODE_ENV !== 'test') {
-                console.error("Logout failed", err);
+                logger.error("Logout failed", err, 'UserContext');
             }
         }
         setUser(null);

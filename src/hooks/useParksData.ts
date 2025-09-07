@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useToast } from '@/context/ToastContext';
 import { HOME_PAGE_CONSTANTS } from '@/constants/homePage';
+import { logger } from '@/lib/logger';
 import { skateparkClient } from '@/services/skateparkClient';
 import { authClient } from '@/services/authClient';
 
@@ -58,7 +59,7 @@ export function useParksData() {
             // Update parks data for virtual scrolling
             setParks(Array.isArray(data) ? data : []);
         } catch (err) {
-            console.error('Failed to fetch parks:', err);
+            logger.error('Failed to fetch parks', err, 'useParksData');
             setParks([]);
         } finally {
             setIsLoading(false);
@@ -85,7 +86,7 @@ export function useParksData() {
             setLastUpdated(new Date());
 
         } catch (err) {
-            console.error('Error refreshing parks:', err);
+            logger.error('Error refreshing parks', err, 'useParksData');
             // Don't clear existing data on error - keep what we have
         }
     }, []);
@@ -137,7 +138,7 @@ export function useParksData() {
             }, HOME_PAGE_CONSTANTS.TIMEOUTS.CACHE_INVALIDATION);
             
         } catch (error: any) {
-            console.error('Delete failed:', error);
+            logger.error('Delete failed', error, 'useParksData');
             
             // Remove from deleting state
             setDeletingSpotIds(prev => {

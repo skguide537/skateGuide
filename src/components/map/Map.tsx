@@ -8,6 +8,7 @@ import { Map } from 'leaflet';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { useCache } from '@/context/ToastContext';
 import { skateparkClient } from '@/services/skateparkClient';
+import { logger } from '@/lib/logger';
 import SkateparkModal from '../modals/SkateparkModal';
 
 
@@ -85,7 +86,7 @@ export default function MapComponent({ userLocation }: MapProps) {
                 setSpots(data);
             } catch (err) {
                 setError('Unable to load skateparks');
-                console.error(err);
+                logger.error('Failed to load skateparks', err, 'Map');
             } finally {
                 setIsLoading(false);
             }
