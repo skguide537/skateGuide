@@ -6,6 +6,7 @@ import { Box, Button, Container, TextField, Typography, Alert, Link } from '@mui
 import { useToast } from '@/context/ToastContext';
 import { useUser } from '@/context/UserContext';
 import { useTheme } from '@/context/ThemeContext';
+import { authClient } from '@/services/authClient';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -19,21 +20,15 @@ export default function LoginPage() {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        const res = await fetch('/api/auth/login', {
-            method: 'POST',
-            body: JSON.stringify({ email, password }),
-            headers: { 'Content-Type': 'application/json' },
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            setUser(data);
-            showToast(`Hi ${data.name || data.email || 'Skater'} 👋`, 'success');
+        try {
+            const data = await authClient.login({ email, password });
+            setUser(data.user);
+            showToast(`Hi ${data.user?.name || data.user?.email || 'Skater'} 👋`, 'success');
             router.push('/');
-        } else {
-            showToast(data.error || 'Login failed', 'error');
-            setError(data.error || 'Login failed');
+        } catch (error: any) {
+            const errorMessage = error.message || 'Login failed';
+            showToast(errorMessage, 'error');
+            setError(errorMessage);
         }
     };
 

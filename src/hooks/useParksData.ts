@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useToast } from '@/context/ToastContext';
 import { HOME_PAGE_CONSTANTS } from '@/constants/homePage';
+import { skateparkClient } from '@/services/skateparkClient';
+import { authClient } from '@/services/authClient';
 
 export interface Skatepark {
     _id: string;
@@ -51,8 +53,7 @@ export function useParksData() {
         try {
             setIsLoading(true);
             
-            const res = await fetch(`/api/skateparks?limit=1000`);
-            const { data = [] } = await res.json();
+            const data = await skateparkClient.getAllSkateparks(1000);
 
             // Update parks data for virtual scrolling
             setParks(Array.isArray(data) ? data : []);
@@ -67,12 +68,10 @@ export function useParksData() {
     const refreshParks = useCallback(async () => {
         try {
             // Refresh all parks data for virtual scrolling
-            const res = await fetch(`/api/skateparks?limit=1000`);
-            if (!res.ok) throw new Error('Failed to fetch parks');
-            const data = await res.json();
+            const data = await skateparkClient.getAllSkateparks(1000);
 
             // Add robust null checks to prevent crashes
-            const parksData = Array.isArray(data?.parks) ? data.parks : [];
+            const parksData = Array.isArray(data) ? data : [];
             
             // Only update if we got valid data, otherwise keep existing data
             if (parksData.length > 0) {
@@ -101,27 +100,16 @@ export function useParksData() {
         });
         
         try {
-            // Get user ID from localStorage or context
-            const userResponse = await fetch('/api/auth/me');
-            if (!userResponse.ok) {
+            // Get user ID from auth client
+            const user = await authClient.getCurrentUser();
+            if (!user) {
                 throw new Error('User not authenticated');
             }
-            const userData = await userResponse.json();
             
             // Delete from backend with timeout
-            const deletePromise = fetch(`/api/skateparks/${spotId}`, {
-                method: 'DELETE',
-                headers: {
-                    'x-user-id': userData._id || '',
-                },
-            });
+            const deletePromise = skateparkClient.deleteSkatepark(spotId, user._id);
             
-            const response = await Promise.race([deletePromise, timeoutPromise]) as Response;
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `HTTP ${response.status}: Failed to delete spot`);
-            }
+            await Promise.race([deletePromise, timeoutPromise]);
 
             // Success - mark as deleted and remove from state
             setDeletedSpotIds(prev => new Set([...prev, spotId]));
