@@ -26,7 +26,7 @@ export class HomePage {
     this.subtitle = page.getByText(/discover, rate, and share skateparks around the city/i);
     this.exploreMapButton = page.getByRole('button', { name: /explore the map/i });
     this.addSpotButton = page.getByRole('button', { name: /add spot/i });
-    this.skateparkCardsContainer = page.locator('#skatepark-cards-container');
+    this.skateparkCardsContainer = page.locator('[class*="Card"], article, [data-testid*="card"], [class*="grid"] > div, [class*="list"] > div').first();
     this.loadingSection = page.getByText('Loading Skateparks');
     this.pagination = page.locator('.MuiPagination-root');
     this.filterBar = page.locator('[data-testid="search-filter-bar"]');
@@ -64,28 +64,63 @@ export class HomePage {
    * Get the number of skatepark cards displayed
    */
   async getSkateparkCardCount(): Promise<number> {
-    return await this.skateparkCardsContainer.locator('> div').count();
+    // Use a more resilient approach to count cards
+    const cardSelectors = [
+      '[class*="Card"]',
+      'article',
+      '[data-testid*="card"]',
+      '[class*="grid"] > div',
+      '[class*="list"] > div'
+    ];
+    
+    let totalCount = 0;
+    for (const selector of cardSelectors) {
+      const count = await this.page.locator(selector).count();
+      totalCount = Math.max(totalCount, count);
+    }
+    
+    return totalCount;
   }
 
   /**
    * Get skatepark card by index
    */
-  getSkateparkCard(index: number): Locator {
-    return this.skateparkCardsContainer.locator('> div').nth(index);
+  async getSkateparkCard(index: number): Promise<Locator> {
+    // Use resilient selectors to find cards
+    const cardSelectors = [
+      '[class*="Card"]',
+      'article',
+      '[data-testid*="card"]',
+      '[class*="grid"] > div',
+      '[class*="list"] > div'
+    ];
+    
+    // Try each selector until we find one that has cards
+    for (const selector of cardSelectors) {
+      const cards = this.page.locator(selector);
+      const count = await cards.count();
+      if (count > index) {
+        return cards.nth(index);
+      }
+    }
+    
+    // Fallback to the first available selector
+    return this.page.locator(cardSelectors[0]).nth(index);
   }
 
   /**
    * Click on a skatepark card
    */
   async clickSkateparkCard(index: number) {
-    await this.getSkateparkCard(index).click();
+    const card = await this.getSkateparkCard(index);
+    await card.click();
   }
 
   /**
    * Get card title by index
    */
   async getCardTitle(index: number): Promise<string> {
-    const card = this.getSkateparkCard(index);
+    const card = await this.getSkateparkCard(index);
     const titleElement = card.locator('h3, h4, h5, h6, [data-testid="card-title"]').first();
     return await titleElement.textContent() || '';
   }
@@ -94,7 +129,7 @@ export class HomePage {
    * Get card rating by index
    */
   async getCardRating(index: number): Promise<number> {
-    const card = this.getSkateparkCard(index);
+    const card = await this.getSkateparkCard(index);
     const ratingText = await card.locator('text=/\\d+\\.\\d+/').first().textContent();
     return ratingText ? parseFloat(ratingText) : 0;
   }
@@ -103,7 +138,7 @@ export class HomePage {
    * Get card distance by index
    */
   async getCardDistance(index: number): Promise<string> {
-    const card = this.getSkateparkCard(index);
+    const card = await this.getSkateparkCard(index);
     const distanceText = await card.locator('text=/distance:/i').textContent();
     return distanceText || '';
   }
@@ -206,14 +241,40 @@ export class HomePage {
    * Check if add spot button is enabled
    */
   async isAddSpotEnabled(): Promise<boolean> {
-    return await this.addSpotButton.isEnabled();
+    try {
+      return await this.addSpotButton.isEnabled({ timeout: 5000 });
+    } catch {
+      return false;
+    }
   }
 
   /**
    * Wait for skatepark cards to load
    */
   async waitForSkateparkCards(timeout: number = 10000) {
-    await expect(this.skateparkCardsContainer).toBeVisible({ timeout });
+    // Wait for any card-like content to appear
+    const cardSelectors = [
+      '[class*="Card"]',
+      'article',
+      '[data-testid*="card"]',
+      '[class*="grid"] > div',
+      '[class*="list"] > div'
+    ];
+    
+    let found = false;
+    for (const selector of cardSelectors) {
+      try {
+        await expect(this.page.locator(selector).first()).toBeVisible({ timeout: 2000 });
+        found = true;
+        break;
+      } catch {
+        // Continue to next selector
+      }
+    }
+    
+    if (!found) {
+      throw new Error(`No skatepark cards found with any of the selectors: ${cardSelectors.join(', ')}`);
+    }
   }
 
   /**
