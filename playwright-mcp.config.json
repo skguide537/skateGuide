@@ -1,0 +1,26 @@
+{
+  "server": {
+    "port": 3001,
+    "host": "localhost",
+    "cors": true,
+    "websocket": true
+  },
+  "playwright": {
+    "configFile": "./playwright.config.ts",
+    "browsers": ["chromium"],
+    "headless": true,
+    "timeout": 30000,
+    "viewport": { "width": 1280, "height": 720 }
+  },
+  "mcp": {
+    "recordTests": true,
+    "captureScreenshots": true,
+    "recordVideo": false,
+    "testDataDir": "./test-results/mcp",
+    "debug": true
+  },
+  "logging": {
+    "level": "info",
+    "file": "./test-results/mcp-server.log"
+  }
+}
