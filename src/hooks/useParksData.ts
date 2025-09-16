@@ -4,27 +4,19 @@ import { HOME_PAGE_CONSTANTS } from '@/constants/homePage';
 import { logger } from '@/lib/logger';
 import { skateparkClient } from '@/services/skateparkClient';
 import { authClient } from '@/services/authClient';
+import { BaseSkatepark } from '@/types/skatepark';
 
-export interface Skatepark {
-    _id: string;
-    title: string;
-    description: string;
-    tags: string[];
-    photoNames: string[];
-    location: { coordinates: [number, number] };
-    isPark: boolean;
-    size: string;
-    levels: string[];
-    avgRating: number;
-    externalLinks?: {
-        url: string;
-        sentBy: { id: string; name: string };
-        sentAt: string;
-    }[];
-}
-
-export function useParksData() {
-    const [parks, setParks] = useState<Skatepark[]>([]);
+export function useParksData(): {
+    parks: BaseSkatepark[];
+    isLoading: boolean;
+    deletedSpotIds: Set<string>;
+    deletingSpotIds: Set<string>;
+    lastUpdated: Date;
+    fetchParks: () => Promise<void>;
+    refreshParks: () => Promise<void>;
+    handleSpotDelete: (spotId: string) => Promise<void>;
+} {
+    const [parks, setParks] = useState<BaseSkatepark[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [deletedSpotIds, setDeletedSpotIds] = useState<Set<string>>(new Set());
     const [deletingSpotIds, setDeletingSpotIds] = useState<Set<string>>(new Set());
@@ -137,7 +129,7 @@ export function useParksData() {
                 invalidateCacheRef.current('map-markers');
             }, HOME_PAGE_CONSTANTS.TIMEOUTS.CACHE_INVALIDATION);
             
-        } catch (error: any) {
+        } catch (error: unknown) {
             logger.error('Delete failed', error, 'useParksData');
             
             // Remove from deleting state
@@ -148,7 +140,8 @@ export function useParksData() {
             });
             
             // Show error to user
-            showToastRef.current(`Failed to delete spot: ${error.message}`, 'error');
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            showToastRef.current(`Failed to delete spot: ${errorMessage}`, 'error');
         }
     }, []);
 

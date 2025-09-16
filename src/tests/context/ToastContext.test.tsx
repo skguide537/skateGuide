@@ -73,7 +73,7 @@ describe('ToastContext - Critical User Feedback', () => {
         const { showToast } = useToast();
         return (
           <div>
-            <span>Toast function available: {showToast ? 'Yes' : 'No'}</span>
+            <span>Toast function available: {typeof showToast === 'function' ? 'Yes' : 'No'}</span>
             <button onClick={() => showToast('Test', 'success')}>Test Toast</button>
           </div>
         );

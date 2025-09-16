@@ -141,8 +141,9 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
             localStorage.setItem('spotAddedAt', Date.now().toString());
             
             setTimeout(() => router.push('/'), 1000);
-        } catch (err: any) {
-            showToast(err.message || 'Unexpected error', 'error');
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Unexpected error';
+            showToast(errorMessage, 'error');
         } finally {
             setIsSubmitting(false);
         }
@@ -162,8 +163,9 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
                 setShowMap(true); // Keep map open when using GPS
                 showToast(`Location set: ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`, 'success');
             }
-        } catch (error: any) {
-            showToast(error.message, 'error');
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            showToast(errorMessage, 'error');
         }
     };
 
@@ -180,8 +182,9 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
                 const shortAddress = GeocodingService.createShortAddress(result.displayName || fullAddress);
                 showToast(`Location found: ${shortAddress}`, 'success');
             }
-        } catch (error: any) {
-            showToast(error.message, 'error');
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            showToast(errorMessage, 'error');
         } finally {
             setIsGeocoding(false);
         }

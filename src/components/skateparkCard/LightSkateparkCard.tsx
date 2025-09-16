@@ -19,6 +19,7 @@ import Star from '@mui/icons-material/Star';
 import LocationOn from '@mui/icons-material/LocationOn';
 import { useLightSkateparkCard } from '@/hooks/useLightSkateparkCard';
 import { CardData } from '@/services/card.service';
+import { ExternalLink } from '@/types/skatepark';
 
 interface LightSkateparkCardProps {
     _id: string;
@@ -32,7 +33,7 @@ interface LightSkateparkCardProps {
     levels: string[];
     avgRating: number;
     distanceKm: number;
-    externalLinks: any[];
+    externalLinks: ExternalLink[];
     isDeleting?: boolean;
     onDelete?: (spotId: string) => void;
 }

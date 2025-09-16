@@ -3,11 +3,18 @@
 import Box from '@mui/material/Box';
 import SkateparkCard from '@/components/skateparkCard/LightSkateparkCard';
 import { HOME_PAGE_CONSTANTS } from '@/constants/homePage';
-import { FilteredSkatepark } from '@/services/parksFilter.service';
+import { FilteredSkatepark } from '@/types/skatepark';
 
 interface VirtualGridProps {
     parentRef: React.RefObject<HTMLDivElement>;
-    virtualizer: any;
+    virtualizer: {
+        getVirtualItems: () => Array<{
+            index: number;
+            start: number;
+            size: number;
+        }>;
+        getTotalSize: () => number;
+    };
     parksWithDistance: FilteredSkatepark[];
     gridColumns: number;
     onDelete: (spotId: string) => void;
@@ -39,7 +46,7 @@ export default function VirtualGrid({
                     position: 'relative',
                 }}
             >
-                {virtualizer.getVirtualItems().map((virtualRow: any) => {
+                {virtualizer.getVirtualItems().map((virtualRow) => {
                     const rowIndex = virtualRow.index;
                     const startIndex = rowIndex * gridColumns;
                     
@@ -66,14 +73,17 @@ export default function VirtualGrid({
                                 <SkateparkCard
                                     _id={park._id}
                                     title={park.title}
-                                    description={park.description}
+                                    description={park.description || ''}
                                     tags={park.tags}
                                     photoNames={park.photoNames}
                                     distanceKm={park.distanceKm}
-                                    coordinates={park.coordinates}
+                                    coordinates={{
+                                        lat: park.location.coordinates[1],
+                                        lng: park.location.coordinates[0]
+                                    }}
                                     isPark={park.isPark}
                                     size={park.size}
-                                    levels={park.levels ? park.levels.filter(level => level !== null && level !== undefined) : []}
+                                    levels={park.levels ? park.levels.filter((level: string) => level !== null && level !== undefined) : []}
                                     avgRating={park.avgRating}
                                     externalLinks={park.externalLinks || []}
                                     isDeleting={park.isDeleting}

@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { HOME_PAGE_CONSTANTS } from '@/constants/homePage';
+import { SkateparkWithDistance } from '@/types/skatepark';
 
-export function useVirtualGrid(parksWithDistance: any[], gridColumns: number) {
+export function useVirtualGrid(parksWithDistance: SkateparkWithDistance[], gridColumns: number) {
     const parentRef = useRef<HTMLDivElement>(null);
     
     // Virtual scrolling setup
@@ -20,7 +21,7 @@ export function useVirtualGrid(parksWithDistance: any[], gridColumns: number) {
 }
 
 export function useResponsiveGrid() {
-    const [gridColumns, setGridColumns] = useState(HOME_PAGE_CONSTANTS.GRID_COLUMNS.MOBILE);
+    const [gridColumns, setGridColumns] = useState<number>(HOME_PAGE_CONSTANTS.GRID_COLUMNS.MOBILE);
 
     useEffect(() => {
         const updateGridColumns = () => {

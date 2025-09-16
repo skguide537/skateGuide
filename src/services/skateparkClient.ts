@@ -3,11 +3,11 @@
  * Replaces direct fetch calls with centralized API methods
  */
 
-import { Skatepark } from './map.service';
+import { BaseSkatepark } from '@/types/skatepark';
 
 export interface SkateparkResponse {
-  data?: Skatepark[];
-  parks?: Skatepark[];
+  data?: BaseSkatepark[];
+  parks?: BaseSkatepark[];
   message?: string;
 }
 
@@ -44,7 +44,7 @@ class SkateparkClient {
   /**
    * Fetch all skateparks with optional limit
    */
-  async getAllSkateparks(limit?: number): Promise<Skatepark[]> {
+  async getAllSkateparks(limit?: number): Promise<BaseSkatepark[]> {
     const url = limit ? `${this.baseUrl}?limit=${limit}` : this.baseUrl;
     
     const response = await fetch(url);
@@ -52,14 +52,15 @@ class SkateparkClient {
       throw new Error(`Failed to fetch skateparks: ${response.statusText}`);
     }
     
-    const data: SkateparkResponse = await response.json();
-    return data.data || data.parks || [];
+    const json = await response.json();
+    if (Array.isArray(json)) return json;
+    return (json?.data || json?.parks || []) as BaseSkatepark[];
   }
 
   /**
    * Fetch a single skatepark by ID
    */
-  async getSkateparkById(id: string): Promise<Skatepark> {
+  async getSkateparkById(id: string): Promise<BaseSkatepark> {
     const response = await fetch(`${this.baseUrl}/${id}`);
     if (!response.ok) {
       throw new Error(`Failed to fetch skatepark: ${response.statusText}`);
@@ -75,7 +76,7 @@ class SkateparkClient {
   async createSkatepark(
     skateparkData: CreateSkateparkRequest,
     userId: string
-  ): Promise<Skatepark> {
+  ): Promise<BaseSkatepark> {
     const response = await fetch(this.baseUrl, {
       method: 'POST',
       headers: {
@@ -102,7 +103,7 @@ class SkateparkClient {
   async createSkateparkWithFiles(
     formData: FormData,
     userId: string
-  ): Promise<Skatepark> {
+  ): Promise<BaseSkatepark> {
     const response = await fetch(this.baseUrl, {
       method: 'POST',
       headers: {

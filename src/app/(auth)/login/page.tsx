@@ -21,9 +21,10 @@ export default function LoginPage() {
         e.preventDefault();
 
         try {
-            const data = await authClient.login({ email, password });
-            setUser(data.user);
-            showToast(`Hi ${data.user?.name || data.user?.email || 'Skater'} 👋`, 'success');
+            await authClient.login({ email, password });
+            const me = await authClient.getCurrentUser();
+            setUser(me);
+            showToast(`Hi ${me?.name || me?.email || 'Skater'} 👋`, 'success');
             router.push('/');
         } catch (error: any) {
             const errorMessage = error.message || 'Login failed';

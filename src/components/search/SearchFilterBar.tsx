@@ -5,6 +5,7 @@ import { Box, Typography, Collapse } from '@mui/material';
 import { useUser } from '@/context/UserContext';
 import { useSearchFilterBar } from '@/hooks/useSearchFilterBar';
 import { SEARCH_FILTER_STYLES, SEARCH_FILTER_CONSTANTS } from '@/constants/searchFilters';
+import { Tag } from '@/types/enums';
 
 // Import extracted components
 import KeywordFilter from './filters/KeywordFilter';
@@ -26,8 +27,8 @@ interface SearchFilterBarProps {
     onSizeFilterChange: (sizes: string[]) => void;
     levelFilter: string[];
     onLevelFilterChange: (levels: string[]) => void;
-    tagFilter: string[];
-    onTagFilterChange: (tags: string[]) => void;
+    tagFilter: Tag[];
+    onTagFilterChange: (tags: Tag[]) => void;
     showOnlyFavorites: boolean;
     onShowOnlyFavoritesChange: (show: boolean) => void;
     distanceFilterEnabled: boolean;
@@ -138,7 +139,7 @@ export default function SearchFilterBar({
 
     const handleTagFilterChange = (value: string[]) => {
         updateTagFilter(value);
-        onTagFilterChange(value);
+        onTagFilterChange(value as Tag[]);
     };
 
     const handleShowOnlyFavoritesChange = (value: boolean) => {

@@ -1,10 +1,10 @@
 // Rich popup component for map markers
 import { Box, Chip, Rating, Typography, Button } from '@mui/material';
-import { Skatepark } from '@/services/map.service';
+import { BaseSkatepark } from '@/types/skatepark';
 
 interface RichPopupProps {
-  spot: Skatepark;
-  onViewDetails: (spot: Skatepark) => void;
+  spot: BaseSkatepark;
+  onViewDetails: (spot: BaseSkatepark) => void;
 }
 
 export default function RichPopup({ spot, onViewDetails }: RichPopupProps) {
@@ -23,8 +23,8 @@ export default function RichPopup({ spot, onViewDetails }: RichPopupProps) {
         <Chip label={spot.size} size="small" />
         <Chip 
           label={
-            spot.levels && spot.levels.length > 0 && spot.levels.some(level => level !== null && level !== undefined) 
-              ? spot.levels.filter(level => level !== null && level !== undefined).join(', ') 
+            spot.levels && spot.levels.length > 0 && spot.levels.some((level: string) => level !== null && level !== undefined)
+              ? spot.levels.filter((level: string) => level !== null && level !== undefined).join(', ')
               : 'Unknown'
           } 
           size="small" 

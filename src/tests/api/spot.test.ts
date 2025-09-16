@@ -1,5 +1,5 @@
-import { GET, POST, PUT, DELETE } from '@/app/api/spots/route';
-import { GET as getOne, PUT as updateOne, DELETE as deleteOne } from '@/app/api/spots/[spotId]/route';
+import { GET, POST } from '@/app/api/spots/route';
+import { PUT as updateOne, DELETE as deleteOne } from '@/app/api/spots/[spotId]/route';
 
 // Mock the entire route handlers
 jest.mock('@/app/api/spots/route', () => ({
@@ -15,7 +15,7 @@ jest.mock('@/app/api/spots/[spotId]/route', () => ({
 
 // Import the mocked functions
 import { GET as MockGET, POST as MockPOST } from '@/app/api/spots/route';
-import { GET as MockGetOne, PUT as MockPUT, DELETE as MockDELETE } from '@/app/api/spots/[spotId]/route';
+import { PUT as MockPUT, DELETE as MockDELETE } from '@/app/api/spots/[spotId]/route';
 
 const mockRequest = (method: string, body?: any) =>
   ({

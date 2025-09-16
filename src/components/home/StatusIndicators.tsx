@@ -2,11 +2,12 @@
 
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import { BaseSkatepark, SkateparkWithDistance } from '@/types/skatepark';
 
 interface StatusIndicatorsProps {
     lastUpdated: Date;
-    parksWithDistance: any[];
-    parks: any[];
+    parksWithDistance: SkateparkWithDistance[];
+    parks: BaseSkatepark[];
 }
 
 export default function StatusIndicators({ lastUpdated, parksWithDistance, parks }: StatusIndicatorsProps) {
