@@ -31,8 +31,8 @@ import {
   ExpandLess
 } from '@mui/icons-material';
 import { MapFilterOptions } from '@/services/mapFilter.service';
-import { Skatepark } from '@/services/map.service';
-import { Size } from '@/types/enums';
+import { BaseSkatepark } from '@/types/skatepark';
+import { Size, Tag } from '@/types/enums';
 
 interface MapSidebarProps {
   isMobile: boolean;
@@ -42,7 +42,7 @@ interface MapSidebarProps {
   hasActiveFilters: boolean;
   filterSummary: string[];
   resultsSummary: string;
-  filteredSpots: Skatepark[];
+  filteredSpots: BaseSkatepark[];
   allSizes: string[];
   allLevels: string[];
   uniqueTags: string[];
@@ -53,12 +53,12 @@ interface MapSidebarProps {
   onUpdateTypeFilter: (type: 'all' | 'park' | 'street') => void;
   onUpdateSizeFilter: (sizes: string[]) => void;
   onUpdateLevelFilter: (levels: string[]) => void;
-  onUpdateTagFilter: (tags: string[]) => void;
+  onUpdateTagFilter: (tags: Tag[]) => void;
   onUpdateDistanceFilterEnabled: (enabled: boolean) => void;
   onUpdateDistanceFilter: (distance: number) => void;
   onUpdateRatingFilter: (rating: number[]) => void;
   onClearAllFilters: () => void;
-  onSpotClick: (spot: Skatepark) => void;
+  onSpotClick: (spot: BaseSkatepark) => void;
 }
 
 export default function MapSidebar({
@@ -314,7 +314,7 @@ export default function MapSidebar({
                 <Select
                   multiple
                   value={filters.tagFilter}
-                  onChange={(e) => onUpdateTagFilter(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                  onChange={(e) => onUpdateTagFilter(typeof e.target.value === 'string' ? e.target.value.split(',') as Tag[] : e.target.value as Tag[])}
                   sx={{
                     '& .MuiOutlinedInput-notchedOutline': {
                       borderColor: 'var(--color-border)',

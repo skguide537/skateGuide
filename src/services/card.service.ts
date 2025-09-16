@@ -1,4 +1,6 @@
 // Card service for handling card-related utilities and logic
+import { ExternalLink } from '@/types/skatepark';
+
 export interface CardData {
   _id: string;
   title: string;
@@ -11,7 +13,7 @@ export interface CardData {
   levels: string[];
   avgRating: number;
   distanceKm: number;
-  externalLinks: any[];
+  externalLinks: ExternalLink[];
 }
 
 export interface CardDisplayOptions {

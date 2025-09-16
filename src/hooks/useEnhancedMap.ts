@@ -2,15 +2,17 @@
 import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import { Map } from 'leaflet';
 import { useCache } from '@/context/ToastContext';
-import { MapService, Skatepark } from '@/services/map.service';
+import { MapService } from '@/services/map.service';
+import { BaseSkatepark } from '@/types/skatepark';
 import { MapFilterService, MapFilterOptions, MapFilterState } from '@/services/mapFilter.service';
+import { Tag } from '@/types/enums';
 import { logger } from '@/lib/logger';
 import { skateparkClient } from '@/services/skateparkClient';
 
 export const useEnhancedMap = (userLocation: [number, number] | null) => {
   // Core state
-  const [spots, setSpots] = useState<Skatepark[]>([]);
-  const [selectedSpot, setSelectedSpot] = useState<Skatepark | null>(null);
+  const [spots, setSpots] = useState<BaseSkatepark[]>([]);
+  const [selectedSpot, setSelectedSpot] = useState<BaseSkatepark | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentMapStyle, setCurrentMapStyle] = useState('street');
@@ -88,11 +90,11 @@ export const useEnhancedMap = (userLocation: [number, number] | null) => {
   }, []);
 
   // Spot interaction handlers
-  const handleViewDetails = useCallback((spot: Skatepark) => {
+  const handleViewDetails = useCallback((spot: BaseSkatepark) => {
     setSelectedSpot(spot);
   }, []);
 
-  const handleSpotClick = useCallback((spot: Skatepark) => {
+  const handleSpotClick = useCallback((spot: BaseSkatepark) => {
     // Fly to the spot location
     if (mapRef.current) {
       const [lng, lat] = spot.location.coordinates;
@@ -134,7 +136,7 @@ export const useEnhancedMap = (userLocation: [number, number] | null) => {
     updateFilter('levelFilter', levelFilter);
   }, [updateFilter]);
 
-  const updateTagFilter = useCallback((tagFilter: string[]) => {
+  const updateTagFilter = useCallback((tagFilter: Tag[]) => {
     updateFilter('tagFilter', tagFilter);
   }, [updateFilter]);
 

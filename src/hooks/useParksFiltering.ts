@@ -1,9 +1,10 @@
-import { useState, useCallback, useMemo } from 'react';
 import { useFavorites } from '@/hooks/useFavorites';
-import { ParksFilterService, FilterState, FilteredSkatepark } from '@/services/parksFilter.service';
-import { Skatepark } from './useParksData';
+import { FilterState, ParksFilterService } from '@/services/parksFilter.service';
+import { Tag } from '@/types/enums';
+import { BaseSkatepark } from '@/types/skatepark';
+import { useCallback, useMemo, useState } from 'react';
 
-export function useParksFiltering(parks: Skatepark[], userCoords: { lat: number; lng: number } | null, deletedSpotIds: Set<string>, deletingSpotIds: Set<string>) {
+export function useParksFiltering(parks: BaseSkatepark[], userCoords: { lat: number; lng: number } | null, deletedSpotIds: Set<string>, deletingSpotIds: Set<string>) {
     const { favorites } = useFavorites();
 
     // Search and filter state
@@ -11,7 +12,7 @@ export function useParksFiltering(parks: Skatepark[], userCoords: { lat: number;
     const [typeFilter, setTypeFilter] = useState<'all' | 'park' | 'street'>('all');
     const [sizeFilter, setSizeFilter] = useState<string[]>([]);
     const [levelFilter, setLevelFilter] = useState<string[]>([]);
-    const [tagFilter, setTagFilter] = useState<string[]>([]);
+    const [tagFilter, setTagFilter] = useState<Tag[]>([]);
     const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
     const [distanceFilterEnabled, setDistanceFilterEnabled] = useState(false);
     const [distanceFilter, setDistanceFilter] = useState<number>(10);
@@ -24,7 +25,7 @@ export function useParksFiltering(parks: Skatepark[], userCoords: { lat: number;
     const handleTypeFilterChange = useCallback((type: 'all' | 'park' | 'street') => setTypeFilter(type), []);
     const handleSizeFilterChange = useCallback((sizes: string[]) => setSizeFilter(sizes), []);
     const handleLevelFilterChange = useCallback((levels: string[]) => setLevelFilter(levels), []);
-    const handleTagFilterChange = useCallback((tags: string[]) => setTagFilter(tags), []);
+    const handleTagFilterChange = useCallback((tags: Tag[]) => setTagFilter(tags), []);
     const handleShowOnlyFavoritesChange = useCallback((show: boolean) => setShowOnlyFavorites(show), []);
     const handleDistanceFilterEnabledChange = useCallback((enabled: boolean) => setDistanceFilterEnabled(enabled), []);
     const handleDistanceFilterChange = useCallback((distance: number) => setDistanceFilter(distance), []);

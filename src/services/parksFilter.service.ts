@@ -1,32 +1,13 @@
 import { UtilityService } from './utility.service';
-
-export interface FilteredSkatepark {
-    _id: string;
-    title: string;
-    description: string;
-    tags: string[];
-    photoNames: string[];
-    location: { coordinates: [number, number] };
-    isPark: boolean;
-    size: string;
-    levels: string[];
-    avgRating: number;
-    externalLinks?: {
-        url: string;
-        sentBy: { id: string; name: string };
-        sentAt: string;
-    }[];
-    coordinates: { lat: number; lng: number };
-    distanceKm: number;
-    isDeleting: boolean;
-}
+import { BaseSkatepark, FilteredSkatepark } from '@/types/skatepark';
+import { Tag } from '@/types/enums';
 
 export interface FilterState {
     searchTerm: string;
     typeFilter: 'all' | 'park' | 'street';
     sizeFilter: string[];
     levelFilter: string[];
-    tagFilter: string[];
+    tagFilter: Tag[];
     showOnlyFavorites: boolean;
     distanceFilterEnabled: boolean;
     distanceFilter: number;
@@ -37,7 +18,7 @@ export interface FilterState {
 
 export class ParksFilterService {
     static filterAndSortParks(
-        parks: any[],
+        parks: BaseSkatepark[],
         filterState: FilterState,
         userCoords: { lat: number; lng: number } | null,
         favorites: string[],
@@ -60,7 +41,7 @@ export class ParksFilterService {
     }
 
     private static applyFilters(
-        park: any,
+        park: BaseSkatepark,
         filterState: FilterState,
         userCoords: { lat: number; lng: number },
         favorites: string[]
@@ -70,7 +51,7 @@ export class ParksFilterService {
             const searchLower = filterState.searchTerm.toLowerCase();
             const matchesSearch = 
                 park.title.toLowerCase().includes(searchLower) ||
-                park.description.toLowerCase().includes(searchLower) ||
+                (park.description && park.description.toLowerCase().includes(searchLower)) ||
                 park.tags.some((tag: string) => tag.toLowerCase().includes(searchLower));
             if (!matchesSearch) return false;
         }
@@ -120,7 +101,7 @@ export class ParksFilterService {
     }
 
     private static addDistanceAndMetadata(
-        park: any,
+        park: BaseSkatepark,
         userCoords: { lat: number; lng: number },
         deletingSpotIds: Set<string>
     ): FilteredSkatepark | null {
