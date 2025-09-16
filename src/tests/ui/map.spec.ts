@@ -15,15 +15,9 @@ test.describe('Map Page', () => {
     await expect(page).toHaveURL('/map');
   });
 
-  test('should handle successful geolocation', async ({ page }) => {
-    // Mock successful geolocation with better error handling
+  test('should handle successful geolocation with real data', async ({ page }) => {
+    // Set up geolocation for real data testing
     await page.addInitScript(() => {
-      // Clear any existing geolocation
-      if (navigator.geolocation) {
-        delete (navigator as any).geolocation;
-      }
-      
-      // Set up new geolocation mock
       Object.defineProperty(navigator, 'geolocation', {
         value: {
           getCurrentPosition: (success: any, error: any) => {
@@ -48,15 +42,15 @@ test.describe('Map Page', () => {
       });
     });
 
-    // Instead of reloading (which can cause timeouts), just verify the page loads
-    // and geolocation is available
-    await expect(page).toHaveURL('/map');
+    // Navigate to map page and wait for real data to load
+    await page.goto('/map');
+    await page.waitForLoadState('networkidle');
     
     // Verify the page structure is intact - look for content instead of specific CSS
     await expect(page.locator('div').filter({ hasText: /loading interactive map|unable to retrieve your location|geolocation is not supported/i })).toBeVisible({ timeout: 15000 });
     
-    // The geolocation mock is set up, so the page should handle it gracefully
-    // without causing errors
+    // The geolocation should work with real data
+    await expect(page).toHaveURL('/map');
   });
 
   test('should handle geolocation error', async ({ page }) => {

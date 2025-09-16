@@ -189,7 +189,7 @@ export default function SearchFilterBar({
     };
 
     return (
-        <Box sx={SEARCH_FILTER_STYLES.container}>
+        <Box sx={SEARCH_FILTER_STYLES.container} data-testid="search-filter-bar">
             {/* Header */}
             <Typography variant="h5" sx={SEARCH_FILTER_STYLES.header}>
                 🔍 Search & Filter Skate Spots
