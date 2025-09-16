@@ -50,8 +50,11 @@ class AuthClient {
         throw new Error(`Failed to get current user: ${response.statusText}`);
       }
       
-      const data: AuthResponse = await response.json();
-      return data.user || null;
+      const json = await response.json();
+      const user = (json && typeof json === 'object' && 'user' in json)
+        ? (json as AuthResponse).user
+        : (json as unknown);
+      return user && typeof user === 'object' && (user as any)._id ? (user as any) : null;
     } catch (error) {
       // Only log in development
       if (process.env.NODE_ENV === 'development') {
@@ -80,7 +83,10 @@ class AuthClient {
       );
     }
 
-    return await response.json();
+    const json = await response.json();
+    return typeof json === 'object' && json && !('user' in json)
+      ? { user: json as User }
+      : (json as AuthResponse);
   }
 
   /**

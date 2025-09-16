@@ -51,7 +51,7 @@ export const SEARCH_FILTER_CONSTANTS = {
             { value: 0, label: '0' },
             { value: 2.5, label: '2.5' },
             { value: 5, label: '5' },
-        ],
+        ] as Array<{ value: number; label: string }>,
     },
     DISTANCE_RANGE: {
         min: 1,
@@ -62,7 +62,7 @@ export const SEARCH_FILTER_CONSTANTS = {
             { value: 10, label: '10km' },
             { value: 25, label: '25km' },
             { value: 50, label: '50km' },
-        ],
+        ] as Array<{ value: number; label: string }>,
     },
 } as const;
 

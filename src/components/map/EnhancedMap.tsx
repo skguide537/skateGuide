@@ -23,7 +23,8 @@ import MapSidebar from './MapSidebar';
 import RichPopup from './RichPopup';
 import MapStyleController from './MapStyleController';
 import { useEnhancedMap } from '@/hooks/useEnhancedMap';
-import { MapService, Skatepark } from '@/services/map.service';
+import { MapService } from '@/services/map.service';
+import { BaseSkatepark } from '@/types/skatepark';
 import { MapService as MapServiceInstance } from '@/services/map.service';
 
 interface MapProps {
@@ -256,7 +257,7 @@ export default function EnhancedMap({ userLocation }: MapProps) {
           open={!!selectedSpot}
           onClose={handleCloseModal}
           title={selectedSpot.title}
-          description={selectedSpot.description}
+          description={selectedSpot.description || ''}
           tags={selectedSpot.tags}
           photoNames={selectedSpot.photoNames}
           coordinates={{

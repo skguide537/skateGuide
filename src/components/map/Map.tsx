@@ -10,6 +10,7 @@ import { useCache } from '@/context/ToastContext';
 import { skateparkClient } from '@/services/skateparkClient';
 import { logger } from '@/lib/logger';
 import SkateparkModal from '../modals/SkateparkModal';
+import { BaseSkatepark } from '@/types/skatepark';
 
 
 const icon = L.icon({
@@ -38,30 +39,10 @@ interface MapProps {
     userLocation: [number, number] | null;
 }
 
-interface Skatepark {
-    _id: string;
-    title: string;
-    description: string;
-    location: {
-        type: 'Point';
-        coordinates: [number, number]; // [lng, lat]
-    };
-    photoNames: string[];
-    isPark: boolean;
-    size: string;
-    levels: string[];
-    tags: string[];
-    avgRating: number;
-    externalLinks?: {
-        url: string;
-        sentBy: { id: string; name: string };
-        sentAt: string;
-    }[];
-}
 
 export default function MapComponent({ userLocation }: MapProps) {
-    const [spots, setSpots] = useState<Skatepark[]>([]);
-    const [selectedSpot, setSelectedSpot] = useState<Skatepark | null>(null);
+    const [spots, setSpots] = useState<BaseSkatepark[]>([]);
+    const [selectedSpot, setSelectedSpot] = useState<BaseSkatepark | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const mapRef = useRef<Map | null>(null);
@@ -176,7 +157,7 @@ export default function MapComponent({ userLocation }: MapProps) {
                     onClose={() => setSelectedSpot(null)}
                     _id={selectedSpot._id}
                     title={selectedSpot.title}
-                    description={selectedSpot.description}
+                    description={selectedSpot.description || ''}
                     photoNames={selectedSpot.photoNames || []}
                     isPark={selectedSpot.isPark}
                     size={selectedSpot.size}

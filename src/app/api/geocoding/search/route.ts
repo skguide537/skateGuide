@@ -25,7 +25,7 @@ function checkRateLimit(ip: string): boolean {
 }
 
 // Helper function to deduplicate results
-function deduplicateResults(results: any[], field: string): string[] {
+function deduplicateResults(results: Record<string, any>[], field: string): string[] {
   const seen = new Set<string>();
   return results
     .map(item => {

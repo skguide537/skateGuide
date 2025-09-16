@@ -6,6 +6,7 @@ import { ISkateparkModel, SkateparkModel } from "../models/skatepark.model";
 import { Coords, ExternalLinks, IReport, Size, SkaterLevel, Tag } from "../types/enums";
 import { DEFAULT_IMAGE_URL } from "../types/constants";
 import { logger } from "@/lib/logger";
+import { CreateSkateparkRequest, BaseSkatepark, ExternalLink } from "@/types/skatepark";
 import "@/models/User";
 
 class SkateparkService {
@@ -204,7 +205,7 @@ class SkateparkService {
     public async getPaginatedSkateparks(skip: number, limit: number) {
         const page = Math.floor(skip / limit) + 1;
         const cacheKey = cacheKeys.paginatedSkateparks(page, limit);
-        const cached = cache.get<any[]>(cacheKey);
+        const cached = cache.get<BaseSkatepark[]>(cacheKey);
         
         if (cached !== null) {
             return cached;
@@ -309,7 +310,7 @@ class SkateparkService {
     }
 
 
-    public async addSkatepark(parkData: any, photos: UploadedFile[], userId: string): Promise<ISkateparkModel> {
+    public async addSkatepark(parkData: CreateSkateparkRequest, photos: UploadedFile[], userId: string): Promise<ISkateparkModel> {
         // Normalize and validate location
         const lng = parkData?.location?.coordinates?.[0];
         const lat = parkData?.location?.coordinates?.[1];
@@ -337,10 +338,10 @@ class SkateparkService {
             },
             size: parkData.size,
             levels: parkData.levels,
-            isPark: parkData.isPark === true || parkData.isPark === "true",
+            isPark: parkData.isPark,
             rating: [],
             createdBy: userId,
-            externalLinks: (parkData.externalLinks || []).map((link: any) => ({
+            externalLinks: (parkData.externalLinks || []).map((link: ExternalLink) => ({
                 url: link.url,
                 sentBy: link.sentBy?.id || userId,
                 sentAt: new Date(link.sentAt || Date.now())
@@ -383,7 +384,7 @@ class SkateparkService {
 
 
     public async addMultipleSkateparks(
-        parksData: any[],
+        parksData: CreateSkateparkRequest[],
         photos: UploadedFile[],
         photoCounts: number[],
         userId: string
@@ -426,7 +427,7 @@ class SkateparkService {
                 },
                 size: parkData.size,
                 levels: parkData.levels,
-                isPark: parkData.isPark === true || parkData.isPark === "true",
+                isPark: parkData.isPark,
                 rating: [],
                 createdBy: userId,
                 externalLinks: parkData.externalLinks || [],
