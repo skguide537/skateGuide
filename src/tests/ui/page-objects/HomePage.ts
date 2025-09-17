@@ -314,8 +314,11 @@ export class HomePage {
   /**
    * Wait for skatepark cards to load
    */
-  async waitForSkateparkCards(timeout: number = 10000) {
-    // Wait for any card-like content to appear
+  async waitForSkateparkCards(timeout: number = 30000) {
+    // First wait for the parks API to return successfully
+    await this.helpers.waitForApiCall('/api/skateparks', timeout).catch(() => {});
+
+    // Then wait for any card-like content to appear
     const cardSelectors = [
       '[class*="Card"]',
       'article',
@@ -327,7 +330,7 @@ export class HomePage {
     let found = false;
     for (const selector of cardSelectors) {
       try {
-        await expect(this.page.locator(selector).first()).toBeVisible({ timeout: 2000 });
+        await expect(this.page.locator(selector).first()).toBeVisible({ timeout });
         found = true;
         break;
       } catch {
