@@ -83,7 +83,10 @@ export class TestHelpers {
    * Wait for page to be fully loaded
    */
   async waitForPageLoad(timeout: number = 10000) {
-    await this.page.waitForLoadState('networkidle', { timeout });
+    // Use domcontentloaded instead of networkidle for more reliable loading
+    await this.page.waitForLoadState('domcontentloaded', { timeout });
+    // Add a small delay to ensure all components are rendered
+    await this.page.waitForTimeout(1000);
   }
 
   /**
@@ -208,13 +211,24 @@ export class TestHelpers {
     const errorSelectors = [
       '[data-testid="error"]',
       '.error',
-      '[role="alert"]',
-      'text=/error/i',
-      'text=/failed/i'
+      'text=/^Error:/i',
+      'text=/^Failed:/i',
+      'text=/Something went wrong/i'
     ];
+
+    // Check for alert elements that are actually errors (not toast notifications)
+    const alertElements = await this.page.locator('[role="alert"]').all();
+    for (const alert of alertElements) {
+      const text = await alert.textContent();
+      if (text && (text.includes('Error') || text.includes('Failed') || text.includes('error'))) {
+        console.log('Found error alert:', text);
+        return true;
+      }
+    }
 
     for (const selector of errorSelectors) {
       if (await this.elementExists(selector)) {
+        console.log('Found error with selector:', selector);
         return true;
       }
     }

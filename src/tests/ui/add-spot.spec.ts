@@ -7,12 +7,12 @@ test.describe('Add Spot Page', () => {
 
   test('should display the add spot form', async ({ page }) => {
     // Wait for the lazy-loaded form to render (increased timeout for Suspense)
-    await expect(page.getByRole('heading', { name: /add new spot/i })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('heading', { name: /add new skate spot/i })).toBeVisible({ timeout: 15000 });
     
     // Check if all form fields are present
     await expect(page.getByLabel(/title/i)).toBeVisible();
     await expect(page.getByLabel(/description/i)).toBeVisible();
-    await expect(page.getByLabel(/street address/i)).toBeVisible();
+    await expect(page.getByLabel(/street/i)).toBeVisible();
     await expect(page.getByLabel(/city/i)).toBeVisible();
     await expect(page.getByLabel(/state\/province/i)).toBeVisible();
     await expect(page.getByLabel(/country/i)).toBeVisible();
@@ -20,7 +20,7 @@ test.describe('Add Spot Page', () => {
     // Check if buttons are present
     await expect(page.getByRole('button', { name: /use my location/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /search address/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /choose on map/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /show map/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /submit skate spot/i })).toBeVisible();
   });
 
@@ -31,7 +31,7 @@ test.describe('Add Spot Page', () => {
     // Fill out the form
     await page.getByLabel(/title/i).fill('Test Skate Spot');
     await page.getByLabel(/description/i).fill('A great place to skate');
-    await page.getByLabel(/street address/i).fill('123 Main Street');
+    await page.getByLabel(/street/i).fill('123 Main Street');
     await page.getByLabel(/city/i).fill('Tel Aviv');
     await page.getByLabel(/state\/province/i).fill('Tel Aviv');
     await page.getByLabel(/country/i).fill('Israel');
@@ -39,33 +39,26 @@ test.describe('Add Spot Page', () => {
     // Verify the form is filled
     await expect(page.getByLabel(/title/i)).toHaveValue('Test Skate Spot');
     await expect(page.getByLabel(/description/i)).toHaveValue('A great place to skate');
-    await expect(page.getByLabel(/street address/i)).toHaveValue('123 Main Street');
+    await expect(page.getByLabel(/street/i)).toHaveValue('123 Main Street');
     await expect(page.getByLabel(/city/i)).toHaveValue('Tel Aviv');
   });
 
-  test('should show map when choose on map is clicked', async ({ page }) => {
+  test('should show map when show map is clicked', async ({ page }) => {
     // Wait for form to be fully loaded
     await expect(page.getByLabel(/title/i)).toBeVisible({ timeout: 15000 });
     
-    // The map is always rendered by the parent component, but initially hidden
-    // Check if map container exists in DOM
-    const mapContainer = page.locator('.leaflet-container');
-    await expect(mapContainer).toBeAttached(); // Map should exist in DOM
+    // Initially the button should say "Show Map"
+    await expect(page.getByRole('button', { name: /show map/i })).toBeVisible();
     
-    // Initially the map should be hidden (no coords set)
-    await expect(mapContainer).not.toBeVisible();
+    // Click show map button - this toggles showMap state in the form
+    await page.getByRole('button', { name: /show map/i }).click();
     
-    // Click choose on map button - this toggles showMap state in the form
-    // which shows a placeholder box, but the actual map visibility depends on coords
-    await page.getByRole('button', { name: /choose on map/i }).click();
+    // After clicking, the button should change to "Hide Map"
+    await expect(page.getByRole('button', { name: /hide map/i })).toBeVisible();
     
-    // After clicking, we should see some indication that the map section is now active
-    // Look for the "Select Location" heading that's always visible
-    await expect(page.getByText('Select Location')).toBeVisible();
-    
-    // The map container should still exist but might still be hidden until coords are set
-    // This is the actual behavior - the button doesn't make the map visible, it just shows the map section
-    await expect(mapContainer).toBeAttached();
+    // We should see some indication that the map section is now active
+    // Look for the "Map Selection" heading that appears when map is shown
+    await expect(page.getByText('Map Selection')).toBeVisible();
   });
 
   test('should validate required fields', async ({ page }) => {
@@ -77,9 +70,9 @@ test.describe('Add Spot Page', () => {
     await expect(page.getByText(/Size is required/i)).not.toBeVisible();
     await expect(page.getByText(/Level is required/i)).not.toBeVisible();
     
-    // Try to submit without filling required fields
-    // The browser might prevent submission due to required attributes
-    await page.getByRole('button', { name: /submit skate spot/i }).click();
+    // The submit button should be disabled when required fields are empty
+    const submitButton = page.getByRole('button', { name: /submit skate spot/i });
+    await expect(submitButton).toBeDisabled();
     
     // Wait a moment for any validation to process
     await page.waitForTimeout(1000);
@@ -95,10 +88,10 @@ test.describe('Add Spot Page', () => {
 
   test('should handle address search', async ({ page }) => {
     // Wait for form to be fully loaded
-    await expect(page.getByLabel(/street address/i)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByLabel(/street/i)).toBeVisible({ timeout: 15000 });
     
     // Fill address fields
-    await page.getByLabel(/street address/i).fill('Dizengoff Street');
+    await page.getByLabel(/street/i).fill('Dizengoff Street');
     await page.getByLabel(/city/i).fill('Tel Aviv');
     await page.getByLabel(/state\/province/i).fill('Tel Aviv');
     await page.getByLabel(/country/i).fill('Israel');
