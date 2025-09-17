@@ -6,23 +6,16 @@ import mongoose from 'mongoose';
 let testDb: any;
 let isDbAvailable = false;
 
-// Check if database is available for testing
+// Check if database is available for testing (works locally and in CI)
 async function isDatabaseAvailable(): Promise<boolean> {
-  // In CI environment, always return false to avoid connection attempts
-  if (process.env.CI) {
-    return false;
-  }
-  
   try {
-    // Try to connect to a test database
     const testUri = process.env.MONGO_URI_TEST || process.env.MONGO_URI;
     if (!testUri) {
       console.log('No test database URI available');
       return false;
     }
-    
-    // Test connection
-    await mongoose.connect(testUri);
+
+    await mongoose.connect(testUri, { serverSelectionTimeoutMS: 3000 } as any);
     await mongoose.connection.close();
     return true;
   } catch (error: any) {
@@ -38,36 +31,29 @@ function getTestDb() {
 
 // Setup integration tests
 async function setupIntegrationTests() {
-  // In CI environment, skip database setup entirely
-  if (process.env.CI) {
-    console.log('⚠️ Running in CI environment - skipping database connection');
-    isDbAvailable = false;
-    return;
-  }
-
   try {
-    const testUri = process.env.MONGO_URI_TEST || process.env.MONGO_URI;
-    if (testUri) {
-      // Add timeout to prevent hanging
-      const connectionPromise = connectToDatabase();
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Database connection timeout')), 10000)
-      );
-      
-      try {
-        await Promise.race([connectionPromise, timeoutPromise]);
-        console.log('✅ Connected to test database for integration tests');
-        isDbAvailable = true;
-      } catch (error: any) {
-        if (error.message === 'Database connection timeout') {
-          console.log('⚠️ Database connection timed out, continuing without database');
-        } else {
-          console.log('⚠️ Failed to connect to test database:', error.message);
-        }
-        isDbAvailable = false;
+    const available = await isDatabaseAvailable();
+    if (!available) {
+      console.log('⚠️ No database available - integration tests will be skipped');
+      isDbAvailable = false;
+      return;
+    }
+
+    const connectionPromise = connectToDatabase();
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Database connection timeout')), 10000)
+    );
+
+    try {
+      await Promise.race([connectionPromise, timeoutPromise]);
+      console.log('✅ Connected to test database for integration tests');
+      isDbAvailable = true;
+    } catch (error: any) {
+      if (error.message === 'Database connection timeout') {
+        console.log('⚠️ Database connection timed out, continuing without database');
+      } else {
+        console.log('⚠️ Failed to connect to test database:', error.message);
       }
-    } else {
-      console.log('⚠️ No test database URI found, integration tests will be skipped');
       isDbAvailable = false;
     }
   } catch (error: any) {
@@ -78,11 +64,6 @@ async function setupIntegrationTests() {
 
 // Cleanup after tests
 async function cleanupTests() {
-  // In CI environment, skip cleanup
-  if (process.env.CI) {
-    return;
-  }
-
   try {
     if (testDb) {
       await testDb.close();
