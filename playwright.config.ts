@@ -20,6 +20,9 @@ export default defineConfig({
     screenshot: 'off', // No screenshots
     actionTimeout: process.env.CI ? 20000 : 15000, // Increase action timeout in CI
     navigationTimeout: process.env.CI ? 45000 : 30000, // Increase navigation timeout in CI
+    // Ensure geolocation-based features work consistently in all tests (especially CI)
+    geolocation: { latitude: 32.073, longitude: 34.789 },
+    permissions: ['geolocation'],
   },
 
   projects: [
