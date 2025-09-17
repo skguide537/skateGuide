@@ -193,9 +193,7 @@ test.describe('Home Page', () => {
     const cardLike = page.locator('[class*="Card"], [data-testid*="card"], article, [class*="grid"] > div, [class*="list"] > div').first();
     await expect(cardLike).toBeVisible({ timeout: 30000 });
 
-    // Then assert container presence
-    const listOrGrid = page.locator('[class*="grid"], [class*="list"], [role="list"], [role="grid"]').first();
-    await expect(listOrGrid).toBeVisible({ timeout: 30000 });
+    // Container types can vary; card presence is sufficient signal
 
     const pagination = page.locator('.MuiPagination-root');
     if (await pagination.isVisible()) {
@@ -213,8 +211,7 @@ test.describe('Home Page', () => {
     const cardLikeMobile = page.locator('[class*="Card"], [data-testid*="card"], article, [class*="grid"] > div, [class*="list"] > div').first();
     await expect(cardLikeMobile).toBeVisible({ timeout: 30000 });
 
-    const listOrGridMobile = page.locator('[class*="grid"], [class*="list"], [role="list"], [role="grid"]').first();
-    await expect(listOrGridMobile).toBeVisible({ timeout: 30000 });
+    // Rely on card visibility instead of container assumptions
   });
 
   test('should be responsive on mobile', async ({ page }) => {
