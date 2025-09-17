@@ -13,7 +13,7 @@ async function run() {
     const parks = db.collection('skateparks');
 
     const count = await parks.countDocuments();
-    if (count >= 5) {
+    if (count >= 25) {
       console.log(`[seed] Found ${count} skateparks. Skipping seed.`);
       return;
     }
@@ -63,6 +63,12 @@ async function run() {
         location: { type: 'Point', coordinates: [34.948, 29.558] },
         ...baseDoc,
       },
+      // Generate additional parks around Tel Aviv coords to ensure pagination
+      ...Array.from({ length: 25 }, (_, i) => ({
+        title: `Seeded Park ${i + 1}`,
+        location: { type: 'Point', coordinates: [34.789 + (i % 5) * 0.01, 32.073 + Math.floor(i / 5) * 0.01] },
+        ...baseDoc,
+      })),
     ];
 
     await parks.insertMany(docs);

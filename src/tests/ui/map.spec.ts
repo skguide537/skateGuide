@@ -9,7 +9,10 @@ test.describe('Map Page', () => {
     // Check if the page loads without errors - our new structure uses MUI Box
     // Wait for either the map to load or an error message to appear
     // MUI Box with height: 100vh will be rendered as a div with CSS classes
-    await expect(page.locator('div').filter({ hasText: /loading interactive map|unable to retrieve your location|geolocation is not supported/i })).toBeVisible({ timeout: 15000 });
+    // Use first() to avoid strict mode violation when multiple containers match
+    await expect(
+      page.locator('div').filter({ hasText: /loading interactive map|unable to retrieve your location|geolocation is not supported/i }).first()
+    ).toBeVisible({ timeout: 15000 });
     
     // The page should load without errors
     await expect(page).toHaveURL('/map');
