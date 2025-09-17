@@ -7,7 +7,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 1, // Add retries for flaky tests
-  workers: process.env.CI ? 1 : 4, // In CI, 1 worker. locally, 4
+  // Use maximum recommended workers: all cores locally, half cores in CI for stability
+  workers: process.env.CI ? '50%' : '100%',
   reporter: 'list', // Minimal console output, no HTML files
   timeout: process.env.CI ? 120000 : 60000, // Increase global timeout to 2 minutes in CI
   expect: {
@@ -46,10 +47,11 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'npm run dev',
+    // Use production server for faster, more stable UI tests
+    command: 'npm run build && npm start',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000, // 2 minutes
+    timeout: 180 * 1000, // 3 minutes for build+start
   },
 
   // Use system temp directory for output (automatically cleaned up by OS)

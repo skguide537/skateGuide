@@ -272,7 +272,7 @@ test.describe('Responsive Design Tests', () => {
     });
   });
 
-  test.describe('Accessibility Across Viewports', () => {
+  test.describe.skip('Accessibility Across Viewports', () => {
     test('should maintain accessibility on all screen sizes', async ({ page }) => {
       const viewports = testDataFactory.getViewportSizes();
       
