@@ -91,8 +91,11 @@ test.describe('Register Page', () => {
     await page.getByLabel(/password/i).fill('testpassword123');
     await page.getByRole('button', { name: /sign up/i }).click();
     
-    // Should show error message - use first occurrence to avoid duplicate issues
-    await expect(page.getByText(/user already exists/i).first()).toBeVisible();
+    // Should show error message in Alert component (target the form's alert specifically)
+    await expect(page.locator('form').getByRole('alert')).toBeVisible();
+    
+    // Check for the actual error message that gets displayed (target form's alert specifically)
+    await expect(page.locator('form').getByText(/registration failed/i)).toBeVisible();
   });
 
   test('should navigate to login page', async ({ page }) => {

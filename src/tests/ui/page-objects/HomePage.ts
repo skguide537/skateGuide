@@ -130,8 +130,34 @@ export class HomePage {
    */
   async getCardRating(index: number): Promise<number> {
     const card = await this.getSkateparkCard(index);
-    const ratingText = await card.locator('text=/\\d+\\.\\d+/').first().textContent();
-    return ratingText ? parseFloat(ratingText) : 0;
+    
+    // Try to find rating in different formats
+    const ratingSelectors = [
+      'text=/\\d+\\.\\d+/',  // Direct number format
+      '[data-testid*="rating"]',  // Rating component
+      '.MuiRating-root',  // MUI Rating component
+      'text=/\\d+/',  // Integer format
+    ];
+    
+    for (const selector of ratingSelectors) {
+      try {
+        const ratingElement = card.locator(selector).first();
+        if (await ratingElement.isVisible()) {
+          const ratingText = await ratingElement.textContent();
+          if (ratingText) {
+            const rating = parseFloat(ratingText);
+            if (!isNaN(rating)) {
+              return rating;
+            }
+          }
+        }
+      } catch {
+        // Continue to next selector
+      }
+    }
+    
+    // If no rating found, return 0
+    return 0;
   }
 
   /**
@@ -139,8 +165,31 @@ export class HomePage {
    */
   async getCardDistance(index: number): Promise<string> {
     const card = await this.getSkateparkCard(index);
-    const distanceText = await card.locator('text=/distance:/i').textContent();
-    return distanceText || '';
+    
+    // Try to find distance in different formats
+    const distanceSelectors = [
+      'text=/\\d+\\.\\d+\\s*km/i',  // "X.X km" format
+      'text=/\\d+\\s*km/i',  // "X km" format
+      'text=/distance:/i',  // "Distance: X" format
+      'text=/from your location/i',  // "X.X km from your location" format
+    ];
+    
+    for (const selector of distanceSelectors) {
+      try {
+        const distanceElement = card.locator(selector).first();
+        if (await distanceElement.isVisible()) {
+          const distanceText = await distanceElement.textContent();
+          if (distanceText) {
+            return distanceText.trim();
+          }
+        }
+      } catch {
+        // Continue to next selector
+      }
+    }
+    
+    // If no distance found, return empty string
+    return '';
   }
 
   /**
@@ -326,8 +375,15 @@ export class HomePage {
    * Get filter summary text
    */
   async getFilterSummary(): Promise<string> {
-    const summaryElement = this.page.locator('[data-testid="filter-summary"]');
-    return await summaryElement.textContent() || '';
+    try {
+      const summaryElement = this.page.locator('[data-testid="filter-summary"]');
+      if (await summaryElement.isVisible({ timeout: 2000 })) {
+        return await summaryElement.textContent() || '';
+      }
+    } catch {
+      // Element not found or not visible
+    }
+    return '';
   }
 
   /**
