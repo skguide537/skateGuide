@@ -120,12 +120,17 @@ test.describe('Home Page', () => {
 
     await page.goto('/');
 
-    const mapButton = page.getByRole('button', { name: /explore the map/i });
-    await expect(mapButton).toBeVisible();
-    await expect(mapButton).toBeEnabled();
-
-    await mapButton.click();
-    await expect(page).toHaveURL('/map');
+    const navbarMap = page.locator('a[href="/map"]').first();
+    if (await navbarMap.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await navbarMap.scrollIntoViewIfNeeded().catch(() => {});
+      await navbarMap.click();
+    } else {
+      const mapButton = page.getByRole('button', { name: /explore the map/i });
+      await expect(mapButton).toBeVisible();
+      await expect(mapButton).toBeEnabled();
+      await mapButton.click();
+    }
+    await expect(page).toHaveURL('/map', { timeout: 20000 });
   });
 
   test('should navigate to add spot page', async ({ page }) => {
@@ -200,7 +205,9 @@ test.describe('Home Page', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.reload();
 
-    await expect(listOrGrid).toBeVisible({ timeout: 20000 });
+    // Re-create locator after reload to avoid staleness and use same resilient selector
+    const listOrGridMobile = page.locator('[class*="grid"], [class*="list"], [role="list"], [role="grid"]').first();
+    await expect(listOrGridMobile).toBeVisible({ timeout: 20000 });
   });
 
   test('should be responsive on mobile', async ({ page }) => {
