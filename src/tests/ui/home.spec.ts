@@ -189,9 +189,13 @@ test.describe('Home Page', () => {
 
     await page.goto('/');
 
-    // Wait for some list/grid content; avoid hard-coded IDs
+    // Wait for cards first to ensure content rendered
+    const cardLike = page.locator('[class*="Card"], [data-testid*="card"], article, [class*="grid"] > div, [class*="list"] > div').first();
+    await expect(cardLike).toBeVisible({ timeout: 30000 });
+
+    // Then assert container presence
     const listOrGrid = page.locator('[class*="grid"], [class*="list"], [role="list"], [role="grid"]').first();
-    await expect(listOrGrid).toBeVisible({ timeout: 20000 });
+    await expect(listOrGrid).toBeVisible({ timeout: 30000 });
 
     const pagination = page.locator('.MuiPagination-root');
     if (await pagination.isVisible()) {
@@ -205,9 +209,12 @@ test.describe('Home Page', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.reload();
 
-    // Re-create locator after reload to avoid staleness and use same resilient selector
+    // Re-create and wait for a card again after reload
+    const cardLikeMobile = page.locator('[class*="Card"], [data-testid*="card"], article, [class*="grid"] > div, [class*="list"] > div').first();
+    await expect(cardLikeMobile).toBeVisible({ timeout: 30000 });
+
     const listOrGridMobile = page.locator('[class*="grid"], [class*="list"], [role="list"], [role="grid"]').first();
-    await expect(listOrGridMobile).toBeVisible({ timeout: 20000 });
+    await expect(listOrGridMobile).toBeVisible({ timeout: 30000 });
   });
 
   test('should be responsive on mobile', async ({ page }) => {

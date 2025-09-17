@@ -61,5 +61,8 @@ jobs:
     - name: Build Next.js (production)
       run: npm run build
 
+    - name: Seed MongoDB test data
+      run: node scripts/seed-test-data.js
+
     - name: Run UI Tests (Playwright manages server)
-      run: npx playwright test
+      run: npx playwright test --workers=5
