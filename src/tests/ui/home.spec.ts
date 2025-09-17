@@ -34,7 +34,7 @@ test.describe('Home Page', () => {
     });
 
     await page.goto('/');
-
+    
     // Wait for a meaningful UI signal instead of a specific container id
     await expect(page.getByRole('heading', { name: /welcome to skateguide/i })).toBeVisible({ timeout: 10000 });
 
@@ -69,7 +69,7 @@ test.describe('Home Page', () => {
     });
 
     await page.goto('/');
-
+    
     await expect(page.getByRole('heading', { name: /welcome to skateguide/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /explore the map/i })).toBeVisible();
     await expect(page).toHaveURL('/');
@@ -125,9 +125,9 @@ test.describe('Home Page', () => {
       await navbarMap.scrollIntoViewIfNeeded().catch(() => {});
       await navbarMap.click();
     } else {
-      const mapButton = page.getByRole('button', { name: /explore the map/i });
-      await expect(mapButton).toBeVisible();
-      await expect(mapButton).toBeEnabled();
+    const mapButton = page.getByRole('button', { name: /explore the map/i });
+    await expect(mapButton).toBeVisible();
+    await expect(mapButton).toBeEnabled();
       await mapButton.click();
     }
     await expect(page).toHaveURL('/map', { timeout: 20000 });
@@ -158,9 +158,9 @@ test.describe('Home Page', () => {
       const isEnabled = isVisible ? await addSpotButton.isEnabled() : false;
       
       if (isVisible && isEnabled) {
-        await addSpotButton.click();
-        await expect(page).toHaveURL('/add-spot');
-      } else {
+      await addSpotButton.click();
+      await expect(page).toHaveURL('/add-spot');
+    } else {
         // Button exists but may be disabled or not visible - this is acceptable
         console.log('Add spot button not available for interaction');
       }
@@ -212,7 +212,7 @@ test.describe('Home Page', () => {
 
   test('should be responsive on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-
+    
     await expect(page.getByRole('heading', { name: /welcome to skateguide/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /explore the map/i })).toBeVisible();
   });
