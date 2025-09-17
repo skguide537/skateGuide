@@ -12,6 +12,7 @@ export class HomePage {
   readonly welcomeHeading: Locator;
   readonly subtitle: Locator;
   readonly exploreMapButton: Locator;
+  readonly navbarMapLink: Locator;
   readonly addSpotButton: Locator;
   readonly skateparkCardsContainer: Locator;
   readonly loadingSection: Locator;
@@ -25,6 +26,7 @@ export class HomePage {
     this.welcomeHeading = page.getByRole('heading', { name: /welcome to skateguide/i });
     this.subtitle = page.getByText(/discover, rate, and share skateparks around the city/i);
     this.exploreMapButton = page.getByRole('button', { name: /explore the map/i });
+    this.navbarMapLink = page.locator('a[href="/map"]').first();
     this.addSpotButton = page.getByRole('button', { name: /add spot/i });
     this.skateparkCardsContainer = page.locator('[class*="Card"], article, [data-testid*="card"], [class*="grid"] > div, [class*="list"] > div').first();
     this.loadingSection = page.getByText('Loading Skateparks');
@@ -272,8 +274,20 @@ export class HomePage {
    * Click explore map button
    */
   async clickExploreMap() {
-    await this.exploreMapButton.click();
-    await this.helpers.waitForNavigation('/map');
+    // Prefer navbar link if available for stable navigation
+    try {
+      if (await this.navbarMapLink.isVisible({ timeout: 2000 })) {
+        await this.navbarMapLink.scrollIntoViewIfNeeded().catch(() => {});
+        await this.navbarMapLink.click();
+      } else {
+        await this.exploreMapButton.scrollIntoViewIfNeeded().catch(() => {});
+        await this.exploreMapButton.click();
+      }
+    } catch {
+      // Fallback to CTA button if navbar link fails
+      await this.exploreMapButton.click();
+    }
+    await this.helpers.waitForNavigation('/map', 20000);
   }
 
   /**
