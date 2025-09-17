@@ -47,10 +47,10 @@ export default defineConfig({
   ],
 
   webServer: {
-    // Use production server for faster, more stable UI tests
-    command: 'npm run build && npm start',
+    // Use production server; CI builds earlier
+    command: 'npm start',
     url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: true,
     timeout: 180 * 1000, // 3 minutes for build+start
   },
 

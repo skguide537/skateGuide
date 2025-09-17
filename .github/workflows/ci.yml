@@ -24,6 +24,8 @@ jobs:
     env:
       CI: true
       NEXT_TELEMETRY_DISABLED: 1
+      # Expose Mongo service URI for integration tests
+      MONGO_URI: mongodb://localhost:27017/skateguide-ci
 
     steps:
     - name: Checkout code
@@ -59,12 +61,5 @@ jobs:
     - name: Build Next.js (production)
       run: npm run build
 
-    - name: Start production server
-      run: npm start &
-
-    - name: Wait for server to be ready
-      run: |
-        timeout 60 bash -c 'until curl -sSf http://localhost:3000 >/dev/null; do sleep 2; done'
-
-    - name: Run UI Tests (Playwright against prod)
+    - name: Run UI Tests (Playwright manages server)
       run: npx playwright test
