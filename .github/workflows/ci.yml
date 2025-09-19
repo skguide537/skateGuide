@@ -14,8 +14,8 @@ jobs:
       CI: true
       NEXT_TELEMETRY_DISABLED: 1
       # Use GitHub secrets for MongoDB connection
-      MONGO_URI: ${{ secrets.MONGODB_URI }}
-      MONGODB_URI: ${{ secrets.MONGODB_URI }}
+      MONGO_URI: ${{ secrets.MONGO_URI }}
+      MONGODB_URI: ${{ secrets.MONGO_URI }}
       # Add other required environment variables from secrets
       JWT_SECRET: ${{ secrets.JWT_SECRET || 'test-jwt-secret-for-ci' }}
       NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'test-nextauth-secret' }}
@@ -48,9 +48,6 @@ jobs:
 
     - name: Build Next.js (production)
       run: npm run build
-
-    - name: Seed MongoDB test data
-      run: node scripts/seed-test-data.js
 
     - name: Verify API and database connection
       run: |
