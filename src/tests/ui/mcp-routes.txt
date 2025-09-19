@@ -1,0 +1,5 @@
+/
+/map
+/add-spot
+/login
+/register

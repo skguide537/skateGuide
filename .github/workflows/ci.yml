@@ -10,22 +10,16 @@ jobs:
   test:
     runs-on: ubuntu-latest
     
-    services:
-      mongo:
-        image: mongo:latest
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --eval 'db.runCommand(\"ping\")'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     env:
       CI: true
       NEXT_TELEMETRY_DISABLED: 1
-      # Expose Mongo service URI for integration tests
-      MONGO_URI: mongodb://localhost:27017/skateguide-ci
+      # Use GitHub secrets for MongoDB connection
+      MONGO_URI: ${{ secrets.MONGODB_URI }}
+      MONGODB_URI: ${{ secrets.MONGODB_URI }}
+      # Add other required environment variables from secrets
+      JWT_SECRET: ${{ secrets.JWT_SECRET || 'test-jwt-secret-for-ci' }}
+      NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'test-nextauth-secret' }}
+      NEXTAUTH_URL: http://localhost:3000
 
     steps:
     - name: Checkout code
@@ -43,12 +37,6 @@ jobs:
     - name: Install Playwright browsers
       run: npx playwright install --with-deps
 
-    - name: Wait for MongoDB to be ready
-      run: |
-        until nc -z localhost 27017; do
-          sleep 1
-        done
-
     - name: Run Unit Tests (Jest)
       run: npm run test:unit
 
@@ -63,6 +51,22 @@ jobs:
 
     - name: Seed MongoDB test data
       run: node scripts/seed-test-data.js
+
+    - name: Verify API and database connection
+      run: |
+        # Start the server in background
+        npm start &
+        sleep 10
+        
+        # Test API endpoint
+        curl -f http://localhost:3000/api/skateparks || echo "❌ API endpoint failed"
+        
+        # Check if we get JSON data
+        RESPONSE=$(curl -s http://localhost:3000/api/skateparks)
+        echo "API Response: $RESPONSE"
+        
+        # Kill the background server
+        pkill -f "next start" || true
 
     - name: Run UI Tests (Playwright manages server)
       run: npx playwright test --workers=5
