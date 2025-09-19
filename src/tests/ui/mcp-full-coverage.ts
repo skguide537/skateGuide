@@ -3,7 +3,7 @@
  * Comprehensive coverage testing using MCP intelligence
  */
 
-import { Page, expect } from '@playwright/test';
+const { Page } = require('@playwright/test');
 
 interface CoverageReport {
   pages: PageCoverage[];
@@ -64,6 +64,8 @@ interface TestCoverage {
   type: 'unit' | 'integration' | 'e2e';
   status: 'pass' | 'fail' | 'pending';
   coverage: number;
+  summary?: string;
+  nesting?: number;
 }
 
 interface StateCoverage {
@@ -178,12 +180,12 @@ interface ContrastIssue {
   status: 'pass' | 'fail';
 }
 
-export class MCPFullCoverageTester {
-  private page: Page;
+class MCPFullCoverageTester {
+  private page: any;
   private mcpServer: string;
   private coverageReport: CoverageReport;
 
-  constructor(page: Page, mcpServer: string = 'http://[::1]:3001/mcp') {
+  constructor(page: any, mcpServer: string = 'http://[::1]:3001/mcp') {
     this.page = page;
     this.mcpServer = mcpServer;
     this.coverageReport = {
@@ -1300,3 +1302,5 @@ ${overall.recommendations.map(rec => `• ${rec}`).join('\n')}
     `.trim();
   }
 }
+
+module.exports = { MCPFullCoverageTester };
