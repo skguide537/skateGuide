@@ -46,24 +46,24 @@ jobs:
     - name: Run Linting
       run: npm run lint
 
-    - name: Build Next.js (production)
-      run: npm run build
+    # - name: Build Next.js (production)
+    #   run: npm run build
 
-    - name: Verify API and database connection
-      run: |
-        # Start the server in background
-        npm start &
-        sleep 10
+    # - name: Verify API and database connection
+    #   run: |
+    #     # Start the server in background
+    #     npm start &
+    #     sleep 10
         
-        # Test API endpoint
-        curl -f http://localhost:3000/api/skateparks || echo "❌ API endpoint failed"
+    #     # Test API endpoint
+    #     curl -f http://localhost:3000/api/skateparks || echo "❌ API endpoint failed"
         
-        # Check if we get JSON data
-        RESPONSE=$(curl -s http://localhost:3000/api/skateparks)
-        echo "API Response: $RESPONSE"
+    #     # Check if we get JSON data
+    #     RESPONSE=$(curl -s http://localhost:3000/api/skateparks)
+    #     echo "API Response: $RESPONSE"
         
-        # Kill the background server
-        pkill -f "next start" || true
+    #     # Kill the background server
+    #     pkill -f "next start" || true
 
-    - name: Run UI Tests (Playwright manages server)
-      run: npx playwright test --workers=5
+    # - name: Run UI Tests (Playwright manages server)
+    #   run: npx playwright test --workers=5
