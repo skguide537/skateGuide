@@ -80,7 +80,7 @@ test.describe('Enhanced Home Page Tests', () => {
         expect(firstCardRating).toBeLessThanOrEqual(5);
         
         const firstCardDistance = await homePage.getCardDistance(0);
-        expect(firstCardDistance).toContain('km');
+        expect(firstCardDistance).toMatch(/\d+\.?\d*\s*km/); // Match "X.X km" format (your app's format)
       }
     });
 
