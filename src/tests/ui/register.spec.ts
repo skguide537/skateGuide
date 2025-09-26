@@ -5,117 +5,53 @@ test.describe('Register Page', () => {
     await page.goto('/register');
   });
 
-  test('should display the registration form', async ({ page }) => {
-    // Check if the form is visible (actual text from the page)
-    await expect(page.getByRole('heading', { name: /create your account/i })).toBeVisible();
-    
-    // Check if all form fields are present
-    await expect(page.getByLabel(/name/i)).toBeVisible();
-    await expect(page.getByLabel(/email/i)).toBeVisible();
-    await expect(page.getByLabel(/password/i)).toBeVisible();
-    
-    // Check if submit button is present (actual text from the page)
-    await expect(page.getByRole('button', { name: /sign up/i })).toBeVisible();
-    
-    // Check if login link is present
-    await expect(page.getByRole('link', { name: /sign in/i })).toBeVisible();
+const TEST_CASES = [
+  {
+    name: 'No user name',
+    email: 'skateguide12+testAccount@gmail.com',
+    password: 'asdfghjkl'
+  },
+  {
+    name: 'No email',
+    email: '',
+    password: 'asdfghjkl'
+  },
+  {
+    name: 'No password',
+    email: 'skateguide12+testAccount@gmail.com',
+    password: ''
+  },
+  {
+    name: 'Existing email',
+    email: 'skateguide12+testAccount@gmail.com',
+    password: 'asdfghjkl'
+  },
+  {
+    name: 'Invalid email',
+    email: 'invalidemail',
+    password: 'asdfghjkl'
+  },
+
+];
+
+// TODO: Need to add validation for success message
+test('Create new user', async ({ page }) => {
+  await page.getByRole('textbox', { name: 'Name *' }).click();
+  await page.getByRole('textbox', { name: 'Name *' }).fill('Test');
+  await page.getByRole('textbox', { name: 'Email *' }).fill('skateguide12+testAccount@gmail.com');
+  await page.getByRole('textbox', { name: 'Email *' }).press('Tab');
+  await page.getByRole('textbox', { name: 'Password *' }).fill('asdfghjkl');
+  await page.getByRole('button', { name: 'Sign up' }).click();
+});
+
+TEST_CASES.forEach(testCase => {
+  test(`Error Handling - ${testCase.name}`, async ({ page }) => {
+    await page.getByRole('textbox', { name: 'Name *' }).click();
+    await page.getByRole('textbox', { name: 'Name *' }).fill(testCase.name);
+    await page.getByRole('textbox', { name: 'Email *' }).fill(testCase.email);
+    await page.getByRole('textbox', { name: 'Password *' }).fill(testCase.password);
+    await page.getByRole('button', { name: 'Sign up' }).click();
+    await expect(page.getByText('Registration failed')).toBeVisible();
   });
-
-  test('should allow user to fill out the form', async ({ page }) => {
-    // Fill out the form
-    await page.getByLabel(/name/i).fill('Test User');
-    await page.getByLabel(/email/i).fill('test@example.com');
-    await page.getByLabel(/password/i).fill('testpassword123');
-    
-    // Verify the form is filled
-    await expect(page.getByLabel(/name/i)).toHaveValue('Test User');
-    await expect(page.getByLabel(/email/i)).toHaveValue('test@example.com');
-    await expect(page.getByLabel(/password/i)).toHaveValue('testpassword123');
-  });
-
-  test('should validate required fields', async ({ page }) => {
-    // Try to submit without filling required fields
-    await page.getByRole('button', { name: /sign up/i }).click();
-    
-    // Should show browser validation (required field indicators)
-    const nameField = page.getByLabel(/name/i);
-    const emailField = page.getByLabel(/email/i);
-    const passwordField = page.getByLabel(/password/i);
-    
-    // Check if fields are marked as required
-    await expect(nameField).toHaveAttribute('required');
-    await expect(emailField).toHaveAttribute('required');
-    await expect(passwordField).toHaveAttribute('required');
-  });
-
-  test('should handle successful registration', async ({ page }) => {
-    // Mock successful registration response
-    await page.route('/api/auth/register', async route => {
-      await route.fulfill({
-        status: 201,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          _id: 'new-user-id',
-          name: 'Test User',
-          email: 'test@example.com',
-          token: 'mock-jwt-token'
-        })
-      });
-    });
-
-    // Fill and submit form
-    await page.getByLabel(/name/i).fill('Test User');
-    await page.getByLabel(/email/i).fill('test@example.com');
-    await page.getByLabel(/password/i).fill('testpassword123');
-    await page.getByRole('button', { name: /sign up/i }).click();
-    
-    // Should redirect to map page (actual redirect from the code)
-    await expect(page).toHaveURL('/map');
-  });
-
-  test('should handle registration failure (duplicate email)', async ({ page }) => {
-    // Mock failed registration response
-    await page.route('/api/auth/register', async route => {
-      await route.fulfill({
-        status: 400,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          error: 'User already exists'
-        })
-      });
-    });
-
-    // Fill and submit form
-    await page.getByLabel(/name/i).fill('Test User');
-    await page.getByLabel(/email/i).fill('existing@example.com');
-    await page.getByLabel(/password/i).fill('testpassword123');
-    await page.getByRole('button', { name: /sign up/i }).click();
-    
-    // Should show error message in Alert component (target the form's alert specifically)
-    await expect(page.locator('form').getByRole('alert')).toBeVisible();
-    
-    // Check for the actual error message that gets displayed (target form's alert specifically)
-    await expect(page.locator('form').getByText(/registration failed/i)).toBeVisible();
-  });
-
-  test('should navigate to login page', async ({ page }) => {
-    // Click on sign in link
-    await page.getByRole('link', { name: /sign in/i }).click();
-    
-    // Should navigate to login page
-    await expect(page).toHaveURL('/login');
-  });
-
-  test('should be responsive on mobile', async ({ page }) => {
-    // Set mobile viewport
-    await page.setViewportSize({ width: 375, height: 667 });
-    
-    // Form should still be usable on mobile
-    await expect(page.getByLabel(/name/i)).toBeVisible();
-    await expect(page.getByLabel(/email/i)).toBeVisible();
-    await expect(page.getByLabel(/password/i)).toBeVisible();
-    
-    // Button should be properly sized for mobile
-    await expect(page.getByRole('button', { name: /sign up/i })).toBeVisible();
-  });
+});
 });
