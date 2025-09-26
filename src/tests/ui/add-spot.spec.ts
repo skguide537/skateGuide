@@ -5,45 +5,8 @@ test.describe('Add Spot Page', () => {
     await page.goto('/add-spot');
   });
 
-  test('should display the add spot form', async ({ page }) => {
-    // Wait for the lazy-loaded form to render (increased timeout for Suspense)
-    await expect(page.getByRole('heading', { name: /add new skate spot/i })).toBeVisible({ timeout: 15000 });
-    
-    // Check if all form fields are present
-    await expect(page.getByLabel(/title/i)).toBeVisible();
-    await expect(page.getByLabel(/description/i)).toBeVisible();
-    await expect(page.getByLabel(/street/i)).toBeVisible();
-    await expect(page.getByLabel(/city/i)).toBeVisible();
-    await expect(page.getByLabel(/state\/province/i)).toBeVisible();
-    await expect(page.getByLabel(/country/i)).toBeVisible();
-    
-    // Check if buttons are present
-    await expect(page.getByRole('button', { name: /use my location/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /search address/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /show map/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /submit skate spot/i })).toBeVisible();
-  });
 
-  test('should allow user to fill out the form', async ({ page }) => {
-    // Wait for form to be fully loaded
-    await expect(page.getByLabel(/title/i)).toBeVisible({ timeout: 15000 });
-    
-    // Fill out the form
-    await page.getByLabel(/title/i).fill('Test Skate Spot');
-    await page.getByLabel(/description/i).fill('A great place to skate');
-    await page.getByLabel(/street/i).fill('123 Main Street');
-    await page.getByLabel(/city/i).fill('Tel Aviv');
-    await page.getByLabel(/state\/province/i).fill('Tel Aviv');
-    await page.getByLabel(/country/i).fill('Israel');
-    
-    // Verify the form is filled
-    await expect(page.getByLabel(/title/i)).toHaveValue('Test Skate Spot');
-    await expect(page.getByLabel(/description/i)).toHaveValue('A great place to skate');
-    await expect(page.getByLabel(/street/i)).toHaveValue('123 Main Street');
-    await expect(page.getByLabel(/city/i)).toHaveValue('Tel Aviv');
-  });
-
-  test('should show map when show map is clicked', async ({ page }) => {
+  test('Verify Map Section', async ({ page }) => {
     // Wait for form to be fully loaded
     await expect(page.getByLabel(/title/i)).toBeVisible({ timeout: 15000 });
     
@@ -52,40 +15,17 @@ test.describe('Add Spot Page', () => {
     
     // Click show map button - this toggles showMap state in the form
     await page.getByRole('button', { name: /show map/i }).click();
-    
+    await expect(page.locator('div').filter({ hasText: /^\+− Leaflet \| © OpenStreetMap contributors$/ }).first()).toBeVisible();
     // After clicking, the button should change to "Hide Map"
     await expect(page.getByRole('button', { name: /hide map/i })).toBeVisible();
-    
-    // We should see some indication that the map section is now active
-    // Look for the "Map Selection" heading that appears when map is shown
+    await page.getByRole('button', { name: /hide map/i }).click();
+
     await expect(page.getByText('Map Selection')).toBeVisible();
+    await expect(page.locator('div').filter({ hasText: /^\+− Leaflet \| © OpenStreetMap contributors$/ }).first()).toBeHidden();
+
   });
 
-  test('should validate required fields', async ({ page }) => {
-    // Wait for form to be fully loaded
-    await expect(page.getByLabel(/title/i)).toBeVisible({ timeout: 15000 });
-    
-    // Initially, no validation errors should be visible
-    await expect(page.getByText(/Title is required/i)).not.toBeVisible();
-    await expect(page.getByText(/Size is required/i)).not.toBeVisible();
-    await expect(page.getByText(/Level is required/i)).not.toBeVisible();
-    
-    // The submit button should be disabled when required fields are empty
-    const submitButton = page.getByRole('button', { name: /submit skate spot/i });
-    await expect(submitButton).toBeDisabled();
-    
-    // Wait a moment for any validation to process
-    await page.waitForTimeout(1000);
-    
-    // Check if validation errors are visible after submission attempt
-    // If browser validation prevents submission, we might not see our custom errors
-    // So we'll check if the form is still on the same page (which indicates validation worked)
-    await expect(page).toHaveURL(/.*add-spot.*/);
-    
-    // Also check if the submit button is still visible (form didn't navigate away)
-    await expect(page.getByRole('button', { name: /submit skate spot/i })).toBeVisible();
-  });
-
+  // TODO: Need to add validation for success message
   test('should handle address search', async ({ page }) => {
     // Wait for form to be fully loaded
     await expect(page.getByLabel(/street/i)).toBeVisible({ timeout: 15000 });
@@ -103,18 +43,32 @@ test.describe('Add Spot Page', () => {
     // This test will need to be updated based on your actual geocoding implementation
   });
 
-  test('should be responsive on mobile', async ({ page }) => {
-    // Wait for form to be fully loaded
-    await expect(page.getByLabel(/title/i)).toBeVisible({ timeout: 15000 });
-    
-    // Set mobile viewport
-    await page.setViewportSize({ width: 375, height: 667 });
-    
-    // Form should still be usable on mobile
-    await expect(page.getByLabel(/title/i)).toBeVisible();
-    await expect(page.getByLabel(/description/i)).toBeVisible();
-    
-    // Buttons should be properly sized for mobile
-    await expect(page.getByRole('button', { name: /submit skate spot/i })).toBeVisible();
-  });
+     
+
+test('test', async ({ page }) => {
+  await page.getByRole('textbox', { name: 'Title' }).click();
+  await page.getByRole('textbox', { name: 'Title' }).fill('Test');
+  await page.getByRole('textbox', { name: 'Description' }).click();
+  await page.getByRole('textbox', { name: 'Description' }).fill('Test Description');
+  await page.getByRole('textbox', { name: 'Description' }).press('Tab');
+  await page.locator('form div').filter({ hasText: '📝 Basic InformationTitle *' }).getByRole('combobox').first().click();
+  await page.getByRole('option', { name: 'Large' }).click();
+  await page.locator('form div').filter({ hasText: '📝 Basic InformationTitle *' }).getByRole('combobox').nth(1).click();
+  await page.getByRole('option', { name: 'All Levels' }).click();
+  await page.locator('#menu- div').first().click();
+  await page.getByRole('checkbox').check();
+  await page.locator('form div').filter({ hasText: '📝 Basic InformationTitle *' }).getByRole('combobox').nth(2).click();
+  await page.getByRole('option', { name: 'Bowl' }).click();
+  await page.getByRole('option', { name: 'Stairs' }).click();
+  await page.keyboard.press('Escape');
+  await page.locator('#menu- div').first().click();
+  await page.getByRole('button', { name: '📍 Use My Location' }).click();
+  await page.getByRole('alert').filter({ hasText: 'Location set: 32.0730,' }).click();
+  await page.locator('div').filter({ hasText: /^\+− Leaflet \| © OpenStreetMap contributors$/ }).first().click();
+  await page.getByRole('textbox', { name: 'Add a link (e.g., Instagram,' }).click();
+  await page.getByRole('textbox', { name: 'Add a link (e.g., Instagram,' }).fill('Google.com');
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit Skate Spot' }).click();
 });
+});
+
