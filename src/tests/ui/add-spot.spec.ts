@@ -45,7 +45,7 @@ test.describe('Add Spot Page', () => {
 
      
 
-test('test', async ({ page }) => {
+test('Create new spot', async ({ page }) => {
   await page.getByRole('textbox', { name: 'Title' }).click();
   await page.getByRole('textbox', { name: 'Title' }).fill('Test');
   await page.getByRole('textbox', { name: 'Description' }).click();
@@ -70,5 +70,6 @@ test('test', async ({ page }) => {
   await page.getByRole('button', { name: 'Add', exact: true }).click();
   await page.getByRole('button', { name: 'Submit Skate Spot' }).click();
 });
+
 });
 
