@@ -47,7 +47,6 @@ export class HomePage {
    */
   async waitForLoad() {
     await this.helpers.waitForElement('#home-welcome-heading');
-    await this.helpers.waitForLoadingToComplete();
   }
 
   /**
@@ -192,9 +191,7 @@ export class HomePage {
   /**
    * Wait for loading to complete
    */
-  async waitForLoadingComplete() {
-    await this.helpers.waitForLoadingToComplete();
-  }
+  
 
   /**
    * Check if pagination is visible (Note: App uses virtual scrolling, not pagination)
