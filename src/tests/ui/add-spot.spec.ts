@@ -55,6 +55,9 @@ test('Create new spot', async ({ page }) => {
   await page.getByRole('option', { name: 'Large' }).click();
   await page.locator('form div').filter({ hasText: '📝 Basic InformationTitle *' }).getByRole('combobox').nth(1).click();
   await page.getByRole('option', { name: 'All Levels' }).click();
+
+//   Todo: fix test from here. if user not logged in, new spot cant be created.
+//   Todo: need to add expect()
   await page.locator('#menu- div').first().click();
   await page.getByRole('checkbox').check();
   await page.locator('form div').filter({ hasText: '📝 Basic InformationTitle *' }).getByRole('combobox').nth(2).click();
