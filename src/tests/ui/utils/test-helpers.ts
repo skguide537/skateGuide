@@ -138,12 +138,7 @@ export class TestHelpers {
   /**
    * Wait for loading state to disappear
    */
-  async waitForLoadingToComplete(loadingSelector: string = '[data-testid="loading"]') {
-    // Wait for loading to appear
-    await this.page.waitForSelector(loadingSelector, { timeout: 5000 }).catch(() => {});
-    // Wait for loading to disappear
-    await this.page.waitForSelector(loadingSelector, { state: 'hidden', timeout: 10000 }).catch(() => {});
-  }
+  
 
   /**
    * Clear all form inputs

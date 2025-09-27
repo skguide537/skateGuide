@@ -1,18 +1,17 @@
 'use client';
 
-import { Dialog, DialogTitle, DialogContent, Typography, Chip, Stack, IconButton, Box, Button } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import FastCarousel from '../ui/FastCarousel';
 import Loading from "@/components/loading/Loading";
-import Rating from '@mui/material/Rating';
-import Image from 'next/image';
-import { useState } from 'react';
+import { useTheme } from '@/context/ThemeContext';
 import { useToast } from '@/context/ToastContext';
 import { useUser } from '@/context/UserContext';
-import { useTheme } from '@/context/ThemeContext';
 import { skateparkClient } from '@/services/skateparkClient';
+import { Link as LinkIcon, LocationOn, Park, Streetview } from '@mui/icons-material';
+import CloseIcon from '@mui/icons-material/Close';
+import { Box, Button, Chip, Dialog, DialogContent, DialogTitle, IconButton, Stack, Typography } from '@mui/material';
+import Rating from '@mui/material/Rating';
+import { useState } from 'react';
 import FavoriteButton from '../common/FavoriteButton';
-import { LocationOn, Park, Streetview, Star, Link as LinkIcon } from '@mui/icons-material';
+import FastCarousel from '../ui/FastCarousel';
 
 interface SkateparkModalProps {
   open: boolean;
