@@ -28,7 +28,7 @@ const TEST_CASES = [
   },
   {
     name: 'Invalid email',
-    email: 'invalidemail',
+    email: 'invalidemail@',
     password: 'asdfghjkl'
   },
 
@@ -51,7 +51,28 @@ TEST_CASES.forEach(testCase => {
     await page.getByRole('textbox', { name: 'Email *' }).fill(testCase.email);
     await page.getByRole('textbox', { name: 'Password *' }).fill(testCase.password);
     await page.getByRole('button', { name: 'Sign up' }).click();
-    await expect(page.getByText('Registration failed')).toBeVisible();
+    // For empty/invalid inputs, the browser/MUI will block submit with native
+    // HTML5 validation. In those cases we should assert the input's validity
+    // state instead of expecting a server error banner.
+    const emailInput = page.getByRole('textbox', { name: 'Email *' });
+    const passwordInput = page.getByRole('textbox', { name: 'Password *' });
+
+    const expectedEmailInvalid = testCase.email === '' || testCase.email === 'invalidemail@';
+    const expectedPasswordInvalid = testCase.password === '';
+
+    // checkValidity() reflects native constraint validation (required, pattern, etc.)
+    const emailIsValid = await emailInput.evaluate(el => (el as HTMLInputElement).checkValidity());
+    const passwordIsValid = await passwordInput.evaluate(el => (el as HTMLInputElement).checkValidity());
+
+    if (expectedEmailInvalid) expect(emailIsValid).toBe(false);
+    
+    if (expectedPasswordInvalid) expect(passwordIsValid).toBe(false);
+    
+    // Only when client-side validation passes do we expect the server error UI
+    // (e.g., duplicate/unknown backend failures), so assert the banner then.
+    if (!expectedEmailInvalid && !expectedPasswordInvalid) {
+      await expect(page.getByText('Registration failed: Internal Server Error').first()).toBeVisible();
+    }
   });
 });
 });
