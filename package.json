@@ -17,7 +17,7 @@
         "test:all": "npm run test:unit && npm run test:integration && npm run test:ui",
         "mcp:start": "npx @playwright/mcp@latest --config playwright-mcp.config.json",
         "mcp:dev": "npx @playwright/mcp@latest --config playwright-mcp.config.json --debug",
-        "mcp:coverage": "npx ts-node src/tests/ui/run-mcp-coverage.ts",
+        "mcp:coverage": "npx tsx src/tests/ui/run-mcp-coverage.ts",
         "mcp:test": "npx playwright test src/tests/ui/mcp-simple-coverage-test.spec.ts --reporter=list",
         "test:watch": "jest --watch",
         "test:coverage": "jest --coverage",
@@ -77,6 +77,7 @@
         "mongodb-memory-server": "^10.1.4",
         "ts-jest": "^29.3.2",
         "ts-node": "^10.9.2",
+        "tsx": "^4.20.6",
         "typescript": "^5.3.3"
     }
 }
