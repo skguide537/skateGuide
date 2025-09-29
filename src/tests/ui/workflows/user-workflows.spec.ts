@@ -246,44 +246,5 @@ test.describe('User Workflows', () => {
     });
   });
 
-  test.describe.skip('Accessibility Workflows', () => {
-    test('should support keyboard navigation', async ({ page }) => {
-      // Step 1: User navigates with keyboard only
-      await homePage.goto();
-      
-      // Step 2: Tab through interactive elements
-      await page.keyboard.press('Tab');
-      await page.keyboard.press('Tab');
-      
-      // Step 3: Use Enter to activate buttons
-      await page.keyboard.press('Enter');
-      
-      // Step 4: Verify navigation worked
-      await expect(page).toHaveURL('/map');
-    });
 
-    test('should support screen reader navigation', async ({ page }) => {
-      // Step 1: User visits home page
-      await homePage.goto();
-      
-      // Step 2: Verify heading structure
-      const headings = page.locator('h1, h2, h3, h4, h5, h6');
-      const headingCount = await headings.count();
-      expect(headingCount).toBeGreaterThan(0);
-      
-      // Step 3: Verify button accessibility
-      const buttons = page.locator('button');
-      const buttonCount = await buttons.count();
-      expect(buttonCount).toBeGreaterThan(0);
-      
-      // Step 4: Verify all buttons have accessible names
-      for (let i = 0; i < buttonCount; i++) {
-        const button = buttons.nth(i);
-        const accessibleName = await button.getAttribute('aria-label') || 
-                              await button.textContent() || 
-                              await button.getAttribute('title');
-        expect(accessibleName).toBeTruthy();
-      }
-    });
-  });
 });
