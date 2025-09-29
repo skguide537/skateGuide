@@ -4,10 +4,9 @@
  */
 
 const { chromium } = require('@playwright/test');
-// Import the MCP tester - Note: this might have TypeScript conflicts
-// const { MCPFullCoverageTester } = require('./mcp-full-coverage');
-const fs = require('fs');
-const path = require('path');
+import { MCPFullCoverageTester } from './mcp-full-coverage';
+import fs from 'fs';
+import path from 'path';
 
 async function runMCPCoverage() {
   console.log('🚀 Starting MCP Full Site Coverage Analysis...');
