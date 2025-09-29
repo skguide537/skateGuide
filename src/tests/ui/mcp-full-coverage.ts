@@ -3,8 +3,6 @@
  * Comprehensive coverage testing using MCP intelligence
  */
 
-const { Page } = require('@playwright/test');
-
 interface CoverageReport {
   pages: PageCoverage[];
   components: ComponentCoverage[];
@@ -180,7 +178,7 @@ interface ContrastIssue {
   status: 'pass' | 'fail';
 }
 
-class MCPFullCoverageTester {
+export class MCPFullCoverageTester {
   private page: any;
   private mcpServer: string;
   private coverageReport: CoverageReport;
@@ -1302,5 +1300,4 @@ ${overall.recommendations.map(rec => `• ${rec}`).join('\n')}
     `.trim();
   }
 }
-
-module.exports = { MCPFullCoverageTester };
+ 
