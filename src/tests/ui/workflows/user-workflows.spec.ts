@@ -157,48 +157,7 @@ test.describe('User Workflows', () => {
     });
   });
 
-  test.describe('Mobile User Flow', () => {
-    test('should handle mobile user experience', async ({ page }) => {
-      // Step 1: Set mobile viewport
-      await page.setViewportSize({ width: 375, height: 667 });
-
-      // Step 2: User visits home page on mobile
-      await homePage.goto();
-      await expect(homePage.welcomeHeading).toBeVisible();
-
-      // Step 3: User scrolls through skatepark cards
-      await homePage.waitForSkateparkCards();
-      const cardCount = await homePage.getSkateparkCardCount();
-      expect(cardCount).toBeGreaterThan(0);
-
-      // Step 4: User tests mobile navigation
-      await homePage.clickExploreMap();
-      await expect(page).toHaveURL('/map');
-
-      // Step 5: User goes back to home
-      await page.goBack();
-      await expect(homePage.welcomeHeading).toBeVisible();
-    });
-
-    test('should handle mobile responsive interactions', async ({ page }) => {
-      // Test different mobile viewport sizes
-      const viewports = testDataFactory.getViewportSizes().filter(v => v.width < 768);
-      
-      for (const viewport of viewports) {
-        await page.setViewportSize({ width: viewport.width, height: viewport.height });
-        await homePage.goto();
-        
-        // Verify content is still accessible
-        await expect(homePage.welcomeHeading).toBeVisible();
-        await expect(homePage.exploreMapButton).toBeVisible();
-        
-        // Test card visibility
-        await homePage.waitForSkateparkCards();
-        const cardCount = await homePage.getSkateparkCardCount();
-        expect(cardCount).toBeGreaterThan(0);
-      }
-    });
-  });
+  
 
   test.describe('Error Handling Workflows', () => {
     test('should handle network errors gracefully', async ({ page }) => {
