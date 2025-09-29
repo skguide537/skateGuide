@@ -121,7 +121,7 @@ test.describe('MCP Simple Coverage Test', () => {
       await page.waitForLoadState('networkidle', { timeout: 10000 });
       
       // Analyze accessibility
-      const accessibility = await (coverageTester as any).mapAccessibility();
+      const accessibility = await (coverageTester as any).analyzeAccessibility();
       
       // Verify accessibility analysis
       expect(accessibility).toBeDefined();
@@ -152,7 +152,7 @@ test.describe('MCP Simple Coverage Test', () => {
       await page.waitForLoadState('networkidle', { timeout: 10000 });
       
       // Analyze performance
-      const performance = await (coverageTester as any).mapPerformance();
+      const performance = await (coverageTester as any).analyzePerformance();
       
       // Verify performance analysis
       expect(performance).toBeDefined();
