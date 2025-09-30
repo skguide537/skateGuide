@@ -200,6 +200,23 @@ export class TestHelpers {
   }
 
   /**
+   * Perform UI login flow
+   */
+  async login(email: string, password: string) {
+    await this.page.goto('/login');
+    await this.waitForPageLoad();
+
+    await this.page.getByRole('textbox', { name: /email\s*\*/i }).fill(email);
+    await this.page.getByRole('textbox', { name: /email\s*\*/i }).press('Tab');
+    await this.page.getByRole('textbox', { name: /password\s*\*/i }).fill(password);
+    await this.page.getByRole('button', { name: /sign in/i }).click();
+
+    // Wait for navigation away from /login
+    await this.page.waitForURL(url => !url.pathname.startsWith('/login'), { timeout: 15000 }).catch(() => {});
+    await this.waitForPageLoad();
+  }
+
+  /**
    * Check if page has errors
    */
   async hasPageErrors(): Promise<boolean> {
