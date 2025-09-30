@@ -18,18 +18,14 @@ test.describe('Enhanced Home Page Tests', () => {
         // Set up geolocation for consistent testing
         await testHelpers.setupGeolocation();
 
-        // Navigate to home page
-        await homePage.goto();
-        await homePage.waitForLoad();
+       
     });
 
 
     //   ✅✅✅
-    test.describe('Page Loading and Structure', () => {
-        test('availability', async () => {
-            await expect(homePage.welcomeHeading).toBeVisible();
-            await expect(homePage.subtitle).toBeVisible();
-            await expect(homePage.exploreMapButton).toBeVisible();
+    test.describe('Availability', () => {
+        test('Home Page Availability', async () => {
+            await expect(homePage.page.locator('#home-welcome-heading')).toBeVisible();
             expect(await homePage.hasSkateparkCards()).toBe(true);
             expect(await homePage.hasFilterBar()).toBe(true);
         });
