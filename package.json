@@ -15,10 +15,6 @@
         "test:ui:debug": "playwright test --debug",
         "test:ui:report": "playwright show-report",
         "test:all": "npm run test:unit && npm run test:integration && npm run test:ui",
-        "mcp:start": "npx @playwright/mcp@latest --config playwright-mcp.config.json",
-        "mcp:dev": "npx @playwright/mcp@latest --config playwright-mcp.config.json --debug",
-        "mcp:coverage": "npx tsx src/tests/ui/run-mcp-coverage.ts",
-        "mcp:test": "npx playwright test src/tests/ui/mcp-simple-coverage-test.spec.ts --reporter=list",
         "test:watch": "jest --watch",
         "test:coverage": "jest --coverage",
         "test:clean": "jest --clearCache",
@@ -54,7 +50,6 @@
     "devDependencies": {
         "@eslint/eslintrc": "^3",
         "@next/bundle-analyzer": "^15.5.4",
-        "@playwright/mcp": "^0.0.37",
         "@playwright/test": "^1.54.2",
         "@testing-library/jest-dom": "^6.7.0",
         "@testing-library/react": "^16.3.0",
