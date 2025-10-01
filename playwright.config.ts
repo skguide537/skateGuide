@@ -2,8 +2,6 @@ import { defineConfig, devices } from '@playwright/test';
 import os from 'os';
 import path from 'path';
 import dotenv from 'dotenv';
-
-// Load environment variables from .env file
 dotenv.config();
 
 export default defineConfig({
