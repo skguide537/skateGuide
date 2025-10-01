@@ -7,7 +7,7 @@ import { createTestHelpers, TEST_DATA } from './utils/test-helpers';
  * Uses real data and comprehensive page object model
  */
 
-test.describe('Avialability', () => {
+test.describe('Availability', () => {
     let homePage: HomePage;
     let testHelpers: ReturnType<typeof createTestHelpers>;
 
