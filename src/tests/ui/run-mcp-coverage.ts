@@ -3,7 +3,7 @@
  * Simple script to run MCP full site coverage analysis
  */
 
-const { chromium } = require('@playwright/test');
+import { chromium } from '@playwright/test';
 import { MCPFullCoverageTester } from './mcp-full-coverage';
 import fs from 'fs';
 import path from 'path';
