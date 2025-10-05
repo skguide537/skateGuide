@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { createTestHelpers } from './utils/test-helpers';
+let testHelpers: ReturnType<typeof createTestHelpers>;
 
+test.beforeEach(async ({ page }) => {
+    testHelpers = createTestHelpers(page);
+});
 
 test.describe('Add Spot Page', () => {
 
@@ -24,24 +28,20 @@ test.describe('Add Spot Page', () => {
 
     });
 
-    // Todo: unskip this test when geocoding is fixed
-    test.skip('should handle address search', async ({ page }) => {
+
+    test('should handle address search', async ({ page }) => {
+        await testHelpers.login(process.env.DB_ADMIN_EMAIL as string, process.env.DB_ADMIN_PASSWORD as string);
         await page.goto('/add-spot');
-        // Wait for form to be fully loaded
-        await expect(page.getByLabel(/street/i)).toBeVisible({ timeout: 15000 });
-
-        // Fill address fields
-        await page.getByLabel(/street/i).fill('Dizengoff Street');
-        await page.getByLabel(/city/i).fill('Tel Aviv');
-        await page.getByLabel(/state\/province/i).fill('Tel Aviv');
-        await page.getByLabel(/country/i).fill('Israel');
-
-        // Click search address button
-        await page.getByRole('button', { name: /search address/i }).click();
-        await expect(page.getByRole('alert').filter({ hasText: 'Skatepark added!' }).first()).toBeVisible({ timeout: 15000 });
-
-        // Should show loading state or results
-        // This test will need to be updated based on your actual geocoding implementation
+        await page.getByRole('combobox', { name: 'Country' }).click();
+        await page.getByRole('combobox', { name: 'Country' }).fill('Ger');
+        await page.getByRole('option', { name: 'Germany' }).click();
+        await page.getByRole('combobox', { name: 'City' }).click();
+        await page.getByRole('combobox', { name: 'City' }).fill('Berl');
+        await page.getByRole('option', { name: 'Berlin' }).click();
+        await page.getByRole('combobox', { name: 'Street' }).click();
+        await page.getByRole('combobox', { name: 'Street' }).fill('Brandenburgische Straße');
+        await page.getByRole('button', { name: 'Search Address' }).click();
+        await expect(page.getByRole('alert').filter({ hasText: 'Location found: Brandenburgische Straße, Wilmersdorf, Charlottenburg-Wilmersdorf' }).first()).toBeVisible({ timeout: 15000 });
     });
 
     test('Create new spot', async ({ page }) => {
@@ -69,46 +69,46 @@ test.describe('Add Spot Page', () => {
         await page.getByRole('button', { name: '📍 Use My Location' }).click();
         await page.getByRole('textbox', { name: 'Add a link (e.g., Instagram,' }).click();
         await page.getByRole('textbox', { name: 'Add a link (e.g., Instagram,' }).fill('https://www.youtube.com/shorts/r6OBMUX7nlg');
-        
+
         let targetId: string | undefined;
         try {
             console.log('🚀 Submitting skatepark...');
-            
+
             // Capture the POST response to get the created skatepark ID
             const responsePromise = page.waitForResponse(
                 response => response.url().includes('/api/skateparks') && response.request().method() === 'POST'
             );
-            
+
             await page.getByRole('button', { name: 'Submit Skate Spot' }).click();
-            
+
             const response = await responsePromise;
             const createdPark = await response.json();
-            
+
             if (createdPark?._id) {
                 targetId = createdPark._id;
                 console.log(`✅ Skatepark created with ID: ${targetId}`);
             } else {
                 console.error('❌ No _id in response:', createdPark);
             }
-            
+
             console.log('✅ Waiting for success toast...');
             await expect(page.getByRole('alert').filter({ hasText: 'Skatepark added!' }).first()).toBeVisible({ timeout: 15000 });
             console.log('✅ Toast visible');
-            
+
             await expect(page).toHaveURL('/', { timeout: 15000 });
             console.log('✅ Redirected to home page');
         } finally {
             if (targetId) {
                 console.log(`🗑️ Cleaning up: deleting skatepark ${targetId}...`);
-                
+
                 const adminId = process.env.DB_ADMIN_ID;
                 if (!adminId) {
                     console.error('❌ DB_ADMIN_ID not found in environment variables');
                     console.warn('⚠️ Skipping cleanup - manual deletion required');
                     return;
                 }
-                
-                
+
+
                 const deleteRes = await page.request.delete(`http://localhost:3000/api/skateparks/${targetId}`, {
                     headers: {
                         'x-user-id': adminId
@@ -117,7 +117,7 @@ test.describe('Add Spot Page', () => {
                     console.error('❌ Cleanup request failed:', err);
                     return null;
                 });
-                
+
                 if (deleteRes?.ok()) {
                     console.log('✅ Cleanup successful - skatepark deleted');
                 } else if (deleteRes) {
