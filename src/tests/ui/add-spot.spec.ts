@@ -47,7 +47,7 @@ test.describe('Add Spot Page', () => {
     test('Create new spot', async ({ page }) => {
         // login before posting a spot
         const helpers = createTestHelpers(page)
-        await helpers.login('test.user@skateguide.com', '123456');
+        await helpers.login(process.env.DB_ADMIN_EMAIL as string, process.env.DB_ADMIN_PASSWORD as string);
 
 
         await page.goto('/add-spot');
