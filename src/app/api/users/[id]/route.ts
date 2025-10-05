@@ -25,6 +25,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
         }
 
         await User.findByIdAndDelete(params.id);
+        
         return NextResponse.json({ ok: true });
     } catch (error: any) {
         return NextResponse.json({ error: error.message ?? 'Internal server error' }, { status: 500 });
