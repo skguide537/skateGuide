@@ -35,7 +35,6 @@ const TEST_CASES = [
 
 ];
 
-// TODO: Need to add validation for success message
 test('Register end to end', async ({ page }) => {
   const targetEmail = 'skateguide12testAccount@gmail.com';
   let targetId: string | undefined;
@@ -57,6 +56,8 @@ test('Register end to end', async ({ page }) => {
     if (createdUser?._id) targetId = createdUser._id;
 
     await expect(page.getByRole('alert').filter({ hasText: 'Account created successfully!' }).first()).toBeVisible({ timeout: 15000 });
+    await expect(page).toHaveURL('/map', { timeout: 15000 });
+    
   } finally {
     if (!targetId) {
       console.warn('⚠️ No user id found - skipping cleanup');
