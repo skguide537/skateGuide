@@ -19,13 +19,30 @@ test.describe('Login Page', () => {
     }
   ];
   
-  // TODO: Need to add validation for error message
   TEST_CASES.forEach(testCase => {
     test(`Error Handling - ${testCase.name}`, async ({ page }) => {
-      await page.getByRole('textbox', { name: 'Email *' }).fill(testCase.email);
-      await page.getByRole('textbox', { name: 'Email *' }).press('Tab');
-      await page.getByRole('textbox', { name: 'Password *' }).fill(testCase.password);
+      const emailInput = page.getByRole('textbox', { name: 'Email *' });
+      const passwordInput = page.getByRole('textbox', { name: 'Password *' });
+
+      await emailInput.fill(testCase.email);
+      await emailInput.press('Tab');
+      await passwordInput.fill(testCase.password);
       await page.getByRole('button', { name: 'Sign in' }).click();
+
+      if(testCase.name === 'Invalid password') {
+        await expect(page.getByRole('alert').filter({ hasText: 'Unauthorized' }).first()).toBeVisible({ timeout: 15000 });
+
+        return; // Don't attempt submit when client-side validation fails
+      }
+
+      // For invalid email, native HTML validation should mark input invalid
+      if (testCase.name === 'Invalid email') {
+        const emailIsValid = await emailInput.evaluate(el => (el as HTMLInputElement).checkValidity());
+        expect(emailIsValid).toBe(false);
+        return; // Don't attempt submit when client-side validation fails
+      }
+
+      
     });
   });
 
