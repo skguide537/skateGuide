@@ -36,7 +36,7 @@ const TEST_CASES = [
 ];
 
 // TODO: Need to add validation for success message
-test('Create new user', async ({ page }) => {
+test('Register end to end', async ({ page }) => {
   const targetEmail = 'skateguide12testAccount@gmail.com';
   let targetId: string | undefined;
 
@@ -128,13 +128,6 @@ TEST_CASES.forEach(testCase => {
   });
 });
 
-test('Delete user', async ({ page }) => {
-    page.waitForTimeout(5000);
-  const deleteUrl = `http://localhost:3000/api/users/${createdUser._id}`;
-  const deleteRes = await page.request.delete(deleteUrl, {
-    headers: { 'x-user-id': process.env.DB_ADMIN_ID as string }
-  });
-  console.log('🔄 Response for delete:', deleteRes);
-});
+
 
 });
