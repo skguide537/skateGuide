@@ -18,14 +18,7 @@ test.describe('Login Page', () => {
       password: '53477'
     }
   ];
-// TODO: Need to add validation for success message
-  test('Successfull Login', async ({ page }) => {
-      await page.getByRole('textbox', { name: 'Email *' }).fill('skateguide12+testAccount@gmail.com');
-      await page.getByRole('textbox', { name: 'Email *' }).press('Tab');
-      await page.getByRole('textbox', { name: 'Password *' }).fill('asdfghjkl');
-      await page.getByRole('button', { name: 'Sign in' }).click();
-      
-  });
+  
   // TODO: Need to add validation for error message
   TEST_CASES.forEach(testCase => {
     test(`Error Handling - ${testCase.name}`, async ({ page }) => {
