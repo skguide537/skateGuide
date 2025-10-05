@@ -60,46 +60,56 @@ class GeocodingClient {
         return data.results || [];
     }
 
-    /**
-     * Search for streets using geocoding
-     */
-    async searchStreets(
-        query: string,
-        limit: number = 5
-    ): Promise<GeocodingResult[]> {
-        const params = new URLSearchParams({
-            type: 'street',
-            q: query,
-            limit: limit.toString(),
-        });
+  /**
+   * Search for streets using geocoding with optional context
+   */
+  async searchStreets(
+    query: string,
+    limit: number = 5,
+    context?: { country?: string; city?: string }
+  ): Promise<GeocodingResult[]> {
+    const params = new URLSearchParams({
+      type: 'street',
+      q: query,
+      limit: limit.toString(),
+    });
 
-        console.log('🔍 [GeocodingClient] Searching streets:', query);
-        const response = await fetch(`${this.baseUrl}?${params.toString()}`);
-
-        if (!response.ok) {
-            console.error('❌ [GeocodingClient] Street search failed:', response.status, response.statusText);
-            throw new Error(`Street search failed: ${response.statusText}`);
-        }
-
-        const data: GeocodingResponse = await response.json();
-        console.log('📄 [GeocodingClient] Street search response:', data);
-
-        // Check if data is an array (autocomplete response)
-        if (Array.isArray(data)) {
-            console.log('✅ [GeocodingClient] Array response detected for streets');
-            return data.map(item => ({ displayName: item, lat: '', lng: '', place_id: 0, type: '', importance: 0 }));
-        }
-
-        console.log('📋 [GeocodingClient] Returning street results:', data.results || []);
-        return data.results || [];
+    // Add context parameters if provided
+    if (context?.country) {
+      params.append('country', context.country);
+    }
+    if (context?.city) {
+      params.append('city', context.city);
     }
 
+    console.log('🔍 [GeocodingClient] Searching streets:', query, context ? `with context: ${JSON.stringify(context)}` : '');
+    const response = await fetch(`${this.baseUrl}?${params.toString()}`);
+    
+    if (!response.ok) {
+      console.error('❌ [GeocodingClient] Street search failed:', response.status, response.statusText);
+      throw new Error(`Street search failed: ${response.statusText}`);
+    }
+
+    const data: GeocodingResponse = await response.json();
+    console.log('📄 [GeocodingClient] Street search response:', data);
+    
+    // Check if data is an array (autocomplete response)
+    if (Array.isArray(data)) {
+      console.log('✅ [GeocodingClient] Array response detected for streets');
+      return data.map(item => ({ displayName: item, lat: '', lng: '', place_id: 0, type: '', importance: 0 }));
+    }
+    
+    console.log('📋 [GeocodingClient] Returning street results:', data.results || []);
+    return data.results || [];
+  }
+
     /**
-     * Search for cities using geocoding
+     * Search for cities using geocoding with optional country context
      */
     async searchCities(
         query: string,
-        limit: number = 5
+        limit: number = 5,
+        country?: string
     ): Promise<GeocodingResult[]> {
         const params = new URLSearchParams({
             type: 'city',
@@ -107,9 +117,14 @@ class GeocodingClient {
             limit: limit.toString(),
         });
 
-        console.log('🔍 [GeocodingClient] Searching cities:', query);
-        const response = await fetch(`${this.baseUrl}?${params.toString()}`);
+        // Add country context if provided
+        if (country) {
+            params.append('country', country);
+        }
 
+        console.log('🔍 [GeocodingClient] Searching cities:', query, country ? `in country: ${country}` : '');
+        const response = await fetch(`${this.baseUrl}?${params.toString()}`);
+        
         if (!response.ok) {
             console.error('❌ [GeocodingClient] City search failed:', response.status, response.statusText);
             throw new Error(`City search failed: ${response.statusText}`);
@@ -117,13 +132,13 @@ class GeocodingClient {
 
         const data: GeocodingResponse = await response.json();
         console.log('📄 [GeocodingClient] City search response:', data);
-
+        
         // Check if data is an array (autocomplete response)
         if (Array.isArray(data)) {
             console.log('✅ [GeocodingClient] Array response detected for cities');
             return data.map(item => ({ displayName: item, lat: '', lng: '', place_id: 0, type: '', importance: 0 }));
         }
-
+        
         console.log('📋 [GeocodingClient] Returning city results:', data.results || []);
         return data.results || [];
     }

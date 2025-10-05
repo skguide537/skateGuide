@@ -280,7 +280,12 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
              
              setIsLoadingStreet(true);
              try {
-                 const suggestions = await GeocodingService.searchStreetSuggestions(query);
+                 // Pass country and city context for better results
+                 const context = {
+                     country: country || undefined,
+                     city: city || undefined
+                 };
+                 const suggestions = await GeocodingService.searchStreetSuggestions(query, context);
                  setStreetSuggestions(suggestions);
              } catch (error) {
                  setStreetSuggestions([]);
@@ -288,7 +293,7 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
                  setIsLoadingStreet(false);
              }
          },
-         []
+         [country, city]
      );
 
          const debouncedFetchCity = useCallback(
@@ -297,7 +302,8 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
              
              setIsLoadingCity(true);
              try {
-                 const suggestions = await GeocodingService.searchCitySuggestions(query);
+                 // Pass country context for better results
+                 const suggestions = await GeocodingService.searchCitySuggestions(query, country || undefined);
                  setCitySuggestions(suggestions);
              } catch (error) {
                  setCitySuggestions([]);
@@ -305,7 +311,7 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
                  setIsLoadingCity(false);
              }
          },
-         []
+         [country]
      );
 
          const debouncedFetchCountry = useCallback(
