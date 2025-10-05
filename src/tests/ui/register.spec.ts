@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+let createdUser: any;
 
 test.describe('Register Page', () => {
   test.beforeEach(async ({ page }) => {
@@ -36,13 +37,63 @@ const TEST_CASES = [
 
 // TODO: Need to add validation for success message
 test('Create new user', async ({ page }) => {
-  await page.getByRole('textbox', { name: 'Name *' }).click();
-  await page.getByRole('textbox', { name: 'Name *' }).fill('Test');
-  await page.getByRole('textbox', { name: 'Email *' }).fill('skateguide12testAccount@gmail.com');
-  await page.getByRole('textbox', { name: 'Email *' }).press('Tab');
-  await page.getByRole('textbox', { name: 'Password *' }).fill('asdfghjkl');
-  await page.getByRole('button', { name: 'Sign up' }).click();
-  await expect(page.getByRole('alert').filter({ hasText: 'Account created successfully!' }).first()).toBeVisible({ timeout: 15000 });
+  const targetEmail = 'skateguide12testAccount@gmail.com';
+  let targetId: string | undefined;
+
+  try {
+    const responsePromise = page.waitForResponse(
+      (res) => res.url().includes('/api/auth/register') && res.request().method() === 'POST'
+    );
+
+    await page.getByRole('textbox', { name: 'Name *' }).click();
+    await page.getByRole('textbox', { name: 'Name *' }).fill('Test');
+    await page.getByRole('textbox', { name: 'Email *' }).fill(targetEmail);
+    await page.getByRole('textbox', { name: 'Email *' }).press('Tab');
+    await page.getByRole('textbox', { name: 'Password *' }).fill('asdfghjkl');
+    await page.getByRole('button', { name: 'Sign up' }).click();
+
+    const resp = await responsePromise;
+    createdUser = await resp.json();
+    if (createdUser?._id) targetId = createdUser._id;
+
+    await expect(page.getByRole('alert').filter({ hasText: 'Account created successfully!' }).first()).toBeVisible({ timeout: 15000 });
+  } finally {
+    if (!targetId) {
+      console.warn('⚠️ No user id found - skipping cleanup');
+      return;
+    }
+
+    const adminId = process.env.DB_ADMIN_ID as string | undefined;
+    if (!adminId) {
+      console.error('❌ DB_ADMIN_ID not found in environment variables');
+      console.warn('⚠️ Skipping cleanup - manual deletion may be required');
+      return;
+    }
+
+    await page.waitForTimeout(5000);
+    const deleteUrl = `http://localhost:3000/api/users/${targetId}`;
+    const deleteRes = await page.request.delete(deleteUrl, {
+      headers: { 'x-user-id': adminId }
+    }).catch((err) => {
+      console.error('❌ User cleanup request failed:', err);
+      return null;
+    });
+
+    if (deleteRes?.ok()) {
+      console.log('✅ Cleanup successful - user deleted');
+    } else if (deleteRes) {
+      const rawText = await deleteRes.text().catch(() => '');
+      console.error(`❌ Cleanup failed: status=${deleteRes.status()} method=DELETE url=${deleteUrl}`);
+      console.error(`↩︎ Response body: ${rawText}`);
+      console.warn('⚠️ Manual cleanup may be required for user:', targetId);
+    }
+  }
+
+
+    
+    
+
+   
 });
 
 TEST_CASES.forEach(testCase => {
@@ -76,4 +127,14 @@ TEST_CASES.forEach(testCase => {
     }
   });
 });
+
+test('Delete user', async ({ page }) => {
+    page.waitForTimeout(5000);
+  const deleteUrl = `http://localhost:3000/api/users/${createdUser._id}`;
+  const deleteRes = await page.request.delete(deleteUrl, {
+    headers: { 'x-user-id': process.env.DB_ADMIN_ID as string }
+  });
+  console.log('🔄 Response for delete:', deleteRes);
+});
+
 });
