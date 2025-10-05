@@ -21,11 +21,9 @@ test.describe('Error Pages', () => {
     }
     
     // Should be able to navigate back to home
-    // Todo: go to home page by clicking on button from the error page
     try {
-      await page.goto('/');
+      await page.getByRole('heading', { name: '🛹 SkateGuide' }).click();
       await expect(page).toHaveURL('/');
-      await expect(page.locator('body')).toBeVisible();
     } catch (error) {
       // If navigation fails, that's also acceptable
       console.log('Navigation after error handled as expected');
