@@ -38,10 +38,11 @@ const TEST_CASES = [
 test('Create new user', async ({ page }) => {
   await page.getByRole('textbox', { name: 'Name *' }).click();
   await page.getByRole('textbox', { name: 'Name *' }).fill('Test');
-  await page.getByRole('textbox', { name: 'Email *' }).fill('skateguide12+testAccount@gmail.com');
+  await page.getByRole('textbox', { name: 'Email *' }).fill('skateguide12testAccount@gmail.com');
   await page.getByRole('textbox', { name: 'Email *' }).press('Tab');
   await page.getByRole('textbox', { name: 'Password *' }).fill('asdfghjkl');
   await page.getByRole('button', { name: 'Sign up' }).click();
+  await expect(page.getByRole('alert').filter({ hasText: 'Account created successfully!' }).first()).toBeVisible({ timeout: 15000 });
 });
 
 TEST_CASES.forEach(testCase => {
