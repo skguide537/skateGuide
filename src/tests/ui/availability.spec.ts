@@ -112,7 +112,7 @@ test.describe('Availability', () => {
 
         test('/add-spot availability', async () => {
             await homePage.goto();
-            await testHelpers.login('test.user@skateguide.com', '123456');
+            await testHelpers.login(process.env.DB_ADMIN_EMAIL as string, process.env.DB_ADMIN_PASSWORD as string);
             await homePage.page.getByLabel('Add New Spot').getByRole('button').click();
             
             await expect(homePage.page).toHaveURL('/add-spot');
