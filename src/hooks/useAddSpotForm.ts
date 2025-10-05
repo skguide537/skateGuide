@@ -171,18 +171,24 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
 
     const searchAddress = async () => {
         try {
+            console.log('🔍 [useAddSpotForm] Starting address search with:', { fullAddress, street, city, state, country });
             setIsGeocoding(true);
             
             const result = await GeocodingService.searchAddress(fullAddress, { street, city, state, country });
+            console.log('📄 [useAddSpotForm] Address search result:', result);
             
             if (result && setValidatedCoords(result.lat, result.lng)) {
+                console.log('✅ [useAddSpotForm] Address search successful, setting coordinates');
                 setShowMap(true);
                 setLocationMethod('address');
                 
                 const shortAddress = GeocodingService.createShortAddress(result.displayName || fullAddress);
                 showToast(`Location found: ${shortAddress}`, 'success');
+            } else {
+                console.error('❌ [useAddSpotForm] Address search failed - invalid coordinates');
             }
         } catch (error: unknown) {
+            console.error('❌ [useAddSpotForm] Address search error:', error);
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             showToast(errorMessage, 'error');
         } finally {
@@ -211,6 +217,7 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
 
     // Address field handlers
     const handleAddressChange = (field: 'street' | 'city' | 'state' | 'country', value: string) => {
+        console.log('🔄 [useAddSpotForm] handleAddressChange called:', { field, value });
         if (locationMethod !== 'address') {
             setLocationMethod('address');
         }
@@ -219,15 +226,19 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
         
         switch (field) {
             case 'street':
+                console.log('📝 [useAddSpotForm] Setting street to:', value);
                 setStreet(value);
                 break;
             case 'city':
+                console.log('📝 [useAddSpotForm] Setting city to:', value);
                 setCity(value);
                 break;
             case 'state':
+                console.log('📝 [useAddSpotForm] Setting state to:', value);
                 setState(value);
                 break;
             case 'country':
+                console.log('📝 [useAddSpotForm] Setting country to:', value);
                 setCountry(value);
                 break;
         }
@@ -301,11 +312,15 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
          async (query: string) => {
              if (query.length < 2) return;
              
+             console.log('🔍 [useAddSpotForm] Fetching country suggestions for:', query);
              setIsLoadingCountry(true);
              try {
                  const suggestions = await GeocodingService.searchCountrySuggestions(query);
+                 console.log('📄 [useAddSpotForm] Country suggestions received:', suggestions);
                  setCountrySuggestions(suggestions);
+                 console.log('✅ [useAddSpotForm] Country suggestions set');
              } catch (error) {
+                 console.error('❌ [useAddSpotForm] Country suggestions error:', error);
                  setCountrySuggestions([]);
              } finally {
                  setIsLoadingCountry(false);

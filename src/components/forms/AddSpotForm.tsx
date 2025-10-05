@@ -267,16 +267,25 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                 freeSolo
                 options={streetSuggestions}
                 value={street}
-                onChange={(_, newValue) => handleAddressChange('street', newValue || '')}
-                onInputChange={(_, newInputValue) => {
-                                    setStreet(newInputValue);
-                                    fetchStreetSuggestions(newInputValue);
+                onChange={(_, newValue) => {
+                    if (newValue && typeof newValue === 'string') {
+                        handleAddressChange('street', newValue);
+                    }
                 }}
-                                loading={isLoadingStreet}
+                onInputChange={(_, newInputValue, reason) => {
+                    if (reason === 'input') {
+                        setStreet(newInputValue);
+                        fetchStreetSuggestions(newInputValue);
+                    } else if (reason === 'clear') {
+                        setStreet('');
+                    }
+                }}
+                loading={isLoadingStreet}
+                open={streetSuggestions.length > 0}
                 renderInput={(params) => (
                     <TextField
                         {...params}
-                                        label="Street"
+                        label="Street"
                         InputProps={{
                             ...params.InputProps,
                             endAdornment: (
@@ -293,16 +302,25 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                 freeSolo
                 options={citySuggestions}
                 value={city}
-                onChange={(_, newValue) => handleAddressChange('city', newValue || '')}
-                onInputChange={(_, newInputValue) => {
-                                    setCity(newInputValue);
-                                    fetchCitySuggestions(newInputValue);
+                onChange={(_, newValue) => {
+                    if (newValue && typeof newValue === 'string') {
+                        handleAddressChange('city', newValue);
+                    }
                 }}
-                                loading={isLoadingCity}
+                onInputChange={(_, newInputValue, reason) => {
+                    if (reason === 'input') {
+                        setCity(newInputValue);
+                        fetchCitySuggestions(newInputValue);
+                    } else if (reason === 'clear') {
+                        setCity('');
+                    }
+                }}
+                loading={isLoadingCity}
+                open={citySuggestions.length > 0}
                 renderInput={(params) => (
                     <TextField
                         {...params}
-                                        label="City"
+                        label="City"
                         InputProps={{
                             ...params.InputProps,
                             endAdornment: (
@@ -323,17 +341,28 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
             <Autocomplete
                 freeSolo
                 options={countrySuggestions}
-                value={country} 
-                onChange={(_, newValue) => handleAddressChange('country', newValue || '')}
-                onInputChange={(_, newInputValue) => {
-                                    setCountry(newInputValue);
-                                    fetchCountrySuggestions(newInputValue);
+                value={country}
+                onChange={(_, newValue) => {
+                    console.log('🔄 [Autocomplete] onChange fired with:', newValue);
+                    if (newValue && typeof newValue === 'string') {
+                        handleAddressChange('country', newValue);
+                    }
                 }}
-                                loading={isLoadingCountry}
+                onInputChange={(_, newInputValue, reason) => {
+                    console.log('⌨️ [Autocomplete] onInputChange fired:', { newInputValue, reason, currentCountry: country });
+                    if (reason === 'input') {
+                        setCountry(newInputValue);
+                        fetchCountrySuggestions(newInputValue);
+                    } else if (reason === 'clear') {
+                        setCountry('');
+                    }
+                }}
+                loading={isLoadingCountry}
+                open={countrySuggestions.length > 0}
                 renderInput={(params) => (
                     <TextField
                         {...params}
-                                        label="Country"
+                        label="Country"
                         InputProps={{
                             ...params.InputProps,
                             endAdornment: (
