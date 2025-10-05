@@ -24,10 +24,41 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
+// Helper function to sort results by relevance
+function sortByRelevance(results: string[], query: string): string[] {
+  const lowerQuery = query.toLowerCase();
+  
+  return results.sort((a, b) => {
+    const aLower = a.toLowerCase();
+    const bLower = b.toLowerCase();
+    
+    // 1. Exact match comes first
+    if (aLower === lowerQuery) return -1;
+    if (bLower === lowerQuery) return 1;
+    
+    // 2. Starts with query comes second
+    const aStartsWith = aLower.startsWith(lowerQuery);
+    const bStartsWith = bLower.startsWith(lowerQuery);
+    
+    if (aStartsWith && !bStartsWith) return -1;
+    if (!aStartsWith && bStartsWith) return 1;
+    
+    // 3. Contains query comes third
+    const aContains = aLower.includes(lowerQuery);
+    const bContains = bLower.includes(lowerQuery);
+    
+    if (aContains && !bContains) return -1;
+    if (!aContains && bContains) return 1;
+    
+    // 4. Shorter names come first (more specific)
+    return a.length - b.length;
+  });
+}
+
 // Helper function to deduplicate results
-function deduplicateResults(results: Record<string, any>[], field: string): string[] {
+function deduplicateResults(results: Record<string, any>[], field: string, query: string): string[] {
   const seen = new Set<string>();
-  return results
+  const uniqueResults = results
     .map(item => {
       let value: string;
       
@@ -52,8 +83,10 @@ function deduplicateResults(results: Record<string, any>[], field: string): stri
       if (seen.has(value)) return false;
       seen.add(value);
       return true;
-    })
-    .slice(0, 5); // Limit to 5 results
+    });
+  
+  // Sort by relevance and then limit to 5 results
+  return sortByRelevance(uniqueResults, query).slice(0, 5);
 }
 
 export async function GET(request: NextRequest) {
@@ -98,16 +131,19 @@ export async function GET(request: NextRequest) {
         let streetQuery = query;
         if (country) streetQuery += `, ${country}`;
         if (city) streetQuery += `, ${city}`;
-        nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(streetQuery)}&addressdetails=1&limit=${limit}&featuretype=street`;
+        // Request more results so we can sort by relevance
+        nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(streetQuery)}&addressdetails=1&limit=20&featuretype=street`;
         break;
       case 'city':
         // For city search, include country context if available
         let cityQuery = query;
         if (country) cityQuery += `, ${country}`;
-        nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityQuery)}&addressdetails=1&limit=${limit}&featuretype=city`;
+        // Request more results so we can sort by relevance
+        nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityQuery)}&addressdetails=1&limit=20&featuretype=city`;
         break;
       case 'country':
-        nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=${limit}&featuretype=country`;
+        // Request more results from Nominatim so we can sort and filter them ourselves
+        nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=20&featuretype=country`;
         break;
       case 'address':
         nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
@@ -153,8 +189,8 @@ export async function GET(request: NextRequest) {
         processedResults = null;
       }
     } else {
-      // For autocomplete, return deduplicated suggestions
-      processedResults = deduplicateResults(data, type);
+      // For autocomplete, return deduplicated and sorted suggestions
+      processedResults = deduplicateResults(data, type, query);
     }
 
     // Cache the results for 10 minutes
