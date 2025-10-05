@@ -1,6 +1,7 @@
 // Geocoding service for handling address searches and coordinate validation
 import { geocodingClient } from './geocodingClient';
 import { logger } from '@/lib/logger';
+import { filterCountries } from '@/constants/countries';
 
 export interface GeocodingResult {
     lat: number;
@@ -126,13 +127,13 @@ export class GeocodingService {
         });
     }
 
-    // Search for street suggestions
-    static async searchStreetSuggestions(query: string): Promise<string[]> {
+    // Search for street suggestions with optional context
+    static async searchStreetSuggestions(query: string, context?: { country?: string; city?: string }): Promise<string[]> {
         if (query.length < 2) return [];
         
         try {
-            console.log('🔍 [GeocodingService] Searching street suggestions for:', query);
-            const results = await geocodingClient.searchStreets(query, 5);
+            console.log('🔍 [GeocodingService] Searching street suggestions for:', query, context);
+            const results = await geocodingClient.searchStreets(query, 5, context);
             console.log('📄 [GeocodingService] Street suggestions results:', results);
             const suggestions = results.map(result => result.displayName);
             console.log('✅ [GeocodingService] Returning street suggestions:', suggestions);
@@ -144,13 +145,13 @@ export class GeocodingService {
         }
     }
 
-    // Search for city suggestions
-    static async searchCitySuggestions(query: string): Promise<string[]> {
+    // Search for city suggestions with optional country context
+    static async searchCitySuggestions(query: string, country?: string): Promise<string[]> {
         if (query.length < 2) return [];
         
         try {
-            console.log('🔍 [GeocodingService] Searching city suggestions for:', query);
-            const results = await geocodingClient.searchCities(query, 5);
+            console.log('🔍 [GeocodingService] Searching city suggestions for:', query, country ? `in country: ${country}` : '');
+            const results = await geocodingClient.searchCities(query, 5, country);
             console.log('📄 [GeocodingService] City suggestions results:', results);
             const suggestions = results.map(result => result.displayName);
             console.log('✅ [GeocodingService] Returning city suggestions:', suggestions);
@@ -168,6 +169,15 @@ export class GeocodingService {
         
         try {
             console.log('🔍 [GeocodingService] Searching country suggestions for:', query);
+            
+            // For short queries (< 6 chars), use local country list for better results
+            if (query.length < 6) {
+                const localResults = filterCountries(query, 5);
+                console.log('📋 [GeocodingService] Using local country list:', localResults);
+                return localResults;
+            }
+            
+            // For longer queries, use OpenStreetMap API
             const results = await geocodingClient.searchCountries(query, 5);
             console.log('📄 [GeocodingService] Country suggestions results:', results);
             const suggestions = results.map(result => result.displayName);
@@ -176,7 +186,8 @@ export class GeocodingService {
         } catch (error) {
             console.error('❌ [GeocodingService] Country autocomplete error:', error);
             logger.error('Country autocomplete error', error, 'GeocodingService');
-            return [];
+            // Fallback to local country list on error
+            return filterCountries(query, 5);
         }
     }
 }
