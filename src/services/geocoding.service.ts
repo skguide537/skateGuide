@@ -73,21 +73,28 @@ export class GeocodingService {
         }
         
         // Use our backend geocoding API
+        console.log('🔍 [GeocodingService] Searching address:', searchQuery);
         const results = await geocodingClient.searchAddress(searchQuery, 1);
+        console.log('📄 [GeocodingService] Address search results:', results);
         
         if (results.length === 0) {
+            console.error('❌ [GeocodingService] No results found for address:', searchQuery);
             throw new Error('No results found for this address');
         }
         
         const result = results[0];
+        console.log('📋 [GeocodingService] Using first result:', result);
         
-        if (result && result.lat && result.lon) {
-            return {
+        if (result && result.lat && result.lng) {
+            const geocodingResult = {
                 lat: parseFloat(result.lat),
-                lng: parseFloat(result.lon),
-                displayName: result.display_name || searchQuery
+                lng: parseFloat(result.lng),
+                displayName: result.displayName || searchQuery
             };
+            console.log('✅ [GeocodingService] Returning geocoding result:', geocodingResult);
+            return geocodingResult;
         } else {
+            console.error('❌ [GeocodingService] Invalid result structure:', result);
             throw new Error('Address not found. Please try a different address or use the map.');
         }
     }
@@ -124,9 +131,14 @@ export class GeocodingService {
         if (query.length < 2) return [];
         
         try {
+            console.log('🔍 [GeocodingService] Searching street suggestions for:', query);
             const results = await geocodingClient.searchStreets(query, 5);
-            return results.map(result => result.display_name);
+            console.log('📄 [GeocodingService] Street suggestions results:', results);
+            const suggestions = results.map(result => result.displayName);
+            console.log('✅ [GeocodingService] Returning street suggestions:', suggestions);
+            return suggestions;
         } catch (error) {
+            console.error('❌ [GeocodingService] Street autocomplete error:', error);
             logger.error('Street autocomplete error', error, 'GeocodingService');
             return [];
         }
@@ -137,9 +149,14 @@ export class GeocodingService {
         if (query.length < 2) return [];
         
         try {
+            console.log('🔍 [GeocodingService] Searching city suggestions for:', query);
             const results = await geocodingClient.searchCities(query, 5);
-            return results.map(result => result.display_name);
+            console.log('📄 [GeocodingService] City suggestions results:', results);
+            const suggestions = results.map(result => result.displayName);
+            console.log('✅ [GeocodingService] Returning city suggestions:', suggestions);
+            return suggestions;
         } catch (error) {
+            console.error('❌ [GeocodingService] City autocomplete error:', error);
             logger.error('City autocomplete error', error, 'GeocodingService');
             return [];
         }
@@ -150,9 +167,14 @@ export class GeocodingService {
         if (query.length < 2) return [];
         
         try {
+            console.log('🔍 [GeocodingService] Searching country suggestions for:', query);
             const results = await geocodingClient.searchCountries(query, 5);
-            return results.map(result => result.display_name);
+            console.log('📄 [GeocodingService] Country suggestions results:', results);
+            const suggestions = results.map(result => result.displayName);
+            console.log('✅ [GeocodingService] Returning country suggestions:', suggestions);
+            return suggestions;
         } catch (error) {
+            console.error('❌ [GeocodingService] Country autocomplete error:', error);
             logger.error('Country autocomplete error', error, 'GeocodingService');
             return [];
         }
