@@ -16,9 +16,27 @@ export async function connectTestDB(): Promise<void> {
   if (isConnected) return;
   
   try {
+    mongoose.set('bufferTimeoutMS', 30000); // 30 seconds for Atlas
+    
     await connectToDatabase();
+    
+    // Wait for connection to be fully ready 
+    let attempts = 0;
+    const maxAttempts = 30; // 15 seconds max
+    
+    while (mongoose.connection.readyState !== 1 && attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      attempts++;
+    }
+    
+    if (mongoose.connection.readyState !== 1) {
+      throw new Error(`Database connection not ready after ${maxAttempts * 0.5} seconds. ReadyState: ${mongoose.connection.readyState}`);
+    }
+    
+    // Extra wait to ensure mongoose is ready to accept queries
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
     isConnected = true;
-    console.log('✅ Connected to test database');
   } catch (error) {
     console.error('❌ Failed to connect to test database:', error);
     throw error;
@@ -35,7 +53,6 @@ export async function closeTestDB(): Promise<void> {
   try {
     await mongoose.connection.close();
     isConnected = false;
-    console.log('✅ Closed test database connection');
   } catch (error) {
     console.error('❌ Failed to close test database:', error);
     throw error;
