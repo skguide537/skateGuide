@@ -15,6 +15,7 @@ console.warn = (...args: any[]) => {
   const suppressPatterns = [
     'Mongoose: looks like you\'re trying to test a Mongoose app',
     'Failed to restore session',
+    'Reconnecting (readyState was:', // Expected when using cached connection
   ];
   
   if (suppressPatterns.some(pattern => message.includes(pattern))) {
