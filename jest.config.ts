@@ -2,7 +2,7 @@ import type { Config } from 'jest';
 
 const config: Config = {
   testTimeout: 60000, // Increased global timeout to 60 seconds
-  testEnvironment: 'jsdom',
+  testEnvironment: 'node',
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
       tsconfig: {
@@ -44,8 +44,9 @@ const config: Config = {
     '/node_modules/',
     '/src/tests/ui/', // Exclude Playwright tests
   ],
-  // Add global setup for integration tests
+  // Global setup and teardown for database connection
   globalSetup: '<rootDir>/src/tests/global-setup.ts',
+  globalTeardown: '<rootDir>/src/tests/global-teardown.ts',
 };
 
 export default config;
