@@ -1,16 +1,26 @@
-// Suppress Mongoose warnings during tests
+/**
+ * Suppress noisy warnings during tests
+ * Only suppresses known, harmless warnings - real errors will still show
+ */
+
+// Suppress Jest warnings
 process.env.SUPPRESS_JEST_WARNINGS = 'true';
 
-// Also suppress console warnings for cleaner test output
+// Filter console warnings for cleaner test output
 const originalWarn = console.warn;
 console.warn = (...args: any[]) => {
-  // Suppress Mongoose warnings
-  if (args[0]?.includes?.('Mongoose: looks like you\'re trying to test a Mongoose app')) {
-    return;
+  const message = args[0]?.toString() || '';
+  
+  // Suppress known harmless warnings
+  const suppressPatterns = [
+    'Mongoose: looks like you\'re trying to test a Mongoose app',
+    'Failed to restore session',
+  ];
+  
+  if (suppressPatterns.some(pattern => message.includes(pattern))) {
+    return; // Suppress this warning
   }
-  // Suppress other common warnings
-  if (args[0]?.includes?.('Failed to restore session')) {
-    return;
-  }
+  
+  // Show all other warnings
   originalWarn(...args);
 };
