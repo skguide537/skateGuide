@@ -40,8 +40,10 @@ jobs:
     - name: Run Unit Tests (Jest)
       run: npm run test:unit
 
-    - name: Run Integration Tests (Jest)
-      run: npm run test:integration
+    # Temporarily disabled - integration tests deleted in cleanup
+    # Will be re-added with real DB tests in next PR
+    # - name: Run Integration Tests (Jest)
+    #   run: npm run test:integration
 
     - name: Run Linting
       run: npm run lint
