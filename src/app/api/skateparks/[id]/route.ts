@@ -3,6 +3,7 @@ import { skateparkService } from "@/services/skatepark.service";
 import { convertToUploadedFile } from "@/lib/file-utils";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
+import { getUserFromRequest } from "@/lib/auth-helpers";
 
 // GET one skatepark
 export async function GET(
@@ -23,18 +24,45 @@ export async function PUT(
     { params }: { params: { id: string } }
 ) {
     try {
-        const userId = request.headers.get("x-user-id");
-        if (!userId) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        // 1. Authenticate user from JWT token
+        const currentUser = await getUserFromRequest(request);
+        
+        if (!currentUser) {
+            return NextResponse.json({ error: "Unauthorized - Please login" }, { status: 401 });
         }
 
+        // 2. Get skatepark to check ownership
+        const { db } = await connectToDatabase();
+        if (!db) {
+            return NextResponse.json({ error: "Database connection failed" }, { status: 500 });
+        }
+        
+        const skatepark = await db.collection('skateparks').findOne(
+            { _id: new ObjectId(params.id) }
+        );
+
+        if (!skatepark) {
+            return NextResponse.json({ error: "Skatepark not found" }, { status: 404 });
+        }
+
+        // 3. Check if user owns the skatepark OR is admin
+        const isOwner = skatepark.createdBy && skatepark.createdBy.toString() === currentUser._id.toString();
+        const isAdmin = currentUser.role === 'admin';
+
+        if (!isOwner && !isAdmin) {
+            return NextResponse.json({ 
+                error: "Forbidden - You can only edit your own skateparks" 
+            }, { status: 403 });
+        }
+
+        // 4. Update skatepark
         const formData = await request.formData();
         const updateData = JSON.parse(formData.get("data") as string);
         const files = formData.getAll("photos") as File[];
         
         const photos = await Promise.all(files.map(convertToUploadedFile));
-        const skatepark = await skateparkService.updateSkatepark(params.id, updateData, photos);
-        return NextResponse.json(skatepark);
+        const updatedSkatepark = await skateparkService.updateSkatepark(params.id, updateData, photos);
+        return NextResponse.json(updatedSkatepark);
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
@@ -46,26 +74,25 @@ export async function DELETE(
     { params }: { params: { id: string } }
 ) {
     try {
-        const userId = request.headers.get("x-user-id");
-        if (!userId) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        // 1. Authenticate user from JWT token
+        const currentUser = await getUserFromRequest(request);
+        
+        if (!currentUser) {
+            return NextResponse.json({ error: "Unauthorized - Please login" }, { status: 401 });
         }
 
-        // Get user to check admin role
+        // 2. Check if current user is admin (only admins can delete)
+        if (currentUser.role !== 'admin') {
+            return NextResponse.json({ error: "Forbidden - Admin access required" }, { status: 403 });
+        }
+
+        // 3. Connect to database
         const { db } = await connectToDatabase();
         if (!db) {
             return NextResponse.json({ error: "Database connection failed" }, { status: 500 });
         }
-        
-        const user = await db.collection('users').findOne(
-            { _id: new ObjectId(userId) },
-            { projection: { role: 1 } }
-        );
 
-        if (!user || user.role !== 'admin') {
-            return NextResponse.json({ error: "Admin access required" }, { status: 403 });
-        }
-
+        // 4. Delete skatepark
         const message = await skateparkService.deleteSkatepark(params.id);
         return NextResponse.json({ message });
     } catch (error: any) {
