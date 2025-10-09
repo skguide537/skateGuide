@@ -81,9 +81,9 @@ class SkateparkClient {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-user-id': userId,
       },
       body: JSON.stringify(skateparkData),
+      credentials: 'include', // Send cookies with request
     });
 
     if (!response.ok) {
@@ -106,10 +106,8 @@ class SkateparkClient {
   ): Promise<BaseSkatepark> {
     const response = await fetch(this.baseUrl, {
       method: 'POST',
-      headers: {
-        'x-user-id': userId,
-      },
       body: formData,
+      credentials: 'include', // Send cookies with request
     });
 
     if (!response.ok) {
@@ -129,9 +127,7 @@ class SkateparkClient {
   async deleteSkatepark(id: string, userId: string): Promise<DeleteSkateparkResponse> {
     const response = await fetch(`${this.baseUrl}/${id}`, {
       method: 'DELETE',
-      headers: {
-        'x-user-id': userId,
-      },
+      credentials: 'include', // Send cookies with request
     });
 
     if (!response.ok) {
@@ -156,9 +152,9 @@ class SkateparkClient {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-user-id': userId,
       },
       body: JSON.stringify(ratingData),
+      credentials: 'include', // Send cookies with request
     });
 
     if (!response.ok) {
@@ -183,9 +179,9 @@ class SkateparkClient {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-user-id': userId,
       },
       body: JSON.stringify({ reason }),
+      credentials: 'include', // Send cookies with request
     });
 
     if (!response.ok) {
