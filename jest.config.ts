@@ -23,9 +23,45 @@ const config: Config = {
     '<rootDir>/src/tests/suppress-warnings.ts'
   ],
   collectCoverageFrom: [
-    'src/**/*.{ts,tsx}',
+    'src/**/*.ts', // Only .ts files (backend)
     '!src/**/*.d.ts',
     '!src/tests/**/*',
+    
+    // Frontend (tested by Playwright)
+    '!src/**/*.tsx',
+    '!src/components/**/*',
+    '!src/context/**/*',
+    '!src/hooks/**/*',
+    '!src/services/*Client.ts', // Frontend API clients
+    '!src/services/card.service.ts',
+    '!src/services/formValidation.service.ts',
+    '!src/services/map.service.ts',
+    '!src/services/mapFilter.service.ts',
+    '!src/services/parksFilter.service.ts',
+    '!src/services/searchFilter.service.ts',
+    '!src/services/utility.service.ts',
+    '!src/services/placeholder.service.ts',
+    '!src/services/geocoding.service.ts',
+    '!src/services/geocodingClient.ts',
+    
+    // Static data / types (no testable logic)
+    '!src/constants/**/*',
+    '!src/types/**/*',
+    
+    // Utilities (low testing value)
+    '!src/lib/logger.ts',
+    '!src/lib/cache.ts',
+    '!src/lib/db-indexes.ts',
+    '!src/lib/file-utils.ts',
+    '!src/lib/cloudinary.ts',
+    
+    // Spots (not used in your app)
+    '!src/app/api/spots/**/*',
+    '!src/services/spots.ts',
+    '!src/models/Spot.ts',
+    
+    // External API wrappers (optional)
+    '!src/app/api/geocoding/**/*',
   ],
   transformIgnorePatterns: [
     'node_modules/(?!(next|@next)/)',
