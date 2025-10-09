@@ -1,8 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
-import { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
     try {
@@ -14,7 +13,7 @@ export async function GET(req: NextRequest) {
         const { db } = await connectToDatabase();
         if (!db) return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
         
-        const token = cookies().get('token')?.value;
+        const token = req.cookies.get('token')?.value;
         if (!token)  return NextResponse.json({ error: 'No token provided' }, { status: 401 });
         
         const secret = process.env.JWT_SECRET || 'your-secret-key';
