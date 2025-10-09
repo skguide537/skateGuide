@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import User from '../../models/User';
 import Spot from '../../models/Spot';
 import { SkateparkModel } from '../../models/skatepark.model';
+import { connectToDatabase } from '../../lib/mongodb';
 
 /**
  * Test data factories for creating realistic test data
@@ -31,6 +32,9 @@ export interface CreateTestUserOptions {
 export async function createTestUser(
   options: CreateTestUserOptions = {}
 ): Promise<any> {
+  // Ensure database connection is ready
+  await connectToDatabase();
+  
   userCounter++;
   
   const userData = {
@@ -68,6 +72,9 @@ export interface CreateTestSpotOptions {
 export async function createTestSpot(
   options: CreateTestSpotOptions
 ): Promise<any> {
+  // Ensure database connection is ready
+  await connectToDatabase();
+  
   const spotData = {
     name: options.name || `Test Spot ${Date.now()}`,
     description: options.description || 'A test spot for testing purposes',
