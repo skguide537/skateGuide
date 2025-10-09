@@ -1,20 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { skateparkService } from "@/services/skatepark.service";
+import { getUserFromRequest } from "@/lib/auth-helpers";
 
 export async function POST(
     request: NextRequest,
     { params }: { params: { id: string } }
 ) {
     try {
-        const userId = request.headers.get("x-user-id");
-        if (!userId) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        // Get authenticated user from JWT cookie
+        const currentUser = await getUserFromRequest(request);
+        if (!currentUser) {
+            return NextResponse.json({ error: "Unauthorized - Please login" }, { status: 401 });
         }
 
         const { rating } = await request.json();
         const message = await skateparkService.rateSkatepark(
             params.id,
-            userId,
+            currentUser._id.toString(),
             rating
         );
 

@@ -64,24 +64,43 @@ test('Register end to end', async ({ page }) => {
       return;
     }
 
-    const adminId = process.env.DB_ADMIN_ID as string | undefined;
-    if (!adminId) {
-      console.error('❌ DB_ADMIN_ID not found in environment variables');
+    const adminEmail = process.env.DB_ADMIN_EMAIL as string | undefined;
+    const adminPassword = process.env.DB_ADMIN_PASSWORD as string | undefined;
+    
+    if (!adminEmail || !adminPassword) {
+      console.error('❌ DB_ADMIN_EMAIL or DB_ADMIN_PASSWORD not found in environment variables');
       console.warn('⚠️ Skipping cleanup - manual deletion may be required');
       return;
     }
 
     await page.waitForTimeout(5000);
-    const deleteUrl = `http://localhost:3000/api/users/${targetId}`;
-    const deleteRes = await page.request.delete(deleteUrl, {
-      headers: { 'x-user-id': adminId }
+    
+    // Step 1: Login as admin to get JWT token in cookie
+    const loginUrl = 'http://localhost:3000/api/auth/login';
+    const loginRes = await page.request.post(loginUrl, {
+      data: {
+        email: adminEmail,
+        password: adminPassword
+      }
     }).catch((err) => {
+      console.error('❌ Admin login failed:', err);
+      return null;
+    });
+
+    if (!loginRes || !loginRes.ok()) {
+      console.error('❌ Admin login failed - cannot cleanup user');
+      console.warn('⚠️ Manual cleanup may be required for user:', targetId);
+      return;
+    }
+
+    // Step 2: Delete user with JWT token (automatically set in cookies)
+    const deleteUrl = `http://localhost:3000/api/users/${targetId}`;
+    const deleteRes = await page.request.delete(deleteUrl).catch((err) => {
       console.error('❌ User cleanup request failed:', err);
       return null;
     });
 
     if (deleteRes?.ok()) {
-      console.log('✅ Cleanup successful - user deleted');
     } else if (deleteRes) {
       const rawText = await deleteRes.text().catch(() => '');
       console.error(`❌ Cleanup failed: status=${deleteRes.status()} method=DELETE url=${deleteUrl}`);
