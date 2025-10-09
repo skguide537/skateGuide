@@ -33,8 +33,8 @@ export async function connectTestDB(): Promise<void> {
       throw new Error(`Database connection not ready after ${maxAttempts * 0.5} seconds. ReadyState: ${mongoose.connection.readyState}`);
     }
     
-    // Extra wait to ensure mongoose is ready to accept queries
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Extra wait to ensure mongoose is ready to accept queries (especially for Atlas)
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
     isConnected = true;
   } catch (error) {
