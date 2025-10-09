@@ -3,6 +3,7 @@ import { skateparkService } from "@/services/skatepark.service";
 import { convertToUploadedFile } from "@/lib/file-utils";
 import { Tag } from "@/types/enums";
 import { connectToDatabase } from "@/lib/mongodb";
+import { getUserFromRequest } from "@/lib/auth-helpers";
 
 // GET all skateparks
 export async function GET(request: NextRequest) {
@@ -99,16 +100,18 @@ export async function POST(request: NextRequest) {
         }
 
         await connectToDatabase();
-        const userId = request.headers.get("x-user-id");
-        if (!userId) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        
+        // Get authenticated user from JWT cookie
+        const currentUser = await getUserFromRequest(request);
+        if (!currentUser) {
+            return NextResponse.json({ error: "Unauthorized - Please login" }, { status: 401 });
         }
 
         const formData = await request.formData();
         const parkData = JSON.parse(formData.get("data") as string);
         const files = formData.getAll("photos") as File[];
         const photos = await Promise.all(files.map(convertToUploadedFile));
-        const skatepark = await skateparkService.addSkatepark(parkData, photos, userId);
+        const skatepark = await skateparkService.addSkatepark(parkData, photos, currentUser._id.toString());
         return NextResponse.json(skatepark, { status: 201 });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

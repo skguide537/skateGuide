@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
+import { getUserFromRequest } from "@/lib/auth-helpers";
 
 // GET user's favorites or public counts per spot
 export async function GET(request: NextRequest) {
@@ -30,13 +31,14 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ counts });
         }
 
-        const userId = request.headers.get("x-user-id");
-        if (!userId) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        // Get authenticated user from JWT cookie
+        const currentUser = await getUserFromRequest(request);
+        if (!currentUser) {
+            return NextResponse.json({ error: "Unauthorized - Please login" }, { status: 401 });
         }
 
         const user = await db.collection('users').findOne(
-            { _id: new ObjectId(userId) },
+            { _id: new ObjectId(currentUser._id) },
             { projection: { favorites: 1 } }
         );
 
@@ -59,9 +61,10 @@ export async function GET(request: NextRequest) {
 // POST add/remove spot from favorites (toggle)
 export async function POST(request: NextRequest) {
     try {
-        const userId = request.headers.get("x-user-id");
-        if (!userId) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        // Get authenticated user from JWT cookie
+        const currentUser = await getUserFromRequest(request);
+        if (!currentUser) {
+            return NextResponse.json({ error: "Unauthorized - Please login" }, { status: 401 });
         }
 
         const { spotId } = await request.json();
@@ -86,7 +89,7 @@ export async function POST(request: NextRequest) {
 
         // Get current user favorites
         const user = await db.collection('users').findOne(
-            { _id: new ObjectId(userId) },
+            { _id: new ObjectId(currentUser._id) },
             { projection: { favorites: 1 } }
         );
 
@@ -112,7 +115,7 @@ export async function POST(request: NextRequest) {
 
         // Update user's favorites
         await db.collection('users').updateOne(
-            { _id: new ObjectId(userId) },
+            { _id: new ObjectId(currentUser._id) },
             { $set: { favorites: newFavorites } }
         );
 

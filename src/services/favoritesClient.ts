@@ -24,9 +24,7 @@ class FavoritesClient {
    */
   async getFavorites(userId: string): Promise<string[]> {
     const response = await fetch(this.baseUrl, {
-      headers: {
-        'x-user-id': userId,
-      },
+      credentials: 'include', // Send cookies with request
     });
 
     if (!response.ok) {
@@ -67,9 +65,9 @@ class FavoritesClient {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-user-id': userId,
       },
       body: JSON.stringify({ spotId }),
+      credentials: 'include', // Send cookies with request
     });
 
     if (!response.ok) {
@@ -91,9 +89,9 @@ class FavoritesClient {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-user-id': userId,
       },
       body: JSON.stringify({ spotId }),
+      credentials: 'include', // Send cookies with request
     });
 
     if (!response.ok) {
@@ -112,9 +110,9 @@ class FavoritesClient {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'x-user-id': userId,
       },
       body: JSON.stringify({ spotId }),
+      credentials: 'include', // Send cookies with request
     });
 
     if (!response.ok) {

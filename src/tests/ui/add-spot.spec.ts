@@ -72,7 +72,6 @@ test.describe('Add Spot Page', () => {
 
         let targetId: string | undefined;
         try {
-            console.log('🚀 Submitting skatepark...');
 
             // Capture the POST response to get the created skatepark ID
             const responsePromise = page.waitForResponse(
@@ -86,40 +85,49 @@ test.describe('Add Spot Page', () => {
 
             if (createdPark?._id) {
                 targetId = createdPark._id;
-                console.log(`✅ Skatepark created with ID: ${targetId}`);
             } else {
                 console.error('❌ No _id in response:', createdPark);
             }
 
-            console.log('✅ Waiting for success toast...');
             await expect(page.getByRole('alert').filter({ hasText: 'Skatepark added!' }).first()).toBeVisible({ timeout: 15000 });
-            console.log('✅ Toast visible');
 
             await expect(page).toHaveURL('/', { timeout: 15000 });
-            console.log('✅ Redirected to home page');
         } finally {
             if (targetId) {
-                console.log(`🗑️ Cleaning up: deleting skatepark ${targetId}...`);
 
-                const adminId = process.env.DB_ADMIN_ID;
-                if (!adminId) {
-                    console.error('❌ DB_ADMIN_ID not found in environment variables');
+                const adminEmail = process.env.DB_ADMIN_EMAIL;
+                const adminPassword = process.env.DB_ADMIN_PASSWORD;
+                
+                if (!adminEmail || !adminPassword) {
+                    console.error('❌ DB_ADMIN_EMAIL or DB_ADMIN_PASSWORD not found in environment variables');
                     console.warn('⚠️ Skipping cleanup - manual deletion required');
                     return;
                 }
 
-
-                const deleteRes = await page.request.delete(`http://localhost:3000/api/skateparks/${targetId}`, {
-                    headers: {
-                        'x-user-id': adminId
+                // Step 1: Login as admin to get JWT token
+                const loginRes = await page.request.post('http://localhost:3000/api/auth/login', {
+                    data: {
+                        email: adminEmail,
+                        password: adminPassword
                     }
                 }).catch((err) => {
+                    console.error('❌ Admin login failed:', err);
+                    return null;
+                });
+
+                if (!loginRes || !loginRes.ok()) {
+                    console.error('❌ Admin login failed - cannot cleanup skatepark');
+                    console.warn('⚠️ Manual cleanup required for ID:', targetId);
+                    return;
+                }
+
+                // Step 2: Delete skatepark with JWT token (automatically set in cookies)
+                const deleteRes = await page.request.delete(`http://localhost:3000/api/skateparks/${targetId}`).catch((err) => {
                     console.error('❌ Cleanup request failed:', err);
                     return null;
                 });
 
                 if (deleteRes?.ok()) {
-                    console.log('✅ Cleanup successful - skatepark deleted');
                 } else if (deleteRes) {
                     const errorBody = await deleteRes.json().catch(() => ({}));
                     console.error(`❌ Cleanup failed with status ${deleteRes.status()}:`, errorBody);
