@@ -2,22 +2,10 @@ import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/context/ToastContext';
 import { useUser } from '@/context/UserContext';
-import { GeocodingService, GeocodingResult, AddressField } from '@/services/geocoding.service';
 import { FormValidationService, SpotFormData } from '@/services/formValidation.service';
 import { skateparkClient } from '@/services/skateparkClient';
 import { Size, Tag, SkaterLevel } from '@/types/enums';
-
-// Debounce utility function
-function debounce<T extends (...args: any[]) => any>(
-    func: T,
-    wait: number
-): (...args: Parameters<T>) => void {
-    let timeout: NodeJS.Timeout;
-    return (...args: Parameters<T>) => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func(...args), wait);
-    };
-}
+import { GeoapifyService, GeoapifyResult } from '@/services/geoapify.service';
 
 export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setCoords: (coords: { lat: number; lng: number }) => void) => {
     // Form state
@@ -50,21 +38,13 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
     
     // Address state
     const [fullAddress, setFullAddress] = useState('');
-    const [street, setStreet] = useState('');
-    const [city, setCity] = useState('');
-    const [state, setState] = useState('');
-    const [country, setCountry] = useState('');
     const [showMap, setShowMap] = useState(false);
-    const [isGeocoding, setIsGeocoding] = useState(false);
     const [locationMethod, setLocationMethod] = useState<'address' | 'gps' | 'map' | null>(null);
     
-    // Autocomplete state
-    const [streetSuggestions, setStreetSuggestions] = useState<string[]>([]);
-    const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
-    const [countrySuggestions, setCountrySuggestions] = useState<string[]>([]);
-    const [isLoadingStreet, setIsLoadingStreet] = useState(false);
-    const [isLoadingCity, setIsLoadingCity] = useState(false);
-    const [isLoadingCountry, setIsLoadingCountry] = useState(false);
+    // Geoapify autocomplete state
+    const [addressSuggestions, setAddressSuggestions] = useState<GeoapifyResult[]>([]);
+    const [isLoadingAddress, setIsLoadingAddress] = useState(false);
+    const [selectedResult, setSelectedResult] = useState<GeoapifyResult | null>(null);
 
     const { user } = useUser();
     const { showToast, invalidateCache } = useToast();
@@ -91,8 +71,7 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
             tags: tagList,
             coords,
             locationMethod,
-            fullAddress,
-            structuredAddress: { street, city, state, country }
+            fullAddress
         };
 
         const validation = FormValidationService.validateForm(formData);
@@ -152,61 +131,41 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
     // Location methods
     const getMyLocation = async () => {
         try {
-            const location = await GeocodingService.getCurrentLocation();
-            if (setValidatedCoords(location.lat, location.lng)) {
-                setLocationMethod('gps');
-                // Clear address fields when using GPS but keep map visible
-                setStreet('');
-                setCity('');
-                setState('');
-                setCountry('');
-                setShowMap(true); // Keep map open when using GPS
-                showToast(`Location set: ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`, 'success');
+            // Use browser's geolocation API
+            if (!("geolocation" in navigator)) {
+                throw new Error("Geolocation is not supported in your browser");
             }
-        } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            showToast(errorMessage, 'error');
-        }
-    };
 
-    const searchAddress = async () => {
-        try {
-            console.log('🔍 [useAddSpotForm] Starting address search with:', { fullAddress, street, city, state, country });
-            setIsGeocoding(true);
+            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject);
+            });
+
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
             
-            const result = await GeocodingService.searchAddress(fullAddress, { street, city, state, country });
-            console.log('📄 [useAddSpotForm] Address search result:', result);
-            
-            if (result && setValidatedCoords(result.lat, result.lng)) {
-                console.log('✅ [useAddSpotForm] Address search successful, setting coordinates');
-                setShowMap(true);
-                setLocationMethod('address');
-                
-                const shortAddress = GeocodingService.createShortAddress(result.displayName || fullAddress);
-                showToast(`Location found: ${shortAddress}`, 'success');
-            } else {
-                console.error('❌ [useAddSpotForm] Address search failed - invalid coordinates');
+            if (setValidatedCoords(lat, lng)) {
+                setLocationMethod('gps');
+                setFullAddress(''); // Clear address when using GPS
+                setShowMap(true); // Keep map open when using GPS
+                showToast(`Location set: ${lat.toFixed(4)}, ${lng.toFixed(4)}`, 'success');
             }
         } catch (error: unknown) {
-            console.error('❌ [useAddSpotForm] Address search error:', error);
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            const errorMessage = error instanceof Error ? error.message : 'Unable to get location';
             showToast(errorMessage, 'error');
-        } finally {
-            setIsGeocoding(false);
         }
     };
 
     const handleMapClick = (coords: { lat: number; lng: number }) => {
         if (setValidatedCoords(coords.lat, coords.lng)) {
             setLocationMethod('map');
-            clearAddressFields();
+            setFullAddress(''); // Clear address when selecting from map
             showToast(`Location selected on map: ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`, 'success');
         }
     };
 
     // Coordinate validation
     const setValidatedCoords = (lat: number, lng: number) => {
-        if (GeocodingService.validateCoordinates(lat, lng)) {
+        if (GeoapifyService.validateCoordinates(lat, lng)) {
             setCoords({ lat, lng });
             return true;
         } else {
@@ -215,140 +174,57 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
         }
     };
 
-    // Address field handlers
-    const handleAddressChange = (field: 'street' | 'city' | 'state' | 'country', value: string) => {
-        console.log('🔄 [useAddSpotForm] handleAddressChange called:', { field, value });
-        if (locationMethod !== 'address') {
+    // Geoapify autocomplete functions
+    const debouncedFetchAddress = useCallback(
+        async (query: string) => {
+            if (query.length < 3) {
+                setAddressSuggestions([]);
+                return;
+            }
+
+            setIsLoadingAddress(true);
+            try {
+                const results = await GeoapifyService.searchAddress(query, 5);
+                // Prioritize Israeli addresses for Israeli users
+                const sortedResults = GeoapifyService.sortForIsraeliUsers(results);
+                setAddressSuggestions(sortedResults);
+            } catch (error) {
+                console.error('Address search error:', error);
+                setAddressSuggestions([]);
+                const errorMessage = error instanceof Error ? error.message : 'Address search failed';
+                showToast(errorMessage, 'error');
+            } finally {
+                setIsLoadingAddress(false);
+            }
+        },
+        [showToast]
+    );
+
+    // Debounce wrapper (500ms delay)
+    const fetchAddressSuggestions = useCallback((query: string) => {
+        const timeoutId = setTimeout(() => debouncedFetchAddress(query), 500);
+        return () => clearTimeout(timeoutId);
+    }, [debouncedFetchAddress]);
+
+    // Handle address selection from dropdown
+    const handleAddressSelect = useCallback((result: GeoapifyResult | null) => {
+        if (!result) return;
+
+        setSelectedResult(result);
+        setFullAddress(result.formatted);
+        
+        // Validate and set coordinates
+        if (GeoapifyService.validateCoordinates(result.lat, result.lon)) {
+            setCoords({ lat: result.lat, lng: result.lon });
             setLocationMethod('address');
+            setShowMap(true);
+            
+            const shortAddress = GeoapifyService.formatShortAddress(result);
+            showToast(`Location set: ${shortAddress}`, 'success');
+        } else {
+            showToast('Invalid coordinates received', 'error');
         }
-        
-        setFullAddress('');
-        
-        switch (field) {
-            case 'street':
-                console.log('📝 [useAddSpotForm] Setting street to:', value);
-                setStreet(value);
-                break;
-            case 'city':
-                console.log('📝 [useAddSpotForm] Setting city to:', value);
-                setCity(value);
-                break;
-            case 'state':
-                console.log('📝 [useAddSpotForm] Setting state to:', value);
-                setState(value);
-                break;
-            case 'country':
-                console.log('📝 [useAddSpotForm] Setting country to:', value);
-                setCountry(value);
-                break;
-        }
-        
-        if (locationMethod !== 'address') {
-            clearSuggestions();
-        }
-    };
-    
-    const handleFullAddressChange = (value: string) => {
-        if (locationMethod !== 'address') {
-            setLocationMethod('address');
-        }
-        
-        setFullAddress(value);
-        clearAddressFields();
-        clearSuggestions();
-    };
-
-    // Helper functions
-    const clearAddressFields = () => {
-        setStreet('');
-        setCity('');
-        setState('');
-        setCountry('');
-        setShowMap(false);
-    };
-
-    const clearSuggestions = () => {
-        setStreetSuggestions([]);
-        setCitySuggestions([]);
-        setCountrySuggestions([]);
-    };
-
-    // Debounced autocomplete functions
-         const debouncedFetchStreet = useCallback(
-         async (query: string) => {
-             if (query.length < 2) return;
-             
-             setIsLoadingStreet(true);
-             try {
-                 // Pass country and city context for better results
-                 const context = {
-                     country: country || undefined,
-                     city: city || undefined
-                 };
-                 const suggestions = await GeocodingService.searchStreetSuggestions(query, context);
-                 setStreetSuggestions(suggestions);
-             } catch (error) {
-                 setStreetSuggestions([]);
-             } finally {
-                 setIsLoadingStreet(false);
-             }
-         },
-         [country, city]
-     );
-
-         const debouncedFetchCity = useCallback(
-         async (query: string) => {
-             if (query.length < 2) return;
-             
-             setIsLoadingCity(true);
-             try {
-                 // Pass country context for better results
-                 const suggestions = await GeocodingService.searchCitySuggestions(query, country || undefined);
-                 setCitySuggestions(suggestions);
-             } catch (error) {
-                 setCitySuggestions([]);
-             } finally {
-                 setIsLoadingCity(false);
-             }
-         },
-         [country]
-     );
-
-         const debouncedFetchCountry = useCallback(
-         async (query: string) => {
-             if (query.length < 2) return;
-             
-             console.log('🔍 [useAddSpotForm] Fetching country suggestions for:', query);
-             setIsLoadingCountry(true);
-             try {
-                 const suggestions = await GeocodingService.searchCountrySuggestions(query);
-                 console.log('📄 [useAddSpotForm] Country suggestions received:', suggestions);
-                 setCountrySuggestions(suggestions);
-                 console.log('✅ [useAddSpotForm] Country suggestions set');
-             } catch (error) {
-                 console.error('❌ [useAddSpotForm] Country suggestions error:', error);
-                 setCountrySuggestions([]);
-             } finally {
-                 setIsLoadingCountry(false);
-             }
-         },
-         []
-     );
-
-         const fetchStreetSuggestions = useCallback((query: string) => {
-         const timeoutId = setTimeout(() => debouncedFetchStreet(query), 500);
-         return () => clearTimeout(timeoutId);
-     }, [debouncedFetchStreet]);
- 
-     const fetchCitySuggestions = useCallback((query: string) => {
-         const timeoutId = setTimeout(() => debouncedFetchCity(query), 500);
-         return () => clearTimeout(timeoutId);
-     }, [debouncedFetchCity]);
- 
-     const fetchCountrySuggestions = useCallback((query: string) => {
-         const timeoutId = setTimeout(() => debouncedFetchCountry(query), 500);
-         return () => clearTimeout(timeoutId);
-     }, [debouncedFetchCountry]);
+    }, [setCoords, showToast]);
 
     // External links
     const addExternalLink = () => {
@@ -378,21 +254,13 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
         
         // Address state
         fullAddress, setFullAddress,
-        street, setStreet,
-        city, setCity,
-        state, setState,
-        country, setCountry,
         showMap, setShowMap,
-        isGeocoding,
         locationMethod,
         
-        // Autocomplete state
-        streetSuggestions, setStreetSuggestions,
-        citySuggestions, setCitySuggestions,
-        countrySuggestions, setCountrySuggestions,
-        isLoadingStreet,
-        isLoadingCity,
-        isLoadingCountry,
+        // Geoapify autocomplete state
+        addressSuggestions,
+        isLoadingAddress,
+        selectedResult,
         
         // Constants
         sizes,
@@ -405,13 +273,9 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
         // Functions
         handleSubmit,
         getMyLocation,
-        searchAddress,
         handleMapClick,
-        handleAddressChange,
-        handleFullAddressChange,
-        fetchStreetSuggestions,
-        fetchCitySuggestions,
-        fetchCountrySuggestions,
+        fetchAddressSuggestions,
+        handleAddressSelect,
         addExternalLink,
         removeExternalLink,
         handleLevelChange,
@@ -426,8 +290,7 @@ export const useAddSpotForm = (coords: { lat: number; lng: number } | null, setC
             tags: tagList,
             coords,
             locationMethod,
-            fullAddress,
-            structuredAddress: { street, city, state, country }
+            fullAddress
         })
     };
 };

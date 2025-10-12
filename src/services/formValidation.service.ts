@@ -9,12 +9,6 @@ export interface SpotFormData {
     coords: { lat: number; lng: number } | null;
     locationMethod: 'address' | 'gps' | 'map' | null;
     fullAddress: string;
-    structuredAddress: {
-        street: string;
-        city: string;
-        state: string;
-        country: string;
-    };
 }
 
 export interface ValidationResult {
@@ -47,15 +41,10 @@ export class FormValidationService {
             errors.push('Please select a location using "Search Address", "Use My Location", or click on the map.');
         }
 
-        // Smart address validation - only require address fields if using address method
+        // Address validation - require address if using address method
         if (data.locationMethod === 'address' && !data.coords) {
-            const hasFullAddress = data.fullAddress.trim();
-            const hasStructuredAddress = data.structuredAddress.country.trim() && 
-                                       data.structuredAddress.city.trim() && 
-                                       data.structuredAddress.street.trim();
-            
-            if (!hasFullAddress && !hasStructuredAddress) {
-                errors.push('Please enter either a full address or complete the structured address fields');
+            if (!data.fullAddress.trim()) {
+                errors.push('Please enter an address or select a location from the map');
             }
         }
 
@@ -82,15 +71,8 @@ export class FormValidationService {
         return coords !== null;
     }
 
-    static validateAddress(
-        fullAddress: string, 
-        structuredAddress: { street: string; city: string; state: string; country: string }
-    ): boolean {
-        const hasFullAddress = fullAddress.trim().length > 0;
-        const hasStructuredAddress = structuredAddress.street.trim().length > 0 && 
-                                   structuredAddress.city.trim().length > 0;
-        
-        return hasFullAddress || hasStructuredAddress;
+    static validateAddress(fullAddress: string): boolean {
+        return fullAddress.trim().length > 0;
     }
 
     // Get field-specific error messages
