@@ -111,7 +111,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     fetchFavorites();
-  }, []); // Remove fetchFavorites dependency - it causes infinite loops
+  }, [fetchFavorites]); 
 
   const value = useMemo(() => ({
     favorites,
