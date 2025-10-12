@@ -4,6 +4,7 @@ import { Box, Button, Chip, FormControl, FormLabel, InputLabel, MenuItem, Outlin
 import { useTheme } from '@/context/ThemeContext';
 import AddSpotMap from '@/components/map/AddSpotMap';
 import { useAddSpotForm } from '@/hooks/useAddSpotForm';
+import { GeoapifyService } from '@/services/geoapify.service';
 
 interface AddSpotFormProps {
   coords: { lat: number; lng: number } | null;
@@ -29,21 +30,13 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
         
         // Address state
         fullAddress, setFullAddress,
-        street, setStreet,
-        city, setCity,
-        state, setState,
-        country, setCountry,
         showMap, setShowMap,
-        isGeocoding,
         locationMethod,
-    
-    // Autocomplete state
-        streetSuggestions, setStreetSuggestions,
-        citySuggestions, setCitySuggestions,
-        countrySuggestions, setCountrySuggestions,
-        isLoadingStreet,
-        isLoadingCity,
-        isLoadingCountry,
+        
+        // Geoapify autocomplete state
+        addressSuggestions,
+        isLoadingAddress,
+        selectedResult,
         
         // Constants
         sizes,
@@ -56,13 +49,9 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
         // Functions
         handleSubmit,
         getMyLocation,
-        searchAddress,
         handleMapClick,
-        handleAddressChange,
-        handleFullAddressChange,
-        fetchStreetSuggestions,
-        fetchCitySuggestions,
-        fetchCountrySuggestions,
+        fetchAddressSuggestions,
+        handleAddressSelect,
         addExternalLink,
         removeExternalLink,
         handleLevelChange,
@@ -227,156 +216,102 @@ export default function AddSpotForm({ coords, setCoords }: AddSpotFormProps) {
                     📍 Location
                 </Typography>
             
-                    {/* Quick Entry - Full Address */}
+                    {/* Address Search with Autocomplete */}
                     <Box sx={{ mb: 2 }}>
                         <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)', mb: 1, fontWeight: 500 }}>
-                            🚀 Quick Entry - Full Address
+                            🔍 Search Address (Hebrew & English supported)
                         </Typography>
-                        <TextField
-                            fullWidth
-                            placeholder="e.g., R. António Ferro, 2765-503 Estoril, Portugal"
-                            value={fullAddress}
-                            onChange={(e) => handleFullAddressChange(e.target.value)}
-                            sx={{ mb: 1 }}
+                        <Autocomplete
+                            freeSolo
+                            options={addressSuggestions}
+                            value={selectedResult}
+                            loading={isLoadingAddress}
+                            getOptionLabel={(option) => 
+                                typeof option === 'string' ? option : option.formatted
+                            }
+                            onChange={(_, newValue) => {
+                                if (newValue && typeof newValue !== 'string') {
+                                    handleAddressSelect(newValue);
+                                }
+                            }}
+                            onInputChange={(_, newInputValue, reason) => {
+                                if (reason === 'input') {
+                                    setFullAddress(newInputValue);
+                                    fetchAddressSuggestions(newInputValue);
+                                } else if (reason === 'clear') {
+                                    setFullAddress('');
+                                }
+                            }}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    placeholder="Type at least 3 characters... (e.g., רחוב בן גוריון, תל אביב or Main Street, New York)"
+                                    fullWidth
+                                    InputProps={{
+                                        ...params.InputProps,
+                                        endAdornment: (
+                                            <>
+                                                {isLoadingAddress ? <CircularProgress color="inherit" size={20} /> : null}
+                                                {params.InputProps.endAdornment}
+                                            </>
+                                        ),
+                                    }}
+                                    sx={{ mb: 2 }}
+                                />
+                            )}
+                            renderOption={(props, option) => {
+                                const icon = GeoapifyService.getResultTypeIcon(option.resultType);
+                                return (
+                                    <li {...props} key={option.placeId}>
+                                        <Box sx={{ display: 'flex', alignItems: 'flex-start', width: '100%', py: 0.5 }}>
+                                            <Typography sx={{ mr: 1.5, fontSize: '1.3rem', minWidth: '24px' }}>
+                                                {icon}
+                                            </Typography>
+                                            <Box sx={{ flex: 1, overflow: 'hidden' }}>
+                                                <Typography 
+                                                    variant="body2" 
+                                                    sx={{ 
+                                                        fontWeight: 500,
+                                                        color: 'var(--color-text-primary)',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap'
+                                                    }}
+                                                >
+                                                    {option.formatted}
+                                                </Typography>
+                                                {option.city && option.country && (
+                                                    <Typography 
+                                                        variant="caption" 
+                                                        sx={{ 
+                                                            color: 'var(--color-text-secondary)',
+                                                            display: 'block'
+                                                        }}
+                                                    >
+                                                        {option.city}, {option.country}
+                                                    </Typography>
+                                                )}
+                                            </Box>
+                                        </Box>
+                                    </li>
+                                );
+                            }}
+                            filterOptions={(x) => x}
+                            noOptionsText={
+                                fullAddress.length < 3 
+                                    ? "Type at least 3 characters to search..." 
+                                    : "No addresses found"
+                            }
                         />
-                        <Button
-                            variant="outlined"
-                            onClick={searchAddress}
-                            disabled={isGeocoding}
-                            startIcon={isGeocoding ? <CircularProgress size={16} /> : null}
-                            sx={{ mr: 1 }}
-                        >
-                            {isGeocoding ? 'Searching...' : 'Search Address'}
-                        </Button>
+                        
                         <Button
                             variant="outlined"
                             onClick={getMyLocation}
-                            sx={{ mr: 1 }}
+                            sx={{ mt: 1 }}
                         >
-                            📍 Use My Location
+                            📍 Use My Location (GPS)
                         </Button>
                     </Box>
-
-                    {/* Structured Address Fields */}
-                    <Box sx={{ mb: 2 }}>
-                        <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)', mb: 1, fontWeight: 500 }}>
-                            🏠 Structured Address (Optional)
-                        </Typography>
-                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-            <Autocomplete
-                freeSolo
-                options={streetSuggestions}
-                value={street}
-                onChange={(_, newValue) => {
-                    if (newValue && typeof newValue === 'string') {
-                        handleAddressChange('street', newValue);
-                    }
-                }}
-                onInputChange={(_, newInputValue, reason) => {
-                    if (reason === 'input') {
-                        setStreet(newInputValue);
-                        fetchStreetSuggestions(newInputValue);
-                    } else if (reason === 'clear') {
-                        setStreet('');
-                    }
-                }}
-                loading={isLoadingStreet}
-                open={streetSuggestions.length > 0}
-                renderInput={(params) => (
-                    <TextField
-                        {...params}
-                        label="Street"
-                        InputProps={{
-                            ...params.InputProps,
-                            endAdornment: (
-                                <>
-                                    {isLoadingStreet ? <CircularProgress color="inherit" size={20} /> : null}
-                                    {params.InputProps.endAdornment}
-                                </>
-                            ),
-                        }}
-                    />
-                )}
-            />
-            <Autocomplete
-                freeSolo
-                options={citySuggestions}
-                value={city}
-                onChange={(_, newValue) => {
-                    if (newValue && typeof newValue === 'string') {
-                        handleAddressChange('city', newValue);
-                    }
-                }}
-                onInputChange={(_, newInputValue, reason) => {
-                    if (reason === 'input') {
-                        setCity(newInputValue);
-                        fetchCitySuggestions(newInputValue);
-                    } else if (reason === 'clear') {
-                        setCity('');
-                    }
-                }}
-                loading={isLoadingCity}
-                open={citySuggestions.length > 0}
-                renderInput={(params) => (
-                    <TextField
-                        {...params}
-                        label="City"
-                        InputProps={{
-                            ...params.InputProps,
-                            endAdornment: (
-                                <>
-                                    {isLoadingCity ? <CircularProgress color="inherit" size={20} /> : null}
-                                    {params.InputProps.endAdornment}
-                                </>
-                            ),
-                        }}
-                    />
-                )}
-            />
-            <TextField 
-                label="State/Province" 
-                value={state} 
-                                onChange={(e) => handleAddressChange('state', e.target.value)}
-                            />
-            <Autocomplete
-                freeSolo
-                options={countrySuggestions}
-                value={country}
-                onChange={(_, newValue) => {
-                    console.log('🔄 [Autocomplete] onChange fired with:', newValue);
-                    if (newValue && typeof newValue === 'string') {
-                        handleAddressChange('country', newValue);
-                    }
-                }}
-                onInputChange={(_, newInputValue, reason) => {
-                    console.log('⌨️ [Autocomplete] onInputChange fired:', { newInputValue, reason, currentCountry: country });
-                    if (reason === 'input') {
-                        setCountry(newInputValue);
-                        fetchCountrySuggestions(newInputValue);
-                    } else if (reason === 'clear') {
-                        setCountry('');
-                    }
-                }}
-                loading={isLoadingCountry}
-                open={countrySuggestions.length > 0}
-                renderInput={(params) => (
-                    <TextField
-                        {...params}
-                        label="Country"
-                        InputProps={{
-                            ...params.InputProps,
-                            endAdornment: (
-                                <>
-                                    {isLoadingCountry ? <CircularProgress color="inherit" size={20} /> : null}
-                                    {params.InputProps.endAdornment}
-                                </>
-                            ),
-                        }}
-                    />
-                )}
-            />
-                        </Box>
-                </Box>
 
                     {/* Map Selection */}
                     <Box sx={{ mb: 2 }}>
