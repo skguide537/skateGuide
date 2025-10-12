@@ -29,19 +29,29 @@ test.describe('Add Spot Page', () => {
     });
 
 
-    test('should handle address search', async ({ page }) => {
+    test('should handle Geoapify address autocomplete', async ({ page }) => {
         await testHelpers.login(process.env.DB_ADMIN_EMAIL as string, process.env.DB_ADMIN_PASSWORD as string);
         await page.goto('/add-spot');
-        await page.getByRole('combobox', { name: 'Country' }).click();
-        await page.getByRole('combobox', { name: 'Country' }).fill('Ger');
-        await page.getByRole('option', { name: 'Germany' }).click();
-        await page.getByRole('combobox', { name: 'City' }).click();
-        await page.getByRole('combobox', { name: 'City' }).fill('Berl');
-        await page.getByRole('option', { name: 'Berlin' }).click();
-        await page.getByRole('combobox', { name: 'Street' }).click();
-        await page.getByRole('combobox', { name: 'Street' }).fill('Brandenburgische Straße');
-        await page.getByRole('button', { name: 'Search Address' }).click();
-        await expect(page.getByRole('alert').filter({ hasText: 'Location found: Brandenburgische Straße, Wilmersdorf, Charlottenburg-Wilmersdorf' }).first()).toBeVisible({ timeout: 15000 });
+        
+        // Wait for the address autocomplete field to be visible
+        const addressInput = page.getByPlaceholder(/Type at least 3 characters/i);
+        await expect(addressInput).toBeVisible({ timeout: 15000 });
+        
+        // Type an address to trigger autocomplete (German address)
+        await addressInput.click();
+        await addressInput.fill('Brandenburger Tor, Berlin');
+        
+        // Wait for autocomplete suggestions to appear
+        await page.waitForSelector('role=option', { timeout: 10000 });
+        
+        // Select the first suggestion
+        await page.getByRole('option').first().click();
+        
+        // Verify that coordinates are set (success toast appears)
+        await expect(page.getByRole('alert').filter({ hasText: /Location set:/i }).first()).toBeVisible({ timeout: 15000 });
+        
+        // Verify that location coordinates are displayed
+        await expect(page.getByText(/✅ Location set:/i)).toBeVisible();
     });
 
     test('Create new spot', async ({ page }) => {
