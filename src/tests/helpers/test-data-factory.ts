@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import User from '../../models/User';
-import Spot from '../../models/Spot';
 import { SkateparkModel } from '../../models/skatepark.model';
 import { connectToDatabase } from '../../lib/mongodb';
 
@@ -48,47 +47,6 @@ export async function createTestUser(
 
   const user = await User.create(userData);
   return user;
-}
-
-/**
- * Spot factory options
- */
-export interface CreateTestSpotOptions {
-  name?: string;
-  description?: string;
-  location?: {
-    type: 'Point';
-    coordinates: [number, number];
-  };
-  type?: 'skatepark' | 'street' | 'diy';
-  rating?: number;
-  createdBy: string | mongoose.Types.ObjectId;
-}
-
-/**
- * Create a test spot in the database
- * Requires createdBy user ID
- */
-export async function createTestSpot(
-  options: CreateTestSpotOptions
-): Promise<any> {
-  // Ensure database connection is ready
-  await connectToDatabase();
-  
-  const spotData = {
-    name: options.name || `Test Spot ${Date.now()}`,
-    description: options.description || 'A test spot for testing purposes',
-    location: options.location || {
-      type: 'Point' as const,
-      coordinates: [34.7818, 32.0853] // Tel Aviv coordinates
-    },
-    type: options.type || 'street',
-    rating: options.rating,
-    createdBy: options.createdBy,
-  };
-
-  const spot = await Spot.create(spotData);
-  return spot;
 }
 
 /**
