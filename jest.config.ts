@@ -41,8 +41,6 @@ const config: Config = {
     '!src/services/searchFilter.service.ts',
     '!src/services/utility.service.ts',
     '!src/services/placeholder.service.ts',
-    '!src/services/geocoding.service.ts',
-    '!src/services/geocodingClient.ts',
     
     // Static data / types (no testable logic)
     '!src/constants/**/*',
@@ -54,14 +52,6 @@ const config: Config = {
     '!src/lib/db-indexes.ts',
     '!src/lib/file-utils.ts',
     '!src/lib/cloudinary.ts',
-    
-    // Spots (not used in your app)
-    '!src/app/api/spots/**/*',
-    '!src/services/spots.ts',
-    '!src/models/Spot.ts',
-    
-    // External API wrappers (optional)
-    '!src/app/api/geocoding/**/*',
   ],
   transformIgnorePatterns: [
     'node_modules/(?!(next|@next)/)',
