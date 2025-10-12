@@ -19,7 +19,7 @@ export interface MockRequestOptions {
  * Create a mock NextRequest for testing
  * Properly formats the request for Next.js API routes
  * 
- * @param url - Request URL (e.g., '/api/spots')
+ * @param url - Request URL (e.g., '/api/skateparks')
  * @param options - Request options
  */
 export function createMockRequest(
@@ -113,7 +113,7 @@ export async function extractJsonResponse(response: Response): Promise<{
 
 /**
  * Create params object for dynamic routes
- * Used for routes like /api/spots/[spotId]
+ * Used for routes like /api/skateparks/[id]
  * 
  * @param params - Key-value pairs for route params
  */

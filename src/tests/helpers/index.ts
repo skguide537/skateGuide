@@ -16,12 +16,10 @@ export {
 // Test data factories
 export {
   createTestUser,
-  createTestSpot,
   createTestSkatepark,
   generateAuthToken,
   createAuthenticatedTestUser,
   type CreateTestUserOptions,
-  type CreateTestSpotOptions,
   type CreateTestSkateparkOptions,
 } from './test-data-factory';
 
