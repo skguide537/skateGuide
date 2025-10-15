@@ -107,6 +107,25 @@ export class TestHelpers {
   }
 
   /**
+   * Wait for favorites to load by checking if favorite buttons are interactive
+   */
+  async waitForFavoritesToLoad(timeout: number = 10000) {
+    try {
+      // Wait for at least one favorite button to be visible and interactive
+      const firstCard = this.page.locator('.MuiCard-root').first();
+      const favoriteButton = firstCard.getByTestId('favorite-toggle').first();
+      
+      await this.page.waitForSelector('.MuiCard-root', { timeout });
+      await favoriteButton.waitFor({ state: 'visible', timeout });
+      
+      // Additional wait to ensure favorites context has loaded
+      await this.page.waitForTimeout(1000);
+    } catch (error) {
+      console.warn('Favorites may not have loaded properly:', error);
+    }
+  }
+
+  /**
    * Take a screenshot for debugging
    */
   async takeScreenshot(name: string) {
@@ -214,6 +233,69 @@ export class TestHelpers {
     // Wait for navigation away from /login
     await this.page.waitForURL(url => !url.pathname.startsWith('/login'), { timeout: 15000 }).catch(() => {});
     await this.waitForPageLoad();
+  }
+
+  /**
+   * Perform UI logout flow
+   */
+  async logout() {
+    // Prefer a stable navbar logout button accessible from anywhere
+    const bannerLogout = this.page.getByRole('banner').getByRole('button').nth(3);
+    if (await bannerLogout.isVisible({ timeout: 500 }).catch(() => false)) {
+      await bannerLogout.click();
+      await this.page.waitForTimeout(200);
+      await this.page.waitForURL(url => url.pathname === '/login' || url.pathname === '/', { timeout: 5000 }).catch(() => {});
+      await this.waitForPageLoad();
+      return;
+    }
+
+    // Try common direct logout buttons first (no CSS selector unions)
+    const directCandidates = [
+      this.page.getByTestId('logout-button'),
+      this.page.getByRole('button', { name: /logout/i }),
+      this.page.getByRole('menuitem', { name: /logout/i }),
+      this.page.getByText(/^logout$/i),
+    ];
+
+    for (const candidate of directCandidates) {
+      if (await candidate.first().isVisible({ timeout: 500 }).catch(() => false)) {
+        await candidate.first().click();
+        await this.page.waitForTimeout(200);
+        await this.page.waitForURL(url => url.pathname === '/login' || url.pathname === '/', { timeout: 5000 }).catch(() => {});
+        await this.waitForPageLoad();
+        return;
+      }
+    }
+
+    // If not directly visible, open a possible user/account menu then click logout
+    const menuCandidates = [
+      this.page.getByTestId('user-menu'),
+      this.page.getByRole('button', { name: /user|account|profile|menu|avatar/i }),
+    ];
+
+    for (const menuBtn of menuCandidates) {
+      if (await menuBtn.first().isVisible({ timeout: 500 }).catch(() => false)) {
+        await menuBtn.first().click();
+        await this.page.waitForTimeout(300);
+        const logoutAfterMenu = [
+          this.page.getByRole('menuitem', { name: /logout/i }),
+          this.page.getByRole('button', { name: /logout/i }),
+          this.page.getByText(/^logout$/i),
+          this.page.getByTestId('logout-button'),
+        ];
+        for (const item of logoutAfterMenu) {
+          if (await item.first().isVisible({ timeout: 500 }).catch(() => false)) {
+            await item.first().click();
+            await this.page.waitForTimeout(200);
+            await this.page.waitForURL(url => url.pathname === '/login' || url.pathname === '/', { timeout: 5000 }).catch(() => {});
+            await this.waitForPageLoad();
+            return;
+          }
+        }
+      }
+    }
+
+    // As a last resort, navigate to /logout route if exists or clear cookies (not implemented here)
   }
 
   /**

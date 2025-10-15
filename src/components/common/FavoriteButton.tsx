@@ -4,6 +4,7 @@ import React from 'react';
 import { IconButton, Tooltip, Box, Typography } from '@mui/material';
 import { Favorite, FavoriteBorder } from '@mui/icons-material';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useUser } from '@/context/UserContext';
 
 interface FavoriteButtonProps {
     spotId: string;
@@ -22,9 +23,14 @@ export default function FavoriteButton({
     variant = 'icon',
     sx = {}
 }: FavoriteButtonProps) {
-    const { isFavorited, toggleFavorite, getFavoritesCount, ensureCounts } = useFavorites();
+    const { isFavorited, toggleFavorite, getFavoritesCount, ensureCounts, favoritesLoaded } = useFavorites();
+    const { user } = useUser();
     const isFavoritedByUser = isFavorited(spotId);
     const computedCount = showCount ? getFavoritesCount(spotId) : undefined;
+    const isLoggedIn = Boolean(user?._id);
+    const aria = !isLoggedIn ? 'Log in to add to favorites' : (isFavoritedByUser ? 'Remove from favorites' : 'Add to favorites');
+    
+    // minimal render
 
     React.useEffect(() => {
         if (showCount && spotId) {
@@ -39,10 +45,31 @@ export default function FavoriteButton({
 
     const handleClick = async (e: React.MouseEvent) => {
         e.stopPropagation();
+        if (!favoritesLoaded) return; // Avoid toggling before favorites are loaded
         await toggleFavorite(spotId);
     };
 
     const iconSize = size === 'small' ? 20 : size === 'large' ? 28 : 24;
+
+    if (!favoritesLoaded) {
+        // Neutral, disabled state while favorites are loading to avoid flicker
+        return (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, opacity: 0.6, pointerEvents: 'none', ...sx }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <FavoriteBorder sx={{ fontSize: iconSize, color: '#A7A9AC' }} />
+                </Box>
+                {showCount && (
+                    <Typography 
+                        variant="body2"
+                        data-testid="favorite-count"
+                        sx={{ color: '#A7A9AC' }}
+                    >
+                        {typeof computedCount === 'number' ? computedCount : favoritesCount}
+                    </Typography>
+                )}
+            </Box>
+        );
+    }
 
     if (variant === 'button') {
         return (
@@ -54,6 +81,9 @@ export default function FavoriteButton({
                     cursor: 'pointer',
                     ...sx
                 }}
+                role="button"
+                aria-label={aria}
+                data-testid="favorite-toggle"
                 onClick={handleClick}
             >
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -65,7 +95,8 @@ export default function FavoriteButton({
                 </Box>
                 {showCount && (
                     <Typography 
-                        variant="body2" 
+                        variant="body2"
+                        data-testid="favorite-count"
                         sx={{ 
                             color: isFavoritedByUser ? '#d32f2f' : '#A7A9AC',
                             fontWeight: isFavoritedByUser ? 600 : 400
@@ -79,7 +110,7 @@ export default function FavoriteButton({
     }
 
     return (
-        <Tooltip title={isFavoritedByUser ? 'Remove from favorites' : 'Add to favorites'}>
+        <Tooltip title={aria}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <IconButton
                     onClick={handleClick}
@@ -95,6 +126,9 @@ export default function FavoriteButton({
                         transition: 'all 0.2s ease',
                         ...sx
                     }}
+                    aria-label={aria}
+                    data-testid="favorite-toggle"
+                    disabled={!isLoggedIn}
                 >
                     {isFavoritedByUser ? (
                         <Favorite sx={{ fontSize: iconSize }} />
@@ -104,7 +138,8 @@ export default function FavoriteButton({
                 </IconButton>
                 {showCount && (
                     <Typography 
-                        variant="caption" 
+                        variant="caption"
+                        data-testid="favorite-count"
                         sx={{ 
                             color: isFavoritedByUser ? '#d32f2f' : '#A7A9AC',
                             fontWeight: isFavoritedByUser ? 600 : 400,

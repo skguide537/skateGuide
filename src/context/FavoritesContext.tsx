@@ -12,6 +12,7 @@ interface FavoritesContextType {
   favorites: string[];
   counts: FavoritesCounts;
   isLoading: boolean;
+  favoritesLoaded: boolean;
   fetchFavorites: () => Promise<void>;
   ensureCounts: (spotIds: string[]) => Promise<void>;
   getFavoritesCount: (spotId: string) => number;
@@ -28,17 +29,21 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [counts, setCounts] = useState<FavoritesCounts>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [favoritesLoaded, setFavoritesLoaded] = useState(false);
   const inProgressRef = useRef<Set<string>>(new Set());
 
   const fetchFavorites = useCallback(async () => {
     if (!user?._id) {
-      setFavorites([]);
+      // No user yet (e.g., hydration/navigation). Do not clear favorites to avoid UI flicker.
+      // We'll mark as not loaded so UI can render a neutral state.
+      setFavoritesLoaded(false);
       return;
     }
     setIsLoading(true);
     try {
       const data = await favoritesClient.getFavorites(user._id);
       setFavorites(Array.isArray(data) ? data : []);
+      setFavoritesLoaded(true);
     } catch (err) {
       logger.error('Favorites fetch failed', err, 'FavoritesContext');
     } finally {
@@ -110,19 +115,26 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   }, [user?._id, showToast, fetchFavorites]);
 
   useEffect(() => {
-    fetchFavorites();
-  }, [fetchFavorites]); 
+    if (user?._id) {
+      setFavoritesLoaded(false);
+      fetchFavorites();
+    } else {
+      // Keep existing favorites; show not-loaded state to avoid flicker
+      setFavoritesLoaded(false);
+    }
+  }, [fetchFavorites, user?._id]); 
 
   const value = useMemo(() => ({
     favorites,
     counts,
     isLoading,
+    favoritesLoaded,
     fetchFavorites,
     ensureCounts,
     getFavoritesCount,
     isFavorited,
     toggleFavorite,
-  }), [favorites, counts, isLoading, ensureCounts, getFavoritesCount, isFavorited, toggleFavorite]);
+  }), [favorites, counts, isLoading, favoritesLoaded, fetchFavorites, ensureCounts, getFavoritesCount, isFavorited, toggleFavorite]);
 
   return (
     <FavoritesContext.Provider value={value}>
