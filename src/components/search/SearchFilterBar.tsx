@@ -111,9 +111,13 @@ export default function SearchFilterBar({
         updateRatingFilter(ratingFilter);
         updateSortBy(sortBy);
     }, [
-        searchTerm, typeFilter, sizeFilter, levelFilter, tagFilter, 
-        showOnlyFavorites, distanceFilterEnabled, distanceFilter, 
-        ratingFilterEnabled, ratingFilter, sortBy
+        searchTerm, typeFilter, sizeFilter, levelFilter, tagFilter,
+        showOnlyFavorites, distanceFilterEnabled, distanceFilter,
+        ratingFilterEnabled, ratingFilter, sortBy,
+        updateSearchTerm, updateTypeFilter, updateSizeFilter, updateLevelFilter,
+        updateTagFilter, updateShowOnlyFavorites, updateDistanceFilterEnabled,
+        updateDistanceFilter, updateRatingFilterEnabled, updateRatingFilter,
+        updateSortBy
     ]);
 
     // Create wrapper functions that update both internal state and parent state
