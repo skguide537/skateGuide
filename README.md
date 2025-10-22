@@ -73,6 +73,84 @@ src/
 └── services/        # Business logic
 ```
 
+## Comments API
+
+The Comments API allows users to post, edit, and delete comments on skateparks.
+
+### Endpoints
+
+#### GET /api/comments
+List comments for a skatepark with pagination.
+
+**Query Parameters:**
+- `skateparkId` (required): The ID of the skatepark
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Comments per page (default: 20, max: 50)
+
+**Response:**
+```json
+{
+  "items": [
+    {
+      "id": "comment_id",
+      "skateparkId": "skatepark_id", 
+      "userId": "user_id",
+      "body": "Comment text",
+      "isDeleted": false,
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "editedAt": "2024-01-01T00:00:00.000Z",
+      "canEdit": true,
+      "canDelete": true
+    }
+  ],
+  "page": 1,
+  "limit": 20,
+  "total": 5
+}
+```
+
+#### POST /api/comments
+Create a new comment (requires authentication).
+
+**Request Body:**
+```json
+{
+  "skateparkId": "skatepark_id",
+  "commentBody": "Comment text"
+}
+```
+
+**Response:** CommentDTO object (same as above)
+
+#### PATCH /api/comments/[id]
+Edit a comment (requires authentication, owner or admin only).
+
+**Request Body:**
+```json
+{
+  "commentBody": "Updated comment text"
+}
+```
+
+**Response:** CommentDTO object
+
+#### DELETE /api/comments/[id]
+Delete a comment (requires authentication, owner or admin only).
+
+**Query Parameters:**
+- `hard` (optional): Set to "true" for hard delete (admin only)
+
+**Response:** 
+- Soft delete: CommentDTO object with `isDeleted: true`
+- Hard delete: `{ "success": true }`
+
+### Validation Rules
+- Comment body: 1-2000 characters
+- Page: minimum 1
+- Limit: 1-50 (clamped automatically)
+- All IDs must be valid MongoDB ObjectIds
+
 ## Contributing
 
 1. Fork the repository
