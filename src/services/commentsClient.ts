@@ -27,11 +27,11 @@ export interface ListCommentsResponse {
 
 export interface CreateCommentRequest {
     skateparkId: string;
-    commentBody: string;
+    body: string;
 }
 
 export interface EditCommentRequest {
-    commentBody: string;
+    body: string;
 }
 
 export interface DeleteCommentResponse {
@@ -74,7 +74,10 @@ class CommentsClient {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(request),
+                body: JSON.stringify({
+                    skateparkId: request.skateparkId,
+                    commentBody: request.body
+                }),
                 credentials: 'include', // Send cookies with request
             });
 
@@ -102,7 +105,9 @@ class CommentsClient {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(request),
+                body: JSON.stringify({
+                    commentBody: request.body
+                }),
                 credentials: 'include', // Send cookies with request
             });
 
