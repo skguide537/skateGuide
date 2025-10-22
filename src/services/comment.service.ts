@@ -26,6 +26,7 @@ export interface ListCommentsRequest {
     skateparkId: string;
     page?: number;
     limit?: number;
+    currentUser?: { _id: string; role?: string };
 }
 
 export interface ListCommentsResponse {
@@ -38,20 +39,22 @@ export interface ListCommentsResponse {
 class CommentService {
     // Helper function to map comment to DTO
     private mapToDTO(comment: ICommentModel, currentUser?: { _id: string; role?: string }): CommentDTO {
-        const isOwner = currentUser && comment.userId.toString() === currentUser._id;
+        // Handle populated userId object correctly
+        const userIdString = (comment.userId as any)._id ? (comment.userId as any)._id.toString() : comment.userId.toString();
+        const isOwner = currentUser && userIdString === currentUser._id;
         const isAdmin = currentUser?.role === 'admin';
         
         return {
             id: (comment._id as any).toString(),
             skateparkId: comment.skateparkId.toString(),
-            userId: comment.userId.toString(),
+            userId: userIdString,
             userName: (comment.userId as any)?.name || 'Unknown User',
             body: comment.body,
             createdAt: comment.createdAt,
             updatedAt: comment.updatedAt,
             editedAt: comment.editedAt,
-            canEdit: isOwner || isAdmin,
-            canDelete: isOwner || isAdmin
+            canEdit: Boolean(isOwner), // Only owner can edit
+            canDelete: Boolean(isOwner || isAdmin) // Owner or admin can delete
         };
     }
 
@@ -97,7 +100,7 @@ class CommentService {
     }
 
     // List comments for a skatepark with pagination
-    public async listComments({ skateparkId, page = 1, limit = 20 }: ListCommentsRequest): Promise<ListCommentsResponse> {
+    public async listComments({ skateparkId, page = 1, limit = 20, currentUser }: ListCommentsRequest): Promise<ListCommentsResponse> {
         // Validate inputs
         if (!this.isValidObjectId(skateparkId)) {
             throw new BadRequestError('Invalid skatepark ID format');
@@ -123,7 +126,7 @@ class CommentService {
                 .populate('userId', 'name')
                 .exec();
 
-            const items = comments.map(comment => this.mapToDTO(comment));
+            const items = comments.map(comment => this.mapToDTO(comment, currentUser));
             
             return {
                 items,
