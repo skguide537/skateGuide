@@ -8,33 +8,41 @@ export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const skateparkId = searchParams.get('skateparkId');
-        const page = parseInt(searchParams.get('page') || '1');
-        const limit = parseInt(searchParams.get('limit') || '20');
+        const page = searchParams.get('page');
+        const limit = searchParams.get('limit');
 
         if (!skateparkId) {
             return NextResponse.json(
-                { error: 'skateparkId query parameter is required' },
+                { error: 'skateparkId is required' },
                 { status: 400 }
             );
         }
 
-        const result = await commentService.listComments({
+        // Get current user (optional - for permissions)
+        let currentUser = null;
+        try {
+            currentUser = await getUserFromRequest(request);
+        } catch (error) {
+            // User not authenticated - that's fine for public comments
+            currentUser = null;
+        }
+
+        const comments = await commentService.listComments({
             skateparkId,
-            page,
-            limit
+            page: page ? parseInt(page) : undefined,
+            limit: limit ? parseInt(limit) : undefined,
+            currentUser: currentUser ? { _id: currentUser._id.toString(), role: currentUser.role } : undefined,
         });
 
-        return NextResponse.json(result);
+        return NextResponse.json(comments);
     } catch (error: any) {
         console.error('GET /api/comments error:', error);
-        
         if (error instanceof BadRequestError) {
             return NextResponse.json(
                 { error: error.message },
                 { status: 400 }
             );
         }
-
         return NextResponse.json(
             { error: 'Failed to fetch comments' },
             { status: 500 }
