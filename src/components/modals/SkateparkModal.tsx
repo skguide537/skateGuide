@@ -12,6 +12,7 @@ import Rating from '@mui/material/Rating';
 import { useState } from 'react';
 import FavoriteButton from '../common/FavoriteButton';
 import FastCarousel from '../ui/FastCarousel';
+import { useComments } from '@/hooks/useComments';
 
 interface SkateparkModalProps {
   open: boolean;
@@ -66,6 +67,9 @@ export default function SkateparkModal({
   const { showToast } = useToast();
   const { user } = useUser();
   const { theme } = useTheme();
+
+  // Test comments hook
+  const { comments, total, isLoading: commentsLoading, error: commentsError } = useComments(_id);
 
   const formatSrc = (src: string) => src.startsWith('http') ? src : `/${src}`;
   const isLoading = !photoNames || photoNames.length === 0;
@@ -534,6 +538,34 @@ export default function SkateparkModal({
               </Typography>
             )}
           </Box>
+        </Box>
+
+        {/* Comments Test Section */}
+        <Box sx={{ 
+          mb: 3,
+          p: 2,
+          backgroundColor: 'var(--color-surface-elevated)',
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--color-border)'
+        }}>
+          <Typography variant="h6" sx={{ mb: 2, color: 'var(--color-text-primary)' }}>
+            💬 Comments Test ({total})
+          </Typography>
+          {commentsLoading && <Typography>Loading comments...</Typography>}
+          {commentsError && <Typography color="error">Error: {commentsError}</Typography>}
+          {comments.length === 0 && !commentsLoading && (
+            <Typography color="text.secondary">No comments yet</Typography>
+          )}
+          {comments.map((comment) => (
+            <Box key={comment.id} sx={{ mb: 1, p: 1, backgroundColor: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
+              <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{comment.userName}</Typography>
+              <Typography variant="body2">{comment.body}</Typography>
+              <Typography variant="caption" color="text.secondary">
+                {new Date(comment.createdAt).toLocaleString()}
+                {comment.editedAt && ` (edited ${new Date(comment.editedAt).toLocaleString()})`}
+              </Typography>
+            </Box>
+          ))}
         </Box>
 
         {/* Map */}
