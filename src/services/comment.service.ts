@@ -7,6 +7,7 @@ export interface CommentDTO {
     id: string;
     skateparkId: string;
     userId: string;
+    userName: string;
     body: string;
     createdAt: Date;
     updatedAt: Date;
@@ -44,6 +45,7 @@ class CommentService {
             id: (comment._id as any).toString(),
             skateparkId: comment.skateparkId.toString(),
             userId: comment.userId.toString(),
+            userName: (comment.userId as any)?.name || 'Unknown User',
             body: comment.body,
             createdAt: comment.createdAt,
             updatedAt: comment.updatedAt,
