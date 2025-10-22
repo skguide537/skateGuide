@@ -10,6 +10,7 @@ export interface CommentDTO {
     skateparkId: string;
     userId: string;
     userName: string;
+    userPhotoUrl: string;
     body: string;
     createdAt: string;
     updatedAt: string;

@@ -15,6 +15,7 @@ import { CommentDTO } from '@/services/commentsClient';
 import { useEditComment } from '@/hooks/useEditComment';
 import { useDeleteComment } from '@/hooks/useDeleteComment';
 import { formatRelativeTime } from '@/utils/timeUtils';
+import CommentAvatar from './CommentAvatar';
 
 interface CommentItemProps {
   comment: CommentDTO;
@@ -101,14 +102,21 @@ export default function CommentItem({
     >
       {/* Header with user info and timestamp */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'var(--color-text-primary)' }}>
-            {comment.userName}
-          </Typography>
-          <Typography variant="caption" sx={{ color: 'var(--color-text-secondary)' }}>
-            {formatRelativeTime(comment.createdAt)}
-            {comment.editedAt && ' (edited)'}
-          </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <CommentAvatar 
+            photoUrl={comment.userPhotoUrl} 
+            userName={comment.userName}
+            size={32}
+          />
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'var(--color-text-primary)' }}>
+              {comment.userName}
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'var(--color-text-secondary)' }}>
+              {formatRelativeTime(comment.createdAt)}
+              {comment.editedAt && ' (edited)'}
+            </Typography>
+          </Box>
         </Box>
 
         {/* Action buttons - only show on hover */}
