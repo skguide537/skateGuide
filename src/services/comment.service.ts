@@ -8,6 +8,7 @@ export interface CommentDTO {
     skateparkId: string;
     userId: string;
     userName: string;
+    userPhotoUrl: string;
     body: string;
     createdAt: Date;
     updatedAt: Date;
@@ -49,6 +50,7 @@ class CommentService {
             skateparkId: comment.skateparkId.toString(),
             userId: userIdString,
             userName: (comment.userId as any)?.name || 'Unknown User',
+            userPhotoUrl: (comment.userId as any)?.photoUrl || '',
             body: comment.body,
             createdAt: comment.createdAt,
             updatedAt: comment.updatedAt,
@@ -123,7 +125,7 @@ class CommentService {
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(clampedLimit)
-                .populate('userId', 'name')
+                .populate('userId', 'name photoUrl')
                 .exec();
 
             const items = comments.map(comment => this.mapToDTO(comment, currentUser));
