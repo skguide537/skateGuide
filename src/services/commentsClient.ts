@@ -11,6 +11,7 @@ export interface CommentDTO {
     userId: string;
     userName: string;
     userPhotoUrl: string;
+    userRole: string;
     body: string;
     createdAt: string;
     updatedAt: string;
