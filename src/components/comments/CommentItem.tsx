@@ -10,7 +10,7 @@ import {
   CircularProgress,
   Tooltip
 } from '@mui/material';
-import { Edit, Delete, Check, Close } from '@mui/icons-material';
+import { Edit, Delete, Check, Close, Skateboarding } from '@mui/icons-material';
 import { CommentDTO } from '@/services/commentsClient';
 import { useEditComment } from '@/hooks/useEditComment';
 import { useDeleteComment } from '@/hooks/useDeleteComment';
@@ -109,9 +109,20 @@ export default function CommentItem({
             size={32}
           />
           <Box>
-            <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'var(--color-text-primary)' }}>
-              {comment.userName}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'var(--color-text-primary)' }}>
+                {comment.userName}
+              </Typography>
+              <Tooltip title={comment.userRole === 'admin' ? 'This user is an admin' : 'This is a user'}>
+                <Skateboarding 
+                  fontSize="small" 
+                  sx={{ 
+                    color: comment.userRole === 'admin' ? 'var(--color-accent-blue)' : 'var(--color-text-secondary)',
+                    fontSize: '16px'
+                  }}
+                />
+              </Tooltip>
+            </Box>
             <Typography variant="caption" sx={{ color: 'var(--color-text-secondary)' }}>
               {formatRelativeTime(comment.createdAt)}
               {comment.editedAt && ' (edited)'}
