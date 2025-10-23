@@ -13,20 +13,48 @@ export default function RegisterPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [photo, setPhoto] = useState<File | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
     const router = useRouter();
     const { showToast } = useToast();
     const { theme } = useTheme();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsUploading(true);
+        setError('');
+        
         try {
-            const data = await authClient.register({ name, email, password });
+            let photoUrl: string | undefined;
+            let photoId: string | undefined;
+
+            // Upload photo if provided
+            if (photo) {
+                try {
+                    const uploadResult = await authClient.uploadPhoto(photo);
+                    photoUrl = uploadResult.photoUrl;
+                    photoId = uploadResult.photoId;
+                } catch (uploadError: any) {
+                    throw new Error(`Photo upload failed: ${uploadError.message}`);
+                }
+            }
+
+            // Register user with photo data
+            const data = await authClient.register({ 
+                name, 
+                email, 
+                password, 
+                photoUrl, 
+                photoId 
+            });
+            
             showToast('Account created successfully!', 'success');
             setTimeout(() => router.push('/map'), 1000);
         } catch (error: any) {
             const errorMessage = error.message || 'Registration failed';
             setError(errorMessage);
             showToast(errorMessage, 'error');
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -260,6 +288,7 @@ export default function RegisterPage() {
                     type="submit"
                     variant="contained"
                     fullWidth
+                    disabled={isUploading}
                     sx={{
                         backgroundColor: 'var(--color-accent-green)',
                         color: 'var(--color-surface-elevated)',
@@ -275,10 +304,16 @@ export default function RegisterPage() {
                             backgroundColor: 'var(--color-accent-green)',
                             transform: 'translateY(-3px)',
                             boxShadow: 'var(--shadow-xl)',
+                        },
+                        '&:disabled': {
+                            backgroundColor: 'var(--color-surface-disabled)',
+                            color: 'var(--color-text-disabled)',
+                            transform: 'none',
+                            boxShadow: 'none',
                         }
                     }}
                 >
-                    Sign up
+                    {isUploading ? 'Creating Account...' : 'Sign up'}
                 </Button>
 
                 <Typography 
