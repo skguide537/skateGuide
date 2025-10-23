@@ -2,6 +2,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { BadRequestError, NotFoundError } from '@/types/error-models';
 import { CommentModel, ICommentModel } from '@/models/comment.model';
 import { logger } from '@/lib/logger';
+import mongoose from 'mongoose';
 
 export interface CommentDTO {
     id: string;
@@ -9,6 +10,7 @@ export interface CommentDTO {
     userId: string;
     userName: string;
     userPhotoUrl: string;
+    userRole: string;
     body: string;
     createdAt: Date;
     updatedAt: Date;
@@ -40,8 +42,28 @@ export interface ListCommentsResponse {
 class CommentService {
     // Helper function to map comment to DTO
     private mapToDTO(comment: ICommentModel, currentUser?: { _id: string; role?: string }): CommentDTO {
-        // Handle populated userId object correctly
-        const userIdString = (comment.userId as any)._id ? (comment.userId as any)._id.toString() : comment.userId.toString();
+        let userIdString: string;
+        let userName: string = 'Unknown User';
+        let userPhotoUrl: string = '';
+        let userRole: string = 'user';
+
+        // Check if userId is populated or just an ObjectId
+        if (comment.userId instanceof mongoose.Types.ObjectId) {
+            userIdString = comment.userId.toString();
+        } else if (comment.userId && typeof comment.userId === 'object' && (comment.userId as any)._id) {
+            // It's a populated user object
+            userIdString = (comment.userId as any)._id.toString();
+            userName = (comment.userId as any).name || 'Unknown User';
+            userPhotoUrl = (comment.userId as any).photoUrl || '';
+            userRole = (comment.userId as any).role || 'user';
+        } else {
+            // userId is null or undefined, or not a valid ObjectId/populated object
+            // This case should ideally not happen if userId is required, but for robustness
+            // and to prevent crashes from old/malformed data, we handle it.
+            userIdString = 'unknown'; // Provide a fallback ID
+            // userName, userPhotoUrl, userRole already have default values
+        }
+
         const isOwner = currentUser && userIdString === currentUser._id;
         const isAdmin = currentUser?.role === 'admin';
         
@@ -49,8 +71,9 @@ class CommentService {
             id: (comment._id as any).toString(),
             skateparkId: comment.skateparkId.toString(),
             userId: userIdString,
-            userName: (comment.userId as any)?.name || 'Unknown User',
-            userPhotoUrl: (comment.userId as any)?.photoUrl || '',
+            userName: userName,
+            userPhotoUrl: userPhotoUrl,
+            userRole: userRole,
             body: comment.body,
             createdAt: comment.createdAt,
             updatedAt: comment.updatedAt,
@@ -125,7 +148,7 @@ class CommentService {
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(clampedLimit)
-                .populate('userId', 'name photoUrl')
+                .populate('userId', 'name photoUrl role')
                 .exec();
 
             const items = comments.map(comment => this.mapToDTO(comment, currentUser));
