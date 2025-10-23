@@ -12,9 +12,7 @@ import Rating from '@mui/material/Rating';
 import { useState } from 'react';
 import FavoriteButton from '../common/FavoriteButton';
 import FastCarousel from '../ui/FastCarousel';
-import { useComments } from '@/hooks/useComments';
-import CommentComposer from '@/components/comments/CommentComposer';
-import CommentItem from '@/components/comments/CommentItem';
+import CollapsibleCommentSection from '@/components/comments/CollapsibleCommentSection';
 
 interface SkateparkModalProps {
   open: boolean;
@@ -69,9 +67,6 @@ export default function SkateparkModal({
   const { showToast } = useToast();
   const { user } = useUser();
   const { theme } = useTheme();
-
-  // Test comments hook
-  const { comments, total, isLoading: commentsLoading, error: commentsError, refresh } = useComments(_id);
 
   const formatSrc = (src: string) => src.startsWith('http') ? src : `/${src}`;
   const isLoading = !photoNames || photoNames.length === 0;
@@ -542,59 +537,8 @@ export default function SkateparkModal({
           </Box>
         </Box>
 
-        {/* Comments Test Section */}
-        <Box sx={{ 
-          mb: 3,
-          p: 2,
-          backgroundColor: 'var(--color-surface-elevated)',
-          borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--color-border)'
-        }}>
-          <Typography variant="h6" sx={{ mb: 2, color: 'var(--color-text-primary)' }}>
-            💬 Comments Test ({total})
-          </Typography>
-          
-          {/* Comment Composer */}
-          <CommentComposer 
-            skateparkId={_id}
-            onCommentCreated={(comment) => {
-              // Refresh comments list
-              refresh();
-            }}
-            onError={(error) => {
-              console.error('Comment creation error:', error);
-            }}
-          />
-
-          {/* Comments List */}
-          <Box sx={{ mt: 2 }}>
-            {commentsLoading && <Typography>Loading comments...</Typography>}
-            {commentsError && <Typography color="error">Error: {commentsError}</Typography>}
-            {comments.length === 0 && !commentsLoading && (
-              <Typography color="text.secondary">No comments yet</Typography>
-            )}
-            {comments.map((comment) => (
-              <CommentItem
-                key={comment.id}
-                comment={comment}
-                currentUserId={user?._id}
-                isAdmin={user?.role === 'admin'}
-                onCommentUpdated={(updatedComment) => {
-                  // Refresh comments list to show updated comment
-                  refresh();
-                }}
-                onCommentDeleted={(commentId) => {
-                  // Refresh comments list to remove deleted comment
-                  refresh();
-                }}
-                onError={(error) => {
-                  console.error('Comment action error:', error);
-                  showToast(error, 'error');
-                }}
-              />
-            ))}
-          </Box>
-        </Box>
+        {/* Comments Section */}
+        <CollapsibleCommentSection skateparkId={_id} />
 
         {/* Map */}
         <Box sx={{ 
