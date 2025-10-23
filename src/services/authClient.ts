@@ -21,6 +21,8 @@ export interface RegisterRequest {
   name: string;
   email: string;
   password: string;
+  photoUrl?: string;
+  photoId?: string;
 }
 
 export interface AuthResponse {
@@ -87,6 +89,32 @@ class AuthClient {
     return typeof json === 'object' && json && !('user' in json)
       ? { user: json as User }
       : (json as AuthResponse);
+  }
+
+  /**
+   * Upload photo to Cloudinary
+   */
+  async uploadPhoto(file: File): Promise<{ photoUrl: string; photoId: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch('/api/upload/photo', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error || `Photo upload failed: ${response.statusText}`
+      );
+    }
+
+    const result = await response.json();
+    return {
+      photoUrl: result.photoUrl,
+      photoId: result.photoId
+    };
   }
 
   /**
