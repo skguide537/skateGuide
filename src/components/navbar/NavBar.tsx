@@ -26,6 +26,7 @@ import AddLocationIcon from '@mui/icons-material/AddLocation';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LoginIcon from '@mui/icons-material/Login';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import PersonIcon from '@mui/icons-material/Person';
 import Link from 'next/link';
 
 export default function NavBar() {
@@ -182,12 +183,20 @@ export default function NavBar() {
                                 </Link>
                             </MenuItem>
                             {user && (
-                                <MenuItem onClick={handleCloseNavMenu} sx={{ py: 1, px: 2 }}>
-                                    <Link href="/add-spot" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit', width: '100%' }}>
-                                        <AddLocationIcon sx={{ mr: 1, fontSize: 20 }} />
-                                        <Typography textAlign="center" fontWeight={500} fontSize="0.9rem" color="var(--color-text-primary)">Add Spot</Typography>
-                                    </Link>
-                                </MenuItem>
+                                <>
+                                    <MenuItem onClick={handleCloseNavMenu} sx={{ py: 1, px: 2 }}>
+                                        <Link href={`/profile/${user._id}`} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit', width: '100%' }}>
+                                            <PersonIcon sx={{ mr: 1, fontSize: 20 }} />
+                                            <Typography textAlign="center" fontWeight={500} fontSize="0.9rem" color="var(--color-text-primary)">Profile</Typography>
+                                        </Link>
+                                    </MenuItem>
+                                    <MenuItem onClick={handleCloseNavMenu} sx={{ py: 1, px: 2 }}>
+                                        <Link href="/add-spot" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit', width: '100%' }}>
+                                            <AddLocationIcon sx={{ mr: 1, fontSize: 20 }} />
+                                            <Typography textAlign="center" fontWeight={500} fontSize="0.9rem" color="var(--color-text-primary)">Add Spot</Typography>
+                                        </Link>
+                                    </MenuItem>
+                                </>
                             )}
                             {!user ? (
                                 <>
@@ -338,25 +347,29 @@ export default function NavBar() {
                             </>
                         ) : (
                             <>
-                                {/* User Avatar */}
-                                <Avatar
-                                    alt={user.name}
-                                    src={user.photoUrl || DEFAULT_AVATAR_URL}
-                                    sx={{ 
-                                        width: 40, 
-                                        height: 40, 
-                                        mr: 2,
-                                        cursor: 'pointer',
-                                        border: '3px solid var(--color-accent-green)',
-                                        transition: 'all var(--transition-fast)',
-                                        boxShadow: 'var(--shadow-sm)',
-                                        '&:hover': { 
-                                            opacity: 0.8,
-                                            transform: 'scale(1.05)',
-                                            boxShadow: 'var(--shadow-md)',
-                                        }
-                                    }}
-                                />
+                                {/* User Avatar - Links to Profile */}
+                                <Tooltip title="View Profile">
+                                    <Link href={`/profile/${user._id}`} style={{ textDecoration: 'none' }}>
+                                        <Avatar
+                                            alt={user.name}
+                                            src={user.photoUrl || DEFAULT_AVATAR_URL}
+                                            sx={{ 
+                                                width: 40, 
+                                                height: 40, 
+                                                mr: 2,
+                                                cursor: 'pointer',
+                                                border: '3px solid var(--color-accent-green)',
+                                                transition: 'all var(--transition-fast)',
+                                                boxShadow: 'var(--shadow-sm)',
+                                                '&:hover': { 
+                                                    opacity: 0.8,
+                                                    transform: 'scale(1.05)',
+                                                    boxShadow: 'var(--shadow-md)',
+                                                }
+                                            }}
+                                        />
+                                    </Link>
+                                </Tooltip>
                                 
                                 {/* Logout Button */}
                                 <IconButton
