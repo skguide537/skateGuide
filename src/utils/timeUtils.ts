@@ -1,4 +1,20 @@
 /**
+ * Format a date to joined date format (e.g., "04 March 2025")
+ */
+export const formatJoinedDate = (date: string | Date): string => {
+  const joinedDate = new Date(date);
+  const day = joinedDate.getDate().toString().padStart(2, '0');
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  const month = monthNames[joinedDate.getMonth()];
+  const year = joinedDate.getFullYear();
+  
+  return `${day} ${month} ${year}`;
+};
+
+/**
  * Format a date to relative time (e.g., "2 hours ago", "3 days ago")
  */
 export const formatRelativeTime = (date: string | Date): string => {

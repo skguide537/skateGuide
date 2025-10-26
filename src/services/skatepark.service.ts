@@ -139,7 +139,8 @@ class SkateparkService {
             .populate("externalLinks.sentBy", "name")
             .exec();
 
-        if (skateparks.length === 0) throw new NotFoundError(`No parks found for user with id ${userId}`);
+        // Return empty array instead of throwing error when no parks found
+        // This is expected for users who haven't posted any spots yet
         return skateparks;
     }
 
