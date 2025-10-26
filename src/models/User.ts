@@ -44,6 +44,31 @@ const userSchema = new mongoose.Schema({
         ref: 'Skatepark',
         default: [],
     },
+    bio: {
+        type: String,
+        maxlength: [500, 'Bio cannot exceed 500 characters'],
+        default: '',
+    },
+    instagram: {
+        type: String,
+        maxlength: [100, 'Instagram handle too long'],
+        default: '',
+    },
+    tiktok: {
+        type: String,
+        maxlength: [100, 'TikTok handle too long'],
+        default: '',
+    },
+    youtube: {
+        type: String,
+        maxlength: [100, 'YouTube handle too long'],
+        default: '',
+    },
+    website: {
+        type: String,
+        maxlength: [200, 'Website URL too long'],
+        default: '',
+    },
 
 });
 
