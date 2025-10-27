@@ -36,6 +36,7 @@ interface LightSkateparkCardProps {
     externalLinks: ExternalLink[];
     isDeleting?: boolean;
     onDelete?: (spotId: string) => void;
+    createdBy?: string | { _id: string; name: string; photoUrl?: string; role?: string; };
 }
 
 const LightSkateparkCard = memo(function LightSkateparkCard(props: LightSkateparkCardProps) {
@@ -349,6 +350,7 @@ const LightSkateparkCard = memo(function LightSkateparkCard(props: LightSkatepar
                 coordinates={props.coordinates}
                 externalLinks={props.externalLinks}
                 distanceKm={props.distanceKm}
+                createdBy={typeof props.createdBy === 'object' ? props.createdBy : undefined}
             />
 
             <DeleteConfirmationDialog

@@ -270,6 +270,7 @@ export default function EnhancedMap({ userLocation }: MapProps) {
           _id={selectedSpot._id}
           externalLinks={selectedSpot.externalLinks}
           avgRating={selectedSpot.avgRating}
+          createdBy={typeof selectedSpot.createdBy === 'object' ? selectedSpot.createdBy : undefined}
         />
       )}
 
