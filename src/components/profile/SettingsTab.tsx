@@ -459,7 +459,7 @@ export default function SettingsTab({ userId, profile, onUpdate }: SettingsTabPr
         <DialogContent>
           <Typography>
             {isDeletingAsAdmin 
-              ? `Are you sure you want to delete ${profile.name}&apos;s account? This will permanently delete their profile, spots, and comments. This action cannot be undone.`
+              ? `Are you sure you want to delete ${profile.name}'s account? This will permanently delete their profile, spots, and comments. This action cannot be undone.`
               : 'Are you sure you want to delete your account? This will permanently delete your profile, spots, and comments. This action cannot be undone.'}
           </Typography>
         </DialogContent>
