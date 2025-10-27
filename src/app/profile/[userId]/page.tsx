@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Container, Typography, Box, CircularProgress, Avatar, Chip, Stack, Tooltip } from '@mui/material';
 import Grid from '@mui/material/Grid2';
@@ -11,15 +12,25 @@ import StarIcon from '@mui/icons-material/Star';
 import CommentIcon from '@mui/icons-material/Comment';
 import Skateboarding from '@mui/icons-material/Skateboarding';
 
+// Import tab components
+import ProfileTabs from '@/components/profile/ProfileTabs';
+import OverviewTab from '@/components/profile/OverviewTab';
+import SpotsTab from '@/components/profile/SpotsTab';
+import FavoritesTab from '@/components/profile/FavoritesTab';
+import CommentsTab from '@/components/profile/CommentsTab';
+import SettingsTab from '@/components/profile/SettingsTab';
+
 export default function ProfilePage() {
   const params = useParams();
   const userId = params.userId as string;
   const { user: currentUser } = useUser();
+  const [activeTab, setActiveTab] = useState(0);
   
-  const { profile, spots, comments, stats, isLoading, error } = useProfile(userId);
+  const { profile, spots, comments, stats, isLoading, error, refetch } = useProfile(userId);
 
-  // Check if current user is viewing their own profile
+  // Check if current user is viewing their own profile or is admin
   const isOwner = currentUser?._id === userId;
+  const isAdmin = currentUser?.role === 'admin';
 
   if (isLoading) {
     return (
@@ -93,13 +104,31 @@ export default function ProfilePage() {
               )}
 
               {/* Social Links */}
-              {(profile.instagram || profile.website) && (
-                <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+              {(profile.instagram || profile.tiktok || profile.youtube || profile.website) && (
+                <Stack direction="row" spacing={2} sx={{ mt: 2 }} flexWrap="wrap">
                   {profile.instagram && (
                     <Chip
                       icon={<span>📷</span>}
                       label="Instagram"
                       onClick={() => window.open(profile.instagram, '_blank')}
+                      clickable
+                      variant="outlined"
+                    />
+                  )}
+                  {profile.tiktok && (
+                    <Chip
+                      icon={<span>🎵</span>}
+                      label="TikTok"
+                      onClick={() => window.open(profile.tiktok, '_blank')}
+                      clickable
+                      variant="outlined"
+                    />
+                  )}
+                  {profile.youtube && (
+                    <Chip
+                      icon={<span>▶️</span>}
+                      label="YouTube"
+                      onClick={() => window.open(profile.youtube, '_blank')}
                       clickable
                       variant="outlined"
                     />
@@ -179,21 +208,21 @@ export default function ProfilePage() {
         </Grid>
       )}
 
-      {/* Coming Soon Message */}
-      <Box sx={{ 
-        p: 4, 
-        bgcolor: 'background.paper', 
-        borderRadius: 2,
-        boxShadow: 1,
-        textAlign: 'center'
-      }}>
-        <Typography variant="h5" gutterBottom>
-          Profile Features Coming Soon
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Full profile page with tabs for Spots, Favorites, Comments, and Settings will be added next.
-        </Typography>
-      </Box>
+      {/* Tabs */}
+      <ProfileTabs 
+        isOwner={isOwner}
+        isAdmin={isAdmin}
+        isProfileAdmin={profile.role === 'admin'}
+        activeTab={activeTab} 
+        onTabChange={setActiveTab} 
+      />
+
+      {/* Tab Content */}
+      {activeTab === 0 && <OverviewTab profile={profile} spots={spots} />}
+      {activeTab === 1 && <SpotsTab spots={spots} isLoading={isLoading} />}
+      {activeTab === 2 && isOwner && <FavoritesTab userId={userId} isOwner={isOwner} />}
+      {activeTab === 3 && <CommentsTab comments={comments} currentUserId={currentUser?._id} />}
+      {(activeTab === 4 && (isOwner || isAdmin)) && <SettingsTab userId={userId} profile={profile} onUpdate={refetch} />}
     </Container>
   );
 }

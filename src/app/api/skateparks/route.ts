@@ -56,6 +56,16 @@ export async function GET(request: NextRequest) {
             return NextResponse.json(skateparks);
         }
 
+        if (searchParams.has("ids")) {
+            const idsParam = searchParams.get("ids");
+            if (!idsParam) {
+                return NextResponse.json({ error: "Ids parameter is required" }, { status: 400 });
+            }
+            const ids = idsParam.split(',').filter(Boolean);
+            const skateparks = await skateparkService.getSkateparksByIds(ids);
+            return NextResponse.json(skateparks);
+        }
+
         if (searchParams.has("page") || searchParams.has("limit")) {
     const pageParam = searchParams.get("page");
     const limitParam = searchParams.get("limit");
