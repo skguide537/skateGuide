@@ -63,6 +63,7 @@ export default function OverviewTab({ profile, spots }: OverviewTabProps) {
           }}
           externalLinks={selectedSpot.externalLinks}
           distanceKm={selectedSpot.distanceKm || 0}
+          createdBy={typeof selectedSpot.createdBy === 'object' ? selectedSpot.createdBy : undefined}
         />
       )}
     </Box>

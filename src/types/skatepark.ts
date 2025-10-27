@@ -66,6 +66,12 @@ export interface BaseSkatepark {
   avgRating: number;
   photoNames: string[];
   externalLinks?: ExternalLink[];
+  createdBy?: string | {
+    _id: string;
+    name: string;
+    photoUrl?: string;
+    role?: string;
+  };
 }
 
 /**
@@ -75,7 +81,7 @@ export interface BaseSkatepark {
 export interface Skatepark extends BaseSkatepark {
   isApproved: boolean;
   rating: Rating[];
-  createdBy: string;
+  createdBy: string | { _id: string; name: string; photoUrl?: string; role?: string; };
   reports?: Report[];
   createdAt?: Date;
   updatedAt?: Date;

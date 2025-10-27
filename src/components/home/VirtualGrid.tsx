@@ -88,6 +88,7 @@ export default function VirtualGrid({
                                     externalLinks={park.externalLinks || []}
                                     isDeleting={park.isDeleting}
                                     onDelete={onDelete}
+                                    createdBy={park.createdBy}
                                 />
                             </div>
                         );
