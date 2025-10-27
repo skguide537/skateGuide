@@ -30,6 +30,7 @@ interface SkateparkCardProps {
     levels: string[];
     avgRating: number;
     externalLinks?: { url: string; sentBy: { id: string; name: string }; sentAt: string }[];
+    createdBy?: string | { _id: string; name: string; photoUrl?: string; role?: string };
 }
 
 const SkateparkCard = memo(function SkateparkCard({
@@ -44,8 +45,14 @@ const SkateparkCard = memo(function SkateparkCard({
     levels,
     avgRating,
     _id,
-    externalLinks
+    externalLinks,
+    createdBy
 }: SkateparkCardProps) {
+    // Debug logging
+    console.log('[SkateparkCard] Card for:', title);
+    console.log('[SkateparkCard] Received createdBy:', createdBy);
+    console.log('[SkateparkCard] createdBy type:', typeof createdBy);
+
     const [open, setOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const { user } = useUser();
@@ -261,6 +268,7 @@ const SkateparkCard = memo(function SkateparkCard({
                     coordinates={coordinates}
                     externalLinks={externalLinks}
                     distanceKm={distanceKm}
+                    createdBy={typeof createdBy === 'object' ? createdBy : undefined}
                 />
         </>
     );

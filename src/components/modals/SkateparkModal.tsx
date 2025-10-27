@@ -7,7 +7,9 @@ import { useUser } from '@/context/UserContext';
 import { skateparkClient } from '@/services/skateparkClient';
 import { Link as LinkIcon, LocationOn, Park, Streetview } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
-import { Box, Button, Chip, Dialog, DialogContent, DialogTitle, IconButton, Stack, Typography } from '@mui/material';
+import PersonIcon from '@mui/icons-material/Person';
+import { Box, Button, Chip, Dialog, DialogContent, DialogTitle, IconButton, Stack, Typography, Avatar } from '@mui/material';
+import Link from 'next/link';
 import Rating from '@mui/material/Rating';
 import { useState } from 'react';
 import FavoriteButton from '../common/FavoriteButton';
@@ -33,6 +35,12 @@ interface SkateparkModalProps {
   _id: string;
   avgRating?: number;
   distanceKm?: number;
+  createdBy?: {
+    _id: string;
+    name: string;
+    photoUrl?: string;
+    role?: string;
+  };
 }
 
 function getRatingWord(rating: number): string {
@@ -58,7 +66,8 @@ export default function SkateparkModal({
   _id,
   externalLinks,
   avgRating,
-  distanceKm
+  distanceKm,
+  createdBy
 }: SkateparkModalProps) {
   // All hooks must be called at the top level, before any conditional returns
   const [userRating, setUserRating] = useState<number | null>(null);
@@ -197,6 +206,66 @@ export default function SkateparkModal({
         >
           {description}
         </Typography>
+
+        {/* Created By Section */}
+        {createdBy && typeof createdBy === 'object' && createdBy !== null && (
+          <Box sx={{ 
+            mb: 3,
+            p: 2,
+            backgroundColor: 'var(--color-surface-elevated)',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--color-border)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5
+          }}>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                color: 'var(--color-text-secondary)',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}
+            >
+              Created by:
+            </Typography>
+            <Link 
+              href={`/profile/${createdBy._id}`}
+              style={{ 
+                textDecoration: 'none', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1,
+                color: 'inherit'
+              }}
+            >
+              <Avatar 
+                src={createdBy.photoUrl} 
+                alt={createdBy.name}
+                sx={{ 
+                  width: 32, 
+                  height: 32 
+                }}
+              >
+                <PersonIcon />
+              </Avatar>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  color: 'var(--color-accent-blue)',
+                  fontWeight: 600,
+                  '&:hover': {
+                    textDecoration: 'underline'
+                  }
+                }}
+              >
+                {createdBy.name}
+              </Typography>
+            </Link>
+          </Box>
+        )}
 
         {/* Distance Display */}
         {distanceKm !== undefined && (

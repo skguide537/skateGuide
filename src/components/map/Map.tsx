@@ -172,6 +172,7 @@ export default function MapComponent({ userLocation }: MapProps) {
                         userLocation[0], userLocation[1],
                         selectedSpot.location.coordinates[1], selectedSpot.location.coordinates[0]
                     ) : undefined}
+                    createdBy={typeof selectedSpot.createdBy === 'object' ? selectedSpot.createdBy : undefined}
                 />
             )}
         </Box>
