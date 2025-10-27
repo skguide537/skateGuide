@@ -23,27 +23,20 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const restoreSession = async () => {
-            console.log('[UserContext] Restoring session...');
             setIsLoading(true);
             try {
                 const userData = await authClient.getCurrentUser();
-                console.log('[UserContext] Session restored. User:', userData);
                 if (userData) {
                     setUser(userData);
                 }
             } catch (err) {
-                console.error('[UserContext] Failed to restore session:', err);
-                // Only log errors in non-test environments
-                if (process.env.NODE_ENV !== 'test') {
-                    logger.error("Failed to restore session", err, 'UserContext');
-                }
+                logger.error("Failed to restore session", err, 'UserContext');
             } finally {
                 setIsLoading(false);
-                console.log('[UserContext] Session restore complete');
             }
         };
 
@@ -54,10 +47,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         try {
             await authClient.logout();
         } catch (err) {
-            // Only log errors in non-test environments
-            if (process.env.NODE_ENV !== 'test') {
-                logger.error("Logout failed", err, 'UserContext');
-            }
+            logger.error("Logout failed", err, 'UserContext');
         }
         setUser(null);
     };
