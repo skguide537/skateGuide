@@ -8,6 +8,7 @@ import { UploadedFile } from 'express-fileupload';
 import { logger } from '@/lib/logger';
 import { DEFAULT_AVATAR_URL } from '@/types/constants';
 import mongoose from 'mongoose';
+import { SkateparkModel } from '@/models/skatepark.model';
 
 export interface UserProfile {
     _id: string;
@@ -117,24 +118,34 @@ class UserService {
         await connectToDatabase();
 
         const skip = (page - 1) * limit;
-        const total = await skateparkService.getSkateparksBySkater(userId);
+        const allSpots = await skateparkService.getSkateparksBySkater(userId);
         
-        // Get paginated results
+        // Return empty array if no spots
+        if (allSpots.length === 0) {
+            return {
+                data: [],
+                total: 0,
+                page,
+                limit,
+            };
+        }
+        
+        // Get paginated results using Mongoose to ensure proper population
         const { db } = await connectToDatabase();
         if (!db) {
             throw new Error('Database connection failed');
         }
         
-        const spots = await db.collection('skateparks')
-            .find({ createdBy: userId })
+        const spots = await SkateparkModel.find({ createdBy: userId })
+            .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
-            .sort({ createdAt: -1 })
-            .toArray();
+            .populate('externalLinks.sentBy', 'name')
+            .lean();
 
         return {
             data: spots,
-            total: total.length,
+            total: allSpots.length,
             page,
             limit,
         };
@@ -152,30 +163,28 @@ class UserService {
         // Convert userId string to ObjectId
         const userIdObjectId = new mongoose.Types.ObjectId(userId);
         
-        // Join comments with skateparks to get titles
+        // Fetch comments using the native driver
         const comments = await db.collection('comments')
-            .aggregate([
-                { $match: { userId: userIdObjectId } },
-                { $sort: { createdAt: -1 } },
-                { $limit: limit },
-                {
-                    $lookup: {
-                        from: 'skateparks',
-                        localField: 'skateparkId',
-                        foreignField: '_id',
-                        as: 'skatepark'
-                    }
-                },
-                { $unwind: { path: '$skatepark', preserveNullAndEmptyArrays: true } }
-            ])
+            .find({ userId: userIdObjectId })
+            .sort({ createdAt: -1 })
+            .limit(limit)
             .toArray();
+
+        // Get skatepark titles by fetching skateparks separately
+        const skateparkIds = comments.map(c => new mongoose.Types.ObjectId(c.skateparkId));
+        const skateparks = await db.collection('skateparks')
+            .find({ _id: { $in: skateparkIds } })
+            .toArray();
+
+        // Create a map for quick lookup
+        const skateparkMap = new Map(skateparks.map(sp => [sp._id.toString(), sp.title]));
 
         const formatted = comments.map(c => ({
             id: c._id.toString(),
             body: c.body,
             createdAt: c.createdAt,
             skateparkId: c.skateparkId.toString(),
-            skateparkTitle: c.skatepark?.title || 'Unknown Skatepark',
+            skateparkTitle: skateparkMap.get(c.skateparkId.toString()) || 'Unknown Skatepark',
             editedAt: c.editedAt,
         }));
 
