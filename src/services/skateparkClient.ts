@@ -71,6 +71,23 @@ class SkateparkClient {
   }
 
   /**
+   * Fetch multiple skateparks by their IDs
+   */
+  async getSkateparksByIds(ids: string[]): Promise<BaseSkatepark[]> {
+    if (ids.length === 0) return [];
+    
+    const idsParam = ids.join(',');
+    const response = await fetch(`${this.baseUrl}?ids=${idsParam}`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch skateparks: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
+  }
+
+  /**
    * Create a new skatepark
    */
   async createSkatepark(

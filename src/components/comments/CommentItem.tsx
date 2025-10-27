@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { 
   Box, 
   Typography, 
@@ -103,26 +104,47 @@ export default function CommentItem({
       {/* Header with user info and timestamp */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <CommentAvatar 
-            photoUrl={comment.userPhotoUrl} 
-            userName={comment.userName}
-            size={32}
-          />
+          <Link 
+            href={`/profile/${comment.userId}`}
+            style={{ textDecoration: 'none', color: 'inherit' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <CommentAvatar 
+              photoUrl={comment.userPhotoUrl} 
+              userName={comment.userName}
+              size={32}
+            />
+          </Link>
           <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'var(--color-text-primary)' }}>
-                {comment.userName}
-              </Typography>
-              <Tooltip title={comment.userRole === 'admin' ? 'This user is an admin' : 'This is a user'}>
-                <Skateboarding 
-                  fontSize="small" 
+            <Link 
+              href={`/profile/${comment.userId}`}
+              style={{ textDecoration: 'none', color: 'inherit' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography 
+                  variant="body2" 
                   sx={{ 
-                    color: comment.userRole === 'admin' ? 'var(--color-accent-blue)' : 'var(--color-text-secondary)',
-                    fontSize: '16px'
+                    fontWeight: 'bold', 
+                    color: 'var(--color-text-primary)',
+                    '&:hover': {
+                      textDecoration: 'underline'
+                    }
                   }}
-                />
-              </Tooltip>
-            </Box>
+                >
+                  {comment.userName}
+                </Typography>
+                <Tooltip title={comment.userRole === 'admin' ? 'This user is an admin' : 'This is a user'}>
+                  <Skateboarding 
+                    fontSize="small" 
+                    sx={{ 
+                      color: comment.userRole === 'admin' ? 'var(--color-accent-blue)' : 'var(--color-text-secondary)',
+                      fontSize: '16px'
+                    }}
+                  />
+                </Tooltip>
+              </Box>
+            </Link>
             <Typography variant="caption" sx={{ color: 'var(--color-text-secondary)' }}>
               {formatRelativeTime(comment.createdAt)}
               {comment.editedAt && ' (edited)'}

@@ -8,6 +8,7 @@ import { DEFAULT_IMAGE_URL } from "../types/constants";
 import { logger } from "@/lib/logger";
 import { CreateSkateparkRequest, BaseSkatepark, ExternalLink } from "@/types/skatepark";
 import "@/models/User";
+import mongoose from "mongoose";
 
 class SkateparkService {
     // 1. Helper Functions:
@@ -89,6 +90,19 @@ class SkateparkService {
             .exec();
 
         cache.set(cacheKey, skateparks as unknown as ISkateparkModel[], 5 * 60 * 1000); // Cache for 5 minutes
+        return skateparks as unknown as ISkateparkModel[];
+    }
+
+    public async getSkateparksByIds(ids: string[]): Promise<ISkateparkModel[]> {
+        const objectIds = ids.map(id => new mongoose.Types.ObjectId(id));
+        
+        const skateparks = await SkateparkModel
+            .find({ _id: { $in: objectIds } })
+            .select('title description tags location photoNames isPark size levels avgRating rating externalLinks')
+            .populate("externalLinks.sentBy", "name")
+            .lean()
+            .exec();
+
         return skateparks as unknown as ISkateparkModel[];
     }
 
