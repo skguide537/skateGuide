@@ -210,6 +210,30 @@ class SkateparkClient {
 
     return await response.json();
   }
+
+  /**
+   * Update a skatepark with file uploads (FormData)
+   */
+  async updateSkateparkWithFiles(
+    id: string,
+    formData: FormData
+  ): Promise<BaseSkatepark> {
+    const response = await fetch(`${this.baseUrl}/${id}`, {
+      method: 'PUT',
+      body: formData,
+      credentials: 'include', // Send cookies with request
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.message || `Failed to update skatepark: ${response.statusText}`
+      );
+    }
+
+    const data = await response.json();
+    return data;
+  }
 }
 
 // Export singleton instance
