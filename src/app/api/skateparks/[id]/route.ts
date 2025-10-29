@@ -11,8 +11,58 @@ export async function GET(
     { params }: { params: { id: string } }
 ) {
     try {
-        const skatepark = await skateparkService.getOneSkatepark(params.id);
-        return NextResponse.json(skatepark);
+        // Ensure DB connection is established before querying
+        await connectToDatabase();
+
+        const skateparkDoc = await skateparkService.getOneSkatepark(params.id);
+        // Ensure we return a plain JSON object (not a Mongoose Document with internals)
+        const skatepark = (typeof (skateparkDoc as any)?.toObject === 'function')
+            ? (skateparkDoc as any).toObject()
+            : JSON.parse(JSON.stringify(skateparkDoc));
+
+        // Compute userRating for current user (null if unauthenticated or unrated)
+        let userRating: number | null = null;
+        try {
+            const currentUser = await getUserFromRequest(request);
+            if (currentUser && Array.isArray((skatepark as any).rating)) {
+                const existing = (skatepark as any).rating.find(
+                    (r: any) => r?.userId?.toString?.() === currentUser._id?.toString?.()
+                );
+                userRating = typeof existing?.value === 'number' ? existing.value : null;
+            }
+        } catch {
+            userRating = null;
+        }
+
+        // Count favorites and comments (excluding soft-deleted)
+        let favoritesCount = 0;
+        let commentsCount = 0;
+        try {
+            const { db } = await connectToDatabase();
+            if (db) {
+                favoritesCount = await db
+                    .collection('users')
+                    .countDocuments({ favorites: new ObjectId(params.id) });
+                commentsCount = await db
+                    .collection('comments')
+                    .countDocuments({
+                        skateparkId: new ObjectId(params.id),
+                        isDeleted: { $ne: true },
+                    });
+            }
+        } catch {
+            favoritesCount = 0;
+            commentsCount = 0;
+        }
+
+        const responsePayload = {
+            ...skatepark,
+            userRating,
+            favoritesCount,
+            commentsCount,
+        };
+
+        return NextResponse.json(responsePayload);
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 404 });
     }

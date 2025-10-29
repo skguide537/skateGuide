@@ -7,7 +7,7 @@ import { Coords, ExternalLinks, IReport, Size, SkaterLevel, Tag } from "../types
 import { DEFAULT_IMAGE_URL } from "../types/constants";
 import { logger } from "@/lib/logger";
 import { CreateSkateparkRequest, BaseSkatepark, ExternalLink } from "@/types/skatepark";
-import "@/models/User";
+import User from "@/models/User";
 import mongoose from "mongoose";
 
 class SkateparkService {
@@ -110,9 +110,29 @@ class SkateparkService {
     public async getOneSkatepark(_id: string): Promise<ISkateparkModel> {
         const skatepark = await SkateparkModel.findById(_id)
             .populate("externalLinks.sentBy", "name")
+            .populate("createdBy", "name photoUrl")
             .exec();
 
         if (!skatepark) throw new NotFoundError(`Skatepark with _id ${_id} not found.`);
+        // Fallback: in case legacy docs store createdBy as string (not ObjectId) and populate returns null
+        const createdByAny: any = (skatepark as any).createdBy;
+        if (!createdByAny || typeof createdByAny === 'string') {
+            const creatorId = typeof createdByAny === 'string' ? createdByAny : undefined;
+            if (creatorId) {
+                try {
+                    const creator = await User.findById(creatorId).select('name photoUrl').lean();
+                    if (creator) {
+                        (skatepark as any).createdBy = {
+                            _id: (creator as any)?._id?.toString?.() || creatorId,
+                            name: (creator as any).name || 'Unknown',
+                            photoUrl: (creator as any).photoUrl || undefined,
+                        };
+                    }
+                } catch {
+                    // ignore and leave as-is
+                }
+            }
+        }
         return skatepark;
     }
 
