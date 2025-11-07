@@ -30,21 +30,7 @@ export default function StatusIndicators({ lastUpdated, parksWithDistance, parks
             </Box>
 
             {/* Virtual Scrolling Status */}
-            <Box sx={{ 
-                textAlign: 'center', 
-                mt: 4, 
-                mb: 4,
-                p: 3,
-                backgroundColor: 'var(--color-surface)',
-                borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--color-border)',
-                boxShadow: 'var(--shadow-sm)',
-                background: 'linear-gradient(135deg, var(--color-surface) 0%, var(--color-surface-elevated) 100%)'
-            }}>
-                <Typography variant="body2" color="var(--color-text-secondary)" fontWeight={500}>
-                    🚀 Virtual scrolling enabled • Smooth performance with {parksWithDistance.length} spots
-                </Typography>
-            </Box>
+           
         </>
     );
 }

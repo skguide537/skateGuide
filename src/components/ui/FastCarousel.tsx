@@ -11,7 +11,7 @@ import { getImagePlaceholder } from '../../services/placeholder.service';
 interface FastCarouselProps {
     images: string[];
     alt: string;
-    height?: number;
+    height?: number | string;
 }
 
 
@@ -62,7 +62,8 @@ const FastCarousel = memo(function FastCarousel({
     };
 
     // Generate blur placeholder
-    const blurDataURL = getImagePlaceholder(400, height);
+    const placeholderHeight = typeof height === 'number' ? height : 200;
+    const blurDataURL = getImagePlaceholder(400, placeholderHeight);
 
     // Single image - no navigation needed
     if (images.length === 1) {

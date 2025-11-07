@@ -1,20 +1,7 @@
 // Card service for handling card-related utilities and logic
-import { ExternalLink } from '@/types/skatepark';
+import { CardSpot } from '@/types/skatepark';
 
-export interface CardData {
-  _id: string;
-  title: string;
-  description: string;
-  tags: string[];
-  photoNames: string[];
-  coordinates: { lat: number; lng: number };
-  isPark: boolean;
-  size: string;
-  levels: string[];
-  avgRating: number;
-  distanceKm: number;
-  externalLinks: ExternalLink[];
-}
+export type CardData = CardSpot;
 
 export interface CardDisplayOptions {
   showDeleteButton: boolean;
@@ -86,16 +73,6 @@ export class CardService {
     }
   }
 
-  // Get level display text
-  static getLevelDisplayText(levels: string[]): string {
-    if (!levels || levels.length === 0) return 'Unknown';
-    
-    const validLevels = levels.filter(level => level !== null && level !== undefined);
-    if (validLevels.length === 0) return 'Unknown';
-    
-    return validLevels.join(', ');
-  }
-
   // Truncate description
   static truncateDescription(description: string, maxLength: number = 100): string {
     if (!description) return 'No description available';
@@ -128,9 +105,7 @@ export class CardService {
     if (!data._id) errors.push('Missing ID');
     if (!data.title) errors.push('Missing title');
     if (!data.size) errors.push('Missing size');
-    if (!data.levels || data.levels.length === 0) errors.push('Missing levels');
-    if (!data.coordinates) errors.push('Missing coordinates');
-    if (data.distanceKm === undefined || data.distanceKm < 0) errors.push('Invalid distance');
+    if (data.avgRating === undefined || data.avgRating === null) errors.push('Missing average rating');
 
     return {
       isValid: errors.length === 0,
@@ -141,23 +116,27 @@ export class CardService {
   // Get card accessibility label
   static getAccessibilityLabel(data: CardData): string {
     const typeInfo = this.getTypeInfo(data.isPark);
-    const levelText = this.getLevelDisplayText(data.levels);
-    const distanceText = this.formatDistance(data.distanceKm);
+    const distanceText = typeof data.distanceKm === 'number'
+      ? this.formatDistance(data.distanceKm)
+      : 'Distance unavailable';
     
-    return `${data.title}, ${typeInfo.label}, ${data.size}, ${levelText} level, ${distanceText}, rating ${this.formatRating(data.avgRating)}`;
+    return `${data.title}, ${typeInfo.label}, ${data.size}, ${distanceText}, rating ${this.formatRating(data.avgRating)}`;
   }
 
   // Get card tooltip text
   static getTooltipText(data: CardData): string {
     const typeInfo = this.getTypeInfo(data.isPark);
-    const levelText = this.getLevelDisplayText(data.levels);
-    
-    return `${data.title}\n${typeInfo.emoji} ${typeInfo.label}\n📏 ${data.size}\n⭐ ${levelText}\n📍 ${this.formatDistance(data.distanceKm)}`;
+    const distanceText = typeof data.distanceKm === 'number'
+      ? this.formatDistance(data.distanceKm)
+      : 'Distance N/A';
+    const tagText = data.tags && data.tags.length > 0 ? data.tags.slice(0, 2).join(', ') : 'No tags';
+
+    return `${data.title}\n${typeInfo.emoji} ${typeInfo.label}\n📏 ${data.size}\n🏷️ ${tagText}\n📍 ${distanceText}`;
   }
 
   // Check if card is premium/featured
   static isPremiumCard(data: CardData): boolean {
-    return data.avgRating >= 4.5 || data.tags.includes('Premium') || data.tags.includes('Featured');
+    return data.avgRating >= 4.5 || (data.tags?.some(tag => ['Premium', 'Featured'].includes(tag)) ?? false);
   }
 
   // Get card priority score for sorting
@@ -168,16 +147,18 @@ export class CardService {
     score += data.avgRating * 10;
     
     // Distance contribution (closer = higher score)
-    if (data.distanceKm <= 5) score += 50;
-    else if (data.distanceKm <= 10) score += 30;
-    else if (data.distanceKm <= 20) score += 15;
+    if (typeof data.distanceKm === 'number') {
+      if (data.distanceKm <= 5) score += 50;
+      else if (data.distanceKm <= 10) score += 30;
+      else if (data.distanceKm <= 20) score += 15;
+    }
     
     // Type contribution
     if (data.isPark) score += 20; // Parks get bonus
     
     // Tags contribution
     const premiumTags = ['Premium', 'Featured', 'Popular'];
-    if (data.tags.some(tag => premiumTags.includes(tag))) {
+    if (data.tags?.some(tag => premiumTags.includes(tag))) {
       score += 25;
     }
     

@@ -11,27 +11,28 @@ import PersonIcon from '@mui/icons-material/Person';
 import { Box, Button, Chip, Dialog, DialogContent, DialogTitle, IconButton, Stack, Typography, Avatar } from '@mui/material';
 import Link from 'next/link';
 import Rating from '@mui/material/Rating';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import FavoriteButton from '../common/FavoriteButton';
 import FastCarousel from '../ui/FastCarousel';
+import { SkateparkDetail } from '@/types/skatepark';
 
 interface SkateparkModalProps {
   open: boolean;
   onClose: () => void;
-  title: string;
-  description: string;
-  tags: string[];
-  photoNames: string[];
-  coordinates: { lat: number; lng: number };
+  _id: string;
+  title?: string;
+  description?: string;
+  tags?: string[];
+  photoNames?: string[];
+  coordinates?: { lat: number; lng: number };
   externalLinks?: {
     url: string;
     sentBy: { id: string; name: string };
     sentAt: string;
   }[];
-  isPark: boolean;
-  size: string;
-  levels: string[];
-  _id: string;
+  isPark?: boolean;
+  size?: string;
+  levels?: string[];
   avgRating?: number;
   distanceKm?: number;
   createdBy?: {
@@ -45,6 +46,7 @@ interface SkateparkModalProps {
 export default function SkateparkModal({
   open,
   onClose,
+  _id,
   title,
   description,
   tags,
@@ -53,7 +55,6 @@ export default function SkateparkModal({
   isPark,
   size,
   levels,
-  _id,
   externalLinks,
   avgRating,
   distanceKm,
@@ -66,19 +67,150 @@ export default function SkateparkModal({
   const { user } = useUser();
   const { theme } = useTheme();
 
-  const formatSrc = (src: string) => src.startsWith('http') ? src : `/${src}`;
-  const isLoading = !photoNames || photoNames.length === 0;
-  
-  // Ensure tags is always an array
-  const safeTags = tags || [];
-  
-  // Ensure levels is always an array
-  const safeLevels = levels || [];
-  
-  // Ensure externalLinks is always an array
-  const safeExternalLinks = externalLinks || [];
-  
+  const [parkDetails, setParkDetails] = useState<SkateparkDetail | null>(null);
+  const [isFetching, setIsFetching] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      setParkDetails(null);
+      setFetchError(null);
+      return;
+    }
+
+    let cancelled = false;
+    setIsFetching(true);
+
+    skateparkClient.getSkateparkById(_id)
+      .then((data) => {
+        if (cancelled) return;
+        setParkDetails(data);
+        setFetchError(null);
+        if (typeof data.userRating === 'number') {
+          setUserRating(data.userRating);
+        } else {
+          setUserRating(null);
+        }
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        const message = error instanceof Error ? error.message : 'Failed to load skatepark details.';
+        setFetchError(message);
+        showToast(message, 'error');
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setIsFetching(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, _id, showToast]);
+
+  const resolvedData = useMemo(() => {
+    const source = parkDetails;
+
+    const normalizedExternalLinks = (source?.externalLinks ?? externalLinks ?? []).map((link) => {
+      if (!link) return null;
+      const sentBy = (link as any).sentBy;
+      const sentAtValue = (link as any).sentAt;
+      return {
+        url: link.url,
+        sentBy: {
+          id:
+            (sentBy?.id as string) ||
+            (sentBy?._id as string) ||
+            (typeof sentBy === 'string' ? sentBy : 'unknown'),
+          name: sentBy?.name || 'Unknown',
+        },
+        sentAt:
+          typeof sentAtValue === 'string'
+            ? sentAtValue
+            : sentAtValue instanceof Date
+              ? sentAtValue.toISOString()
+              : new Date().toISOString(),
+      };
+    }).filter(Boolean) as {
+      url: string;
+      sentBy: { id: string; name: string };
+      sentAt: string;
+    }[];
+
+    const resolvedCoordinates = source?.location?.coordinates
+      ? { lat: source.location.coordinates[1], lng: source.location.coordinates[0] }
+      : coordinates;
+
+    const resolvedCreatedBy = (() => {
+      const detailCreator = source?.createdBy;
+      if (detailCreator && typeof detailCreator === 'object' && '_id' in detailCreator) {
+        return {
+          _id: detailCreator._id?.toString?.() ?? detailCreator._id,
+          name: detailCreator.name ?? 'Unknown',
+          photoUrl: detailCreator.photoUrl,
+          role: detailCreator.role,
+        };
+      }
+      return createdBy;
+    })();
+
+    return {
+      title: source?.title ?? title ?? 'Skate spot',
+      description: source?.description ?? description ?? '',
+      tags: source?.tags?.length ? source.tags : tags ?? [],
+      photoNames: source?.photoNames?.length ? source.photoNames : photoNames ?? [],
+      isPark: source?.isPark ?? isPark ?? false,
+      size: source?.size ?? size ?? 'Unknown',
+      levels: source?.levels ?? levels ?? [],
+      avgRating: source?.avgRating ?? avgRating ?? 0,
+      distanceKm,
+      coordinates: resolvedCoordinates,
+      externalLinks: normalizedExternalLinks,
+      createdBy: resolvedCreatedBy,
+    };
+  }, [
+    parkDetails,
+    title,
+    description,
+    tags,
+    photoNames,
+    isPark,
+    size,
+    levels,
+    avgRating,
+    distanceKm,
+    coordinates,
+    externalLinks,
+    createdBy,
+  ]);
+
+  const {
+    title: resolvedTitle,
+    description: resolvedDescription,
+    tags: resolvedTags,
+    photoNames: resolvedPhotoNames,
+    isPark: resolvedIsPark,
+    size: resolvedSize,
+    levels: resolvedLevels,
+    avgRating: resolvedAvgRating,
+    coordinates: resolvedCoordinates,
+    externalLinks: resolvedExternalLinks,
+    createdBy: resolvedCreatedBy,
+    distanceKm: resolvedDistanceKm,
+  } = resolvedData;
+
+  const isLoading = (!resolvedPhotoNames || resolvedPhotoNames.length === 0) && (isFetching || !parkDetails) && !fetchError;
+
   if (isLoading) return <Loading />;
+
+  // Ensure tags, levels, and external links are always arrays
+  const safeTags = resolvedTags || [];
+  const safeLevels = resolvedLevels || [];
+  const safeExternalLinks = resolvedExternalLinks || [];
+
+  const locationEmbedUrl = resolvedCoordinates
+    ? `https://www.google.com/maps?q=${resolvedCoordinates.lat},${resolvedCoordinates.lng}&hl=es;z=14&output=embed`
+    : null;
 
   return (
     <Dialog 
@@ -127,12 +259,12 @@ export default function SkateparkModal({
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          {isPark ? (
+          {resolvedIsPark ? (
             <Park sx={{ color: 'var(--color-accent-green)', fontSize: 28 }} />
           ) : (
             <Streetview sx={{ color: 'var(--color-accent-rust)', fontSize: 28 }} />
           )}
-          {title}
+          {resolvedTitle}
         </Box>
         <IconButton
           aria-label="close"
@@ -171,8 +303,8 @@ export default function SkateparkModal({
           border: '1px solid var(--color-border)'
         }}>
           <FastCarousel 
-            images={photoNames} 
-            alt={title}
+            images={resolvedPhotoNames}
+            alt={resolvedTitle}
             height={280}
           />
         </Box>
@@ -196,7 +328,7 @@ export default function SkateparkModal({
             border: '1px solid var(--color-border)'
           }}
         >
-          {description}
+          {resolvedDescription}
         </Typography>
 
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
@@ -204,7 +336,7 @@ export default function SkateparkModal({
           <Box sx={{ flex: { xs: '1 1 auto', md: '0 0 320px' }, width: { md: '320px' }, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
             <Stack spacing={2} sx={{ width: '100%', alignItems: 'center' }}>
               {/* Created By Section */}
-              {createdBy && typeof createdBy === 'object' && createdBy !== null && (
+              {resolvedCreatedBy && typeof resolvedCreatedBy === 'object' && resolvedCreatedBy !== null && (
                 <Box sx={{ 
                   p: 1.5,
                   backgroundColor: 'var(--color-surface-elevated)',
@@ -227,7 +359,7 @@ export default function SkateparkModal({
                     Created by:
                   </Typography>
                   <Link 
-                    href={`/profile/${createdBy._id}`}
+                    href={`/profile/${resolvedCreatedBy._id}`}
                     style={{ 
                       textDecoration: 'none', 
                       display: 'flex', 
@@ -237,8 +369,8 @@ export default function SkateparkModal({
                     }}
                   >
                     <Avatar 
-                      src={createdBy.photoUrl} 
-                      alt={createdBy.name}
+                      src={resolvedCreatedBy.photoUrl} 
+                      alt={resolvedCreatedBy.name}
                       sx={{ 
                         width: 28, 
                         height: 28 
@@ -256,7 +388,7 @@ export default function SkateparkModal({
                         }
                       }}
                     >
-                      {createdBy.name}
+                      {resolvedCreatedBy.name}
                     </Typography>
                   </Link>
                 </Box>
@@ -305,9 +437,9 @@ export default function SkateparkModal({
                         }
                       }}
                     />
-                    {typeof avgRating === 'number' && avgRating > 0 && (
+                    {typeof resolvedAvgRating === 'number' && resolvedAvgRating > 0 && (
                       <Typography variant="body2" sx={{ fontWeight: 700, color: 'var(--color-text-secondary)' }}>
-                        Avg: {avgRating.toFixed(1)}
+                        Avg: {resolvedAvgRating.toFixed(1)}
                       </Typography>
                     )}
                   </Stack>
@@ -317,20 +449,20 @@ export default function SkateparkModal({
               {/* Type & Distance Chips */}
               <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
                 <Chip
-                  label={isPark ? 'Skatepark' : 'Street Spot'}
+                  label={resolvedIsPark ? 'Skatepark' : 'Street Spot'}
                   size="small"
-                  icon={isPark ? <Park sx={{ fontSize: 16 }} /> : <Streetview sx={{ fontSize: 16 }} />}
+                  icon={resolvedIsPark ? <Park sx={{ fontSize: 16 }} /> : <Streetview sx={{ fontSize: 16 }} />}
                   sx={{
-                    backgroundColor: isPark ? 'var(--color-accent-green)' : 'var(--color-accent-rust)',
+                    backgroundColor: resolvedIsPark ? 'var(--color-accent-green)' : 'var(--color-accent-rust)',
                     color: 'var(--color-surface-elevated)',
                     fontWeight: 700,
                   }}
                 />
 
-                {distanceKm !== undefined && (
+                {resolvedDistanceKm !== undefined && (
                   <Chip
                     icon={<LocationOn sx={{ fontSize: 16 }} />}
-                    label={`${distanceKm.toFixed(1)}km away`}
+                    label={`${resolvedDistanceKm.toFixed(1)}km away`}
                     size="small"
                     sx={{
                       backgroundColor: 'var(--color-surface-elevated)',
@@ -344,9 +476,9 @@ export default function SkateparkModal({
 
               {/* Size & Level Chips */}
               <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-                {size && (
+              {resolvedSize && (
                   <Chip
-                    label={size}
+                  label={resolvedSize}
                     size="small"
                     title="Size"
                     sx={{
@@ -375,7 +507,7 @@ export default function SkateparkModal({
             {/* CTA Button */}
             <Button
               component={Link}
-              href={`/parks/${_id}`}
+            href={`/parks/${_id}`}
               variant="contained"
               size="large"
               fullWidth
@@ -426,18 +558,34 @@ export default function SkateparkModal({
                 Location
               </Typography>
             </Box>
-            <iframe
-              width="100%"
-              height={260}
-              loading="lazy"
-              style={{ 
-                border: 0, 
-                borderRadius: 0,
-                backgroundColor: 'var(--color-surface)'
-              }}
-              allowFullScreen
-              src={`https://www.google.com/maps?q=${coordinates.lat},${coordinates.lng}&hl=es;z=14&output=embed`}
-            />
+            {locationEmbedUrl ? (
+              <iframe
+                width="100%"
+                height={260}
+                loading="lazy"
+                style={{ 
+                  border: 0, 
+                  borderRadius: 0,
+                  backgroundColor: 'var(--color-surface)'
+                }}
+                allowFullScreen
+                src={locationEmbedUrl}
+              />
+            ) : (
+              <Box
+                sx={{
+                  height: 260,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: 'var(--color-surface)',
+                  color: 'var(--color-text-secondary)',
+                  fontStyle: 'italic'
+                }}
+              >
+                Location unavailable
+              </Box>
+            )}
           </Box>
         </Stack>
       </DialogContent>
