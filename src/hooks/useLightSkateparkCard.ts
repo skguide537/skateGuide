@@ -27,25 +27,18 @@ export const useLightSkateparkCard = (
     CardService.getTypeInfo(cardData.isPark), [cardData.isPark]
   );
   
-  const levelDisplayText = useMemo(() => 
-    CardService.getLevelDisplayText(cardData.levels), [cardData.levels]
-  );
-  
   const imagesToShow = useMemo(() => 
     CardService.getImagesToShow(cardData.photoNames), [cardData.photoNames]
   );
   
-  const truncatedDescription = useMemo(() => 
-    CardService.truncateDescription(cardData.description), [cardData.description]
-  );
-  
   const tagsInfo = useMemo(() => 
-    CardService.getTagsToDisplay(cardData.tags, 3), [cardData.tags]
+    CardService.getTagsToDisplay(cardData.tags ?? [], 2), [cardData.tags]
   );
   
-  const distanceText = useMemo(() => 
-    CardService.formatDistance(cardData.distanceKm), [cardData.distanceKm]
-  );
+  const distanceText = useMemo(() => {
+    if (typeof cardData.distanceKm !== 'number') return null;
+    return CardService.formatDistance(cardData.distanceKm);
+  }, [cardData.distanceKm]);
   
   const ratingText = useMemo(() => 
     CardService.formatRating(cardData.avgRating), [cardData.avgRating]
@@ -113,32 +106,35 @@ export const useLightSkateparkCard = (
   // Get card styles based on state
   const getCardStyles = useCallback(() => {
     const baseStyles = {
-      width: 345,
-      height: 420,
+      width: '100%',
+      maxWidth: '21rem',
       display: 'flex',
       flexDirection: 'column' as const,
       boxShadow: 'var(--shadow-md)',
       borderRadius: 'var(--radius-lg)',
       backgroundColor: colorScheme.background,
       color: 'var(--color-text-primary)',
-      transition: 'all var(--transition-fast)',
-      opacity: isDeleting ? 0.5 : 1,
+      transition: 'transform var(--transition-fast), box-shadow var(--transition-fast)',
+      opacity: isDeleting ? 0.6 : 1,
       border: '1px solid var(--color-border)',
       overflow: 'hidden' as const,
       cursor: isDeleting ? 'not-allowed' as const : 'pointer' as const,
       position: 'relative' as const,
+      minHeight: 'auto',
     };
 
-    const hoverStyles = isDeleting ? {} : {
-      '&:hover': {
-        transform: 'translateY(-4px)',
-        boxShadow: 'var(--shadow-xl)',
-        backgroundColor: 'var(--color-surface)',
-      },
-      '&:active': {
-        transform: 'translateY(-2px)',
-      }
-    };
+    const hoverStyles = isDeleting
+      ? {}
+      : {
+          '&:hover': {
+            transform: 'translateY(-0.2rem)',
+            boxShadow: 'var(--shadow-xl)',
+            backgroundColor: 'var(--color-surface)',
+          },
+          '&:active': {
+            transform: 'translateY(-0.1rem)',
+          },
+        };
 
     return { ...baseStyles, ...hoverStyles };
   }, [isDeleting, colorScheme.background]);
@@ -201,9 +197,7 @@ export const useLightSkateparkCard = (
     // Computed values
     isAdmin,
     typeInfo,
-    levelDisplayText,
     imagesToShow,
-    truncatedDescription,
     tagsInfo,
     distanceText,
     ratingText,

@@ -87,6 +87,12 @@ export interface Skatepark extends BaseSkatepark {
   updatedAt?: Date;
 }
 
+export interface SkateparkDetail extends Skatepark {
+  userRating?: number | null;
+  favoritesCount?: number;
+  commentsCount?: number;
+}
+
 // ============================================================================
 // SPECIALIZED INTERFACES
 // ============================================================================
@@ -105,6 +111,19 @@ export interface SkateparkCard extends BaseSkatepark {
   distanceKm: number;
   isDeleting?: boolean;
 }
+
+export type CardSpot = {
+  _id: string;
+  title: string;
+  photoNames: string[];
+  avgRating: number;
+  isPark: boolean;
+  size: Size;
+  location?: Location;
+  distanceKm?: number;
+  tags?: Tag[];
+  description?: string;
+};
 
 /**
  * Skatepark data for map display

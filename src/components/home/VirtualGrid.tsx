@@ -76,6 +76,7 @@ export default function VirtualGrid({
                                     description={park.description || ''}
                                     tags={park.tags}
                                     photoNames={park.photoNames}
+                                location={park.location}
                                     distanceKm={park.distanceKm}
                                     coordinates={{
                                         lat: park.location.coordinates[1],
@@ -83,9 +84,7 @@ export default function VirtualGrid({
                                     }}
                                     isPark={park.isPark}
                                     size={park.size}
-                                    levels={park.levels ? park.levels.filter((level: string) => level !== null && level !== undefined) : []}
-                                    avgRating={park.avgRating}
-                                    externalLinks={park.externalLinks || []}
+                                avgRating={park.avgRating}
                                     isDeleting={park.isDeleting}
                                     onDelete={onDelete}
                                     createdBy={park.createdBy}

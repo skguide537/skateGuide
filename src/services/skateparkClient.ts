@@ -3,7 +3,7 @@
  * Replaces direct fetch calls with centralized API methods
  */
 
-import { BaseSkatepark } from '@/types/skatepark';
+import { BaseSkatepark, SkateparkDetail } from '@/types/skatepark';
 
 export interface SkateparkResponse {
   data?: BaseSkatepark[];
@@ -60,7 +60,7 @@ class SkateparkClient {
   /**
    * Fetch a single skatepark by ID
    */
-  async getSkateparkById(id: string): Promise<BaseSkatepark> {
+  async getSkateparkById(id: string): Promise<SkateparkDetail> {
     const response = await fetch(`${this.baseUrl}/${id}`);
     if (!response.ok) {
       throw new Error(`Failed to fetch skatepark: ${response.statusText}`);
