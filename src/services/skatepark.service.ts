@@ -7,8 +7,9 @@ import { Coords, ExternalLinks, IReport, Size, SkaterLevel, Tag } from "../types
 import { DEFAULT_IMAGE_URL } from "../types/constants";
 import { logger } from "@/lib/logger";
 import { CreateSkateparkRequest, BaseSkatepark, ExternalLink } from "@/types/skatepark";
-import User from "@/models/User";
+import "@/models/User";
 import mongoose from "mongoose";
+import User from "@/models/User";
 
 class SkateparkService {
     // 1. Helper Functions:
@@ -23,6 +24,30 @@ class SkateparkService {
         const skatepark = await this.checkSkatepark(_id);
         if (skatepark.photoNames.length === 0) return [`This skatepark has no photos.`];
         return skatepark.photoNames;
+    }
+
+    private formatCreatedBy(createdBy: any): { _id: string; name: string; photoUrl?: string } | undefined {
+        if (!createdBy) return undefined;
+
+        if (typeof createdBy === 'string') {
+            return { _id: createdBy, name: 'Unknown' };
+        }
+
+        if (createdBy instanceof mongoose.Types.ObjectId) {
+            return { _id: createdBy.toString(), name: 'Unknown' };
+        }
+
+        const id = createdBy?._id?.toString?.() || createdBy?.id?.toString?.();
+
+        if (!id) {
+            return undefined;
+        }
+
+        return {
+            _id: id,
+            name: createdBy.name || 'Unknown',
+            photoUrl: createdBy.photoUrl,
+        };
     }
 
     private async uploadToCloudinary(photo: UploadedFile): Promise<string> {
@@ -84,13 +109,19 @@ class SkateparkService {
         // Optimize query with lean() and select only needed fields
         const skateparks = await SkateparkModel
             .find()
-            .select('title description tags location photoNames isPark size levels avgRating rating externalLinks')
+            .select('title description tags location photoNames isPark size levels avgRating rating externalLinks createdBy')
             .populate("externalLinks.sentBy", "name")
+            .populate('createdBy', 'name photoUrl')
             .lean()
             .exec();
 
-        cache.set(cacheKey, skateparks as unknown as ISkateparkModel[], 5 * 60 * 1000); // Cache for 5 minutes
-        return skateparks as unknown as ISkateparkModel[];
+        const formatted = (skateparks as any[]).map(park => ({
+            ...park,
+            createdBy: this.formatCreatedBy(park.createdBy),
+        }));
+
+        cache.set(cacheKey, formatted as unknown as ISkateparkModel[], 5 * 60 * 1000); // Cache for 5 minutes
+        return formatted as unknown as ISkateparkModel[];
     }
 
     public async getSkateparksByIds(ids: string[]): Promise<ISkateparkModel[]> {
@@ -98,12 +129,16 @@ class SkateparkService {
         
         const skateparks = await SkateparkModel
             .find({ _id: { $in: objectIds } })
-            .select('title description tags location photoNames isPark size levels avgRating rating externalLinks')
+            .select('title description tags location photoNames isPark size levels avgRating rating externalLinks createdBy')
             .populate("externalLinks.sentBy", "name")
+            .populate('createdBy', 'name photoUrl')
             .lean()
             .exec();
 
-        return skateparks as unknown as ISkateparkModel[];
+        return (skateparks as any[]).map(park => ({
+            ...park,
+            createdBy: this.formatCreatedBy(park.createdBy),
+        })) as unknown as ISkateparkModel[];
     }
 
 
@@ -250,17 +285,19 @@ class SkateparkService {
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
-            .select('title description tags location photoNames isPark size levels avgRating rating externalLinks createdAt')
+            .select('title description tags location photoNames isPark size levels avgRating rating externalLinks createdBy createdAt')
             .populate('externalLinks.sentBy', 'name')
+            .populate('createdBy', 'name photoUrl')
             .lean();
 
         const parks = rawParks.map((park: any) => ({
             ...park,
+            createdBy: this.formatCreatedBy(park.createdBy),
             externalLinks: park.externalLinks?.map((link: any) => ({
                 ...link,
                 sentBy: link.sentBy
                     ? {
-                        id: link.sentBy._id?.toString() || "unknown",
+                        id: link.sentBy._id?.toString() || link.sentBy.id || "unknown",
                         name: link.sentBy.name || "Unknown"
                     }
                     : undefined
