@@ -5,7 +5,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useToast } from '@/context/ToastContext';
 import { useUser } from '@/context/UserContext';
 import { skateparkClient } from '@/services/skateparkClient';
-import { Link as LinkIcon, LocationOn, Park, Streetview } from '@mui/icons-material';
+import { LocationOn, Park, Streetview } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
 import PersonIcon from '@mui/icons-material/Person';
 import { Box, Button, Chip, Dialog, DialogContent, DialogTitle, IconButton, Stack, Typography, Avatar } from '@mui/material';
@@ -14,7 +14,6 @@ import Rating from '@mui/material/Rating';
 import { useState } from 'react';
 import FavoriteButton from '../common/FavoriteButton';
 import FastCarousel from '../ui/FastCarousel';
-import CollapsibleCommentSection from '@/components/comments/CollapsibleCommentSection';
 
 interface SkateparkModalProps {
   open: boolean;
@@ -43,15 +42,6 @@ interface SkateparkModalProps {
   };
 }
 
-function getRatingWord(rating: number): string {
-  if (rating >= 4.5) return 'Gnarly';
-  if (rating >= 3.5) return 'Steezy';
-  if (rating >= 2.5) return 'Decent';
-  if (rating >= 1.5) return 'Meh';
-  if (rating > 0) return 'Whack';
-  return 'Unrated';
-}
-
 export default function SkateparkModal({
   open,
   onClose,
@@ -71,7 +61,6 @@ export default function SkateparkModal({
 }: SkateparkModalProps) {
   // All hooks must be called at the top level, before any conditional returns
   const [userRating, setUserRating] = useState<number | null>(null);
-  const [hoverRating, setHoverRating] = useState<number | null>(-1);
   const [isRatingLoading, setIsRatingLoading] = useState(false);
   const { showToast } = useToast();
   const { user } = useUser();
@@ -170,12 +159,12 @@ export default function SkateparkModal({
         sx={{ 
           backgroundColor: 'var(--color-surface)',
           color: 'var(--color-text-primary)',
-          p: 3
+          p: 2
         }}
       >
         {/* Image Carousel */}
         <Box sx={{ 
-          mb: 3,
+          mb: 2,
           borderRadius: 'var(--radius-lg)',
           overflow: 'hidden',
           boxShadow: 'var(--shadow-md)',
@@ -184,7 +173,7 @@ export default function SkateparkModal({
           <FastCarousel 
             images={photoNames} 
             alt={title}
-            height={400}
+            height={280}
           />
         </Box>
 
@@ -192,9 +181,12 @@ export default function SkateparkModal({
         <Typography 
           variant="body1" 
           sx={{ 
-            mb: 3, 
-            maxHeight: 120, 
-            overflowY: 'auto', 
+            mb: 2, 
+            display: '-webkit-box',
+            WebkitLineClamp: 3,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
             whiteSpace: 'pre-line',
             color: 'var(--color-text-primary)',
             lineHeight: 1.6,
@@ -207,447 +199,247 @@ export default function SkateparkModal({
           {description}
         </Typography>
 
-        {/* Created By Section */}
-        {createdBy && typeof createdBy === 'object' && createdBy !== null && (
-          <Box sx={{ 
-            mb: 3,
-            p: 2,
-            backgroundColor: 'var(--color-surface-elevated)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--color-border)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5
-          }}>
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                color: 'var(--color-text-secondary)',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1
-              }}
-            >
-              Created by:
-            </Typography>
-            <Link 
-              href={`/profile/${createdBy._id}`}
-              style={{ 
-                textDecoration: 'none', 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 1,
-                color: 'inherit'
-              }}
-            >
-              <Avatar 
-                src={createdBy.photoUrl} 
-                alt={createdBy.name}
-                sx={{ 
-                  width: 32, 
-                  height: 32 
-                }}
-              >
-                <PersonIcon />
-              </Avatar>
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  color: 'var(--color-accent-blue)',
-                  fontWeight: 600,
-                  '&:hover': {
-                    textDecoration: 'underline'
-                  }
-                }}
-              >
-                {createdBy.name}
-              </Typography>
-            </Link>
-          </Box>
-        )}
-
-        {/* Distance Display */}
-        {distanceKm !== undefined && (
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 1,
-            mb: 3,
-            px: 2,
-            py: 1.5,
-            backgroundColor: 'var(--color-surface-elevated)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--color-border)',
-            alignSelf: 'flex-start'
-          }}>
-            <LocationOn sx={{ 
-              fontSize: '1.2rem', 
-              color: 'var(--color-accent-blue)' 
-            }} />
-            <Typography variant="body2" sx={{ 
-              fontWeight: 600,
-              color: 'var(--color-text-primary)',
-              fontSize: '0.9rem'
-            }}>
-              {distanceKm.toFixed(1)}km away
-            </Typography>
-          </Box>
-        )}
-
-        {/* Spot Info */}
-        <Box sx={{ 
-          mb: 3,
-          p: 2,
-          backgroundColor: 'var(--color-surface-elevated)',
-          borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--color-border)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-          flexWrap: 'wrap'
-        }}>
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 1,
-            px: 2,
-            py: 1,
-            backgroundColor: isPark ? 'var(--color-accent-green)' : 'var(--color-accent-rust)',
-            color: 'var(--color-surface-elevated)',
-            borderRadius: 'var(--radius-md)',
-            fontWeight: 600,
-            fontSize: '0.875rem'
-          }}>
-            {isPark ? <Park sx={{ fontSize: 16 }} /> : <Streetview sx={{ fontSize: 16 }} />}
-            {isPark ? 'Skatepark' : 'Street Spot'}
-          </Box>
-          
-          {size && (
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 1,
-              px: 2,
-              py: 1,
-              backgroundColor: 'var(--color-accent-blue)',
-              color: 'var(--color-surface-elevated)',
-              borderRadius: 'var(--radius-md)',
-              fontWeight: 600,
-              fontSize: '0.875rem'
-            }}>
-              Size: {size}
-            </Box>
-          )}
-          
-          {safeLevels && safeLevels.length > 0 && safeLevels.some(level => level !== null && level !== undefined) && (
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 1,
-              px: 2,
-              py: 1,
-              backgroundColor: 'var(--color-accent-rust)',
-              color: 'var(--color-surface-elevated)',
-              borderRadius: 'var(--radius-md)',
-              fontWeight: 600,
-              fontSize: '0.875rem'
-            }}>
-              Levels: {safeLevels.filter(level => level !== null && level !== undefined).join(', ')}
-            </Box>
-          )}
-        </Box>
-
-        {/* Tags */}
-        <Box sx={{ mb: 3 }}>
-          <Typography 
-            variant="subtitle2" 
-            sx={{ 
-              mb: 1.5, 
-              color: 'var(--color-text-secondary)',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
-            }}
-          >
-            🏷️ Tags
-          </Typography>
-          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
-            {safeTags.map((tag, idx) => (
-              <Chip
-                key={idx}
-                label={tag}
-                size="small"
-                sx={{ 
-                  backgroundColor: 'var(--color-accent-green)',
-                  color: 'var(--color-surface-elevated)',
-                  fontWeight: 600,
-                  fontSize: '0.75rem',
-                  height: 28,
-                  '&:hover': {
-                    backgroundColor: 'var(--color-accent-green)',
-                    transform: 'translateY(-1px)',
-                    boxShadow: 'var(--shadow-md)',
-                  }
-                }}
-              />
-            ))}
-          </Stack>
-        </Box>
-
-        {/* Favorites Button */}
-        <Box sx={{ mb: 3 }}>
-          <Typography 
-            variant="subtitle2" 
-            sx={{ 
-              mb: 1.5, 
-              color: 'var(--color-text-secondary)',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
-            }}
-          >
-            ❤️ Favorites
-          </Typography>
-          <FavoriteButton 
-            spotId={_id} 
-            size="medium" 
-            showCount={true}
-            variant="button"
-          />
-        </Box>
-
-        {/* External Links */}
-        {safeExternalLinks && safeExternalLinks.length > 0 && (
-          <Box sx={{ mb: 3 }}>
-            <Typography 
-              variant="subtitle2" 
-              sx={{ 
-                mb: 1.5, 
-                color: 'var(--color-text-secondary)',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1
-              }}
-            >
-              🔗 External Links
-            </Typography>
-            <Box sx={{ 
-              display: 'flex', 
-              gap: 2, 
-              pb: 1,
-              flexWrap: 'wrap'
-            }}>
-              {safeExternalLinks.map((link, idx) => {
-                let hostname = '';
-                try {
-                  const urlObj = new URL(link.url);
-                  hostname = urlObj.hostname.replace(/^www\./, '').split('.')[0];
-                  hostname = hostname.charAt(0).toUpperCase() + hostname.slice(1);
-                } catch {
-                  hostname = 'Link';
-                }
-
-                // Safely handle sentBy property
-                const sentByName = link.sentBy && typeof link.sentBy === 'object' && 'name' in link.sentBy 
-                  ? link.sentBy.name 
-                  : typeof link.sentBy === 'string' 
-                    ? link.sentBy 
-                    : 'Unknown User';
-
-                return (
-                  <Box key={idx} sx={{ textAlign: 'center' }}>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => window.open(link.url, '_blank')}
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+          {/* Left column: creator, actions, chips, CTA */}
+          <Box sx={{ flex: { xs: '1 1 auto', md: '0 0 320px' }, width: { md: '320px' }, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+            <Stack spacing={2} sx={{ width: '100%', alignItems: 'center' }}>
+              {/* Created By Section */}
+              {createdBy && typeof createdBy === 'object' && createdBy !== null && (
+                <Box sx={{ 
+                  p: 1.5,
+                  backgroundColor: 'var(--color-surface-elevated)',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--color-border)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5
+                }}>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: 'var(--color-text-secondary)',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1
+                    }}
+                  >
+                    Created by:
+                  </Typography>
+                  <Link 
+                    href={`/profile/${createdBy._id}`}
+                    style={{ 
+                      textDecoration: 'none', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: 1,
+                      color: 'inherit'
+                    }}
+                  >
+                    <Avatar 
+                      src={createdBy.photoUrl} 
+                      alt={createdBy.name}
                       sx={{ 
-                        textTransform: 'none',
-                        borderColor: 'var(--color-accent-blue)',
+                        width: 28, 
+                        height: 28 
+                      }}
+                    >
+                      <PersonIcon />
+                    </Avatar>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
                         color: 'var(--color-accent-blue)',
-                        borderRadius: 'var(--radius-md)',
-                        transition: 'all var(--transition-fast)',
+                        fontWeight: 600,
                         '&:hover': {
-                          backgroundColor: 'rgba(93, 173, 226, 0.1)',
-                          borderColor: 'var(--color-accent-blue)',
-                          transform: 'translateY(-1px)',
-                          boxShadow: 'var(--shadow-sm)',
+                          textDecoration: 'underline'
                         }
                       }}
                     >
-                      <LinkIcon sx={{ mr: 1, fontSize: 16 }} />
-                      {hostname}
-                    </Button>
-                  </Box>
-                );
-              })}
-            </Box>
-          </Box>
-        )}
+                      {createdBy.name}
+                    </Typography>
+                  </Link>
+                </Box>
+              )}
 
-        {/* Rating Section */}
-        <Box sx={{ 
-          mb: 3,
-          p: 2,
-          backgroundColor: 'var(--color-surface-elevated)',
-          borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--color-border)'
-        }}>
-          <Typography 
-            variant="subtitle2" 
-            sx={{ 
-              mb: 1.5,
-              color: 'var(--color-text-primary)',
-              fontWeight: 600,
+              {/* Favorites + Rating */}
+              <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+                <Box title="Add to favorites">
+                  <FavoriteButton 
+                    spotId={_id} 
+                    size="medium" 
+                    showCount={true}
+                    variant="button"
+                  />
+                </Box>
+
+                <Box title="Rating">
+                  <Stack direction="row" spacing={1.5} alignItems="center">
+                    <Rating
+                      name="user-rating"
+                      value={userRating}
+                      disabled={isRatingLoading}
+                      onChange={async (_, value) => {
+                        if (!value) return;
+                        if (!user) return showToast("You must be logged in to rate.", "error");
+
+                        setIsRatingLoading(true);
+                        try {
+                          await skateparkClient.rateSkatepark(_id, { rating: value }, user._id);
+                          setUserRating(value);
+                        } catch (err: any) {
+                          showToast(err.message, "error");
+                        } finally {
+                          setIsRatingLoading(false);
+                        }
+                      }}
+                      sx={{
+                        '& .MuiRating-iconFilled': {
+                          color: 'var(--color-accent-rust)',
+                        },
+                        '& .MuiRating-iconHover': {
+                          color: 'var(--color-accent-rust)',
+                        },
+                        '& .MuiRating-iconEmpty': {
+                          color: theme === 'dark' ? 'var(--color-border)' : '#000000',
+                        }
+                      }}
+                    />
+                    {typeof avgRating === 'number' && avgRating > 0 && (
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: 'var(--color-text-secondary)' }}>
+                        Avg: {avgRating.toFixed(1)}
+                      </Typography>
+                    )}
+                  </Stack>
+                </Box>
+              </Stack>
+
+              {/* Type & Distance Chips */}
+              <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+                <Chip
+                  label={isPark ? 'Skatepark' : 'Street Spot'}
+                  size="small"
+                  icon={isPark ? <Park sx={{ fontSize: 16 }} /> : <Streetview sx={{ fontSize: 16 }} />}
+                  sx={{
+                    backgroundColor: isPark ? 'var(--color-accent-green)' : 'var(--color-accent-rust)',
+                    color: 'var(--color-surface-elevated)',
+                    fontWeight: 700,
+                  }}
+                />
+
+                {distanceKm !== undefined && (
+                  <Chip
+                    icon={<LocationOn sx={{ fontSize: 16 }} />}
+                    label={`${distanceKm.toFixed(1)}km away`}
+                    size="small"
+                    sx={{
+                      backgroundColor: 'var(--color-surface-elevated)',
+                      color: 'var(--color-text-primary)',
+                      border: '1px solid var(--color-border)',
+                      fontWeight: 700,
+                    }}
+                  />
+                )}
+              </Stack>
+
+              {/* Size & Level Chips */}
+              <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+                {size && (
+                  <Chip
+                    label={size}
+                    size="small"
+                    title="Size"
+                    sx={{
+                      backgroundColor: 'var(--color-accent-blue)',
+                      color: 'var(--color-surface-elevated)',
+                      fontWeight: 700,
+                    }}
+                  />
+                )}
+
+                {safeLevels && safeLevels.length > 0 && safeLevels.some(level => level !== null && level !== undefined) && (
+                  <Chip
+                    label={safeLevels.filter(level => level !== null && level !== undefined).join(', ')}
+                    size="small"
+                    title="Difficulty level"
+                    sx={{
+                      backgroundColor: 'var(--color-accent-rust)',
+                      color: 'var(--color-surface-elevated)',
+                      fontWeight: 700,
+                    }}
+                  />
+                )}
+              </Stack>
+            </Stack>
+
+            {/* CTA Button */}
+            <Button
+              component={Link}
+              href={`/parks/${_id}`}
+              variant="contained"
+              size="large"
+              fullWidth
+              sx={{
+                backgroundColor: 'var(--color-accent-green)',
+                color: 'var(--color-surface-elevated)',
+                fontWeight: 700,
+                py: 1.5,
+                borderRadius: 'var(--radius-md)',
+                textTransform: 'none',
+                fontSize: '1rem',
+                '&:hover': {
+                  backgroundColor: 'var(--color-accent-green)',
+                  transform: 'translateY(-2px)',
+                  boxShadow: 'var(--shadow-lg)',
+                }
+              }}
+            >
+              View Full Park Details
+            </Button>
+          </Box>
+
+          {/* Right column: Map */}
+          <Box sx={{ 
+            flex: 1,
+            borderRadius: 'var(--radius-lg)',
+            overflow: 'hidden',
+            boxShadow: 'var(--shadow-md)',
+            border: '1px solid var(--color-border)'
+          }}>
+            <Box sx={{ 
+              p: 1.5, 
+              backgroundColor: 'var(--color-surface-elevated)',
+              borderBottom: '1px solid var(--color-border)',
               display: 'flex',
               alignItems: 'center',
               gap: 1
-            }}
-          >
-            ⭐ Rate this spot
-          </Typography>
-          
-          {/* Current Average Rating Display */}
-          {avgRating && avgRating > 0 && (
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 1, 
-              mb: 2,
-              p: 1.5,
-              backgroundColor: 'var(--color-surface)',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--color-border)'
             }}>
-              <Rating 
-                value={avgRating} 
-                readOnly 
-                size="small"
-                sx={{
-                  '& .MuiRating-iconFilled': {
-                    color: '#FFD700', // Gold color for filled stars
-                  },
-                  '& .MuiRating-iconEmpty': {
-                    color: theme === 'dark' ? 'var(--color-border)' : '#000000',
-                  }
-                }}
-              />
+              <LocationOn sx={{ color: 'var(--color-accent-blue)', fontSize: 20 }} />
               <Typography 
-                variant="body2" 
+                variant="subtitle2" 
                 sx={{ 
                   color: 'var(--color-text-primary)',
                   fontWeight: 600,
-                  ml: 1
+                  fontSize: '0.875rem'
                 }}
               >
-                ({avgRating.toFixed(1)})
+                Location
               </Typography>
             </Box>
-          )}
-          
-          {/* User Rating Input */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Rating
-              name="user-rating"
-              value={userRating}
-              disabled={isRatingLoading}
-              onChange={async (_, value) => {
-                if (!value) return;
-                if (!user) return showToast("You must be logged in to rate.", "error");
-
-                setIsRatingLoading(true);
-                try {
-                  await skateparkClient.rateSkatepark(_id, { rating: value }, user._id);
-                  setUserRating(value);
-                } catch (err: any) {
-                  showToast(err.message, "error");
-                } finally {
-                  setIsRatingLoading(false);
-                }
+            <iframe
+              width="100%"
+              height={260}
+              loading="lazy"
+              style={{ 
+                border: 0, 
+                borderRadius: 0,
+                backgroundColor: 'var(--color-surface)'
               }}
-              onChangeActive={(_, hover) => setHoverRating(hover)}
-              sx={{
-                '& .MuiRating-iconFilled': {
-                  color: 'var(--color-accent-rust)',
-                },
-                '& .MuiRating-iconHover': {
-                  color: 'var(--color-accent-rust)',
-                },
-                '& .MuiRating-iconEmpty': {
-                  color: theme === 'dark' ? 'var(--color-border)' : '#000000',
-                }
-              }}
+              allowFullScreen
+              src={`https://www.google.com/maps?q=${coordinates.lat},${coordinates.lng}&hl=es;z=14&output=embed`}
             />
-            {(hoverRating !== -1 || userRating) && (
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  color: 'var(--color-accent-rust)',
-                  fontWeight: 600,
-                  backgroundColor: 'rgba(255, 107, 53, 0.1)',
-                  px: 2,
-                  py: 0.5,
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--color-accent-rust)'
-                }}
-              >
-                {getRatingWord(
-                  hoverRating !== null && hoverRating !== -1
-                    ? hoverRating
-                    : userRating !== null
-                      ? userRating
-                      : 0
-                )}
-              </Typography>
-            )}
           </Box>
-        </Box>
-
-        {/* Comments Section */}
-        <CollapsibleCommentSection skateparkId={_id} />
-
-        {/* Map */}
-        <Box sx={{ 
-          borderRadius: 'var(--radius-lg)',
-          overflow: 'hidden',
-          boxShadow: 'var(--shadow-md)',
-          border: '1px solid var(--color-border)'
-        }}>
-          <Box sx={{ 
-            p: 2, 
-            backgroundColor: 'var(--color-surface-elevated)',
-            borderBottom: '1px solid var(--color-border)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1
-          }}>
-            <LocationOn sx={{ color: 'var(--color-accent-blue)' }} />
-            <Typography 
-              variant="subtitle2" 
-              sx={{ 
-                color: 'var(--color-text-primary)',
-                fontWeight: 600
-              }}
-            >
-              Location
-            </Typography>
-          </Box>
-          <iframe
-            width="100%"
-            height="300"
-            loading="lazy"
-            style={{ 
-              border: 0, 
-              borderRadius: 0,
-              backgroundColor: 'var(--color-surface)'
-            }}
-            allowFullScreen
-            src={`https://www.google.com/maps?q=${coordinates.lat},${coordinates.lng}&hl=es;z=14&output=embed`}
-          />
-        </Box>
+        </Stack>
       </DialogContent>
     </Dialog>
   );
