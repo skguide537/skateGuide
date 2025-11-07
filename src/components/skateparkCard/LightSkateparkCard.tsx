@@ -6,9 +6,7 @@ import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
-import Rating from '@mui/material/Rating';
 import { memo } from 'react';
-import Image from 'next/image';
 import SkateparkModal from '../modals/SkateparkModal';
 import FastCarousel from '../ui/FastCarousel';
 import DeleteConfirmationDialog from '../modals/DeleteConfirmationDialog';
@@ -16,24 +14,14 @@ import FavoriteButton from '../common/FavoriteButton';
 import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Star from '@mui/icons-material/Star';
-import LocationOn from '@mui/icons-material/LocationOn';
 import { useLightSkateparkCard } from '@/hooks/useLightSkateparkCard';
 import { CardData } from '@/services/card.service';
-import { ExternalLink } from '@/types/skatepark';
+import { CardSpot, ExternalLink } from '@/types/skatepark';
 
-interface LightSkateparkCardProps {
-    _id: string;
-    title: string;
-    description: string;
-    tags: string[];
-    photoNames: string[];
-    coordinates: { lat: number; lng: number };
-    isPark: boolean;
-    size: string;
-    levels: string[];
-    avgRating: number;
-    distanceKm: number;
-    externalLinks: ExternalLink[];
+interface LightSkateparkCardProps extends CardSpot {
+    coordinates?: { lat: number; lng: number };
+    levels?: string[];
+    externalLinks?: ExternalLink[];
     isDeleting?: boolean;
     onDelete?: (spotId: string) => void;
     createdBy?: string | { _id: string; name: string; photoUrl?: string; role?: string; };
@@ -46,13 +34,13 @@ const LightSkateparkCard = memo(function LightSkateparkCard(props: LightSkatepar
         description: props.description,
         tags: props.tags,
         photoNames: props.photoNames,
-        coordinates: props.coordinates,
         isPark: props.isPark,
         size: props.size,
-        levels: props.levels,
         avgRating: props.avgRating,
         distanceKm: props.distanceKm,
-        externalLinks: props.externalLinks
+        location: props.location ?? (props.coordinates
+            ? { type: 'Point', coordinates: [props.coordinates.lng, props.coordinates.lat] as [number, number] }
+            : undefined)
     };
 
     const {
@@ -64,9 +52,7 @@ const LightSkateparkCard = memo(function LightSkateparkCard(props: LightSkatepar
         // Computed values
         isAdmin,
         typeInfo,
-        levelDisplayText,
         imagesToShow,
-        truncatedDescription,
         tagsInfo,
         distanceText,
         ratingText,
@@ -84,14 +70,20 @@ const LightSkateparkCard = memo(function LightSkateparkCard(props: LightSkatepar
         getCardStyles,
         getDeleteButtonStyles,
         getTypeBadgeStyles,
-        getDistanceBadgeStyles
+        getDistanceBadgeStyles,
+        accessibilityLabel,
+        tooltipText
     } = useLightSkateparkCard(cardData, props.onDelete);
+
+    const ratingDisplay = ratingText === '0.0' ? 'New' : ratingText;
 
     return (
         <>
             <Card 
                 onClick={handleCardClick}
                 sx={getCardStyles()}
+                title={tooltipText}
+                aria-label={accessibilityLabel}
             >
                 {/* Admin Delete Button */}
                 {isAdmin && (
@@ -105,15 +97,16 @@ const LightSkateparkCard = memo(function LightSkateparkCard(props: LightSkatepar
 
                 {/* Image Section */}
                 <Box sx={{ 
-                    position: 'relative', 
-                    height: 200, 
+                    position: 'relative',
+                    width: '100%',
+                    aspectRatio: '16 / 9',
                     overflow: 'hidden',
                     borderBottom: '1px solid var(--color-border)'
                 }}>
                     <FastCarousel 
-                        images={imagesToShow} 
-                        alt={props.title}
-                        height={200}
+                        images={imagesToShow.slice(0, 3)} 
+                        alt={props.title ?? 'Skate spot'}
+                        height="100%"
                     />
                     
                     {/* Type Badge - Top Left */}
@@ -122,9 +115,11 @@ const LightSkateparkCard = memo(function LightSkateparkCard(props: LightSkatepar
                     </Box>
 
                     {/* Distance Badge - Top Right */}
-                    <Box sx={getDistanceBadgeStyles()}>
-                        📍 {props.distanceKm.toFixed(1)}km
-                    </Box>
+                    {distanceText && (
+                        <Box sx={getDistanceBadgeStyles()}>
+                            📍 {distanceText}
+                        </Box>
+                    )}
                 </Box>
 
                 {/* Content Section */}
@@ -132,15 +127,15 @@ const LightSkateparkCard = memo(function LightSkateparkCard(props: LightSkatepar
                     flexGrow: 1, 
                     display: 'flex', 
                     flexDirection: 'column',
-                    p: 3,
-                    '&:last-child': { pb: 3 }
+                    p: 2.25,
+                    '&:last-child': { pb: 2.25 }
                 }}>
                     {/* Title and Rating Row */}
                     <Box sx={{ 
                         display: 'flex', 
                         justifyContent: 'space-between', 
                         alignItems: 'flex-start',
-                        mb: 2
+                        mb: 1.5
                     }}>
                         <Typography 
                             variant="h6" 
@@ -175,95 +170,52 @@ const LightSkateparkCard = memo(function LightSkateparkCard(props: LightSkatepar
                                 fontWeight: 600,
                                 color: 'var(--color-text-primary)'
                             }}>
-                                {ratingText}
+                                {ratingDisplay}
                             </Typography>
                         </Box>
                     </Box>
-
-                    {/* Distance Display */}
-                    {props.distanceKm !== undefined && (
-                        <Box sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: 1,
-                            mb: 2,
-                            px: 1.5,
-                            py: 0.5,
-                            backgroundColor: 'var(--color-surface)',
-                            borderRadius: 'var(--radius-md)',
-                            border: '1px solid var(--color-border)',
-                            alignSelf: 'flex-start'
-                        }}>
-                            <LocationOn sx={{ 
-                                fontSize: '1rem', 
-                                color: 'var(--color-accent-blue)' 
-                            }} />
-                            <Typography variant="body2" sx={{ 
-                                fontWeight: 600,
-                                color: 'var(--color-text-primary)',
-                                fontSize: '0.8rem'
-                            }}>
-                                {distanceText}
-                            </Typography>
-                        </Box>
-                    )}
-
-                    {/* Description */}
-                    <Typography 
-                        variant="body2" 
-                        color="var(--color-text-secondary)"
-                        sx={{ 
-                            mb: 3, 
-                            lineHeight: 1.5,
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                        }}
-                    >
-                        {truncatedDescription}
-                    </Typography>
 
                     {/* Tags */}
-                    <Box sx={{ mb: 3 }}>
-                        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                            {tagsInfo.displayTags.map((tag, index) => (
-                                <Chip
-                                    key={index}
-                                    label={tag}
-                                    size="small"
-                                    sx={{
-                                        backgroundColor: 'var(--color-accent-blue)',
-                                        color: 'var(--color-surface-elevated)',
-                                        fontWeight: 500,
-                                        fontSize: '0.7rem',
-                                        height: 24,
-                                        '& .MuiChip-label': {
-                                            px: 1,
-                                        }
-                                    }}
-                                />
-                            ))}
-                            {tagsInfo.hasMore && (
-                                <Chip
-                                    label={`+${tagsInfo.moreCount}`}
-                                    size="small"
-                                    sx={{
-                                        backgroundColor: 'var(--color-surface)',
-                                        color: 'var(--color-text-secondary)',
-                                        fontWeight: 500,
-                                        fontSize: '0.7rem',
-                                        height: 24,
-                                        border: '1px solid var(--color-border)',
-                                        '& .MuiChip-label': {
-                                            px: 1,
-                                        }
-                                    }}
-                                />
-                            )}
-                        </Stack>
-                    </Box>
+                    {(tagsInfo.displayTags.length > 0 || tagsInfo.hasMore) && (
+                        <Box sx={{ mb: 2 }}>
+                            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                                {tagsInfo.displayTags.map((tag, index) => (
+                                    <Chip
+                                        key={index}
+                                        label={tag}
+                                        size="small"
+                                        sx={{
+                                            backgroundColor: 'var(--color-accent-blue)',
+                                            color: 'var(--color-surface-elevated)',
+                                            fontWeight: 500,
+                                            fontSize: '0.7rem',
+                                            height: 24,
+                                            '& .MuiChip-label': {
+                                                px: 1,
+                                            }
+                                        }}
+                                    />
+                                ))}
+                                {tagsInfo.hasMore && (
+                                    <Chip
+                                        label={`+${tagsInfo.moreCount}`}
+                                        size="small"
+                                        sx={{
+                                            backgroundColor: 'var(--color-surface)',
+                                            color: 'var(--color-text-secondary)',
+                                            fontWeight: 500,
+                                            fontSize: '0.7rem',
+                                            height: 24,
+                                            border: '1px solid var(--color-border)',
+                                            '& .MuiChip-label': {
+                                                px: 1,
+                                            }
+                                        }}
+                                    />
+                                )}
+                            </Stack>
+                        </Box>
+                    )}
 
                     {/* Bottom Row - Size, Level, and Actions */}
                     <Box sx={{ 
@@ -272,48 +224,17 @@ const LightSkateparkCard = memo(function LightSkateparkCard(props: LightSkatepar
                         justifyContent: 'space-between', 
                         alignItems: 'center'
                     }}>
-                        {/* Size and Level */}
-                        <Box sx={{ display: 'flex', gap: 2 }}>
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: 0.5,
+                        <Chip
+                            label={props.size}
+                            size="small"
+                            sx={{
                                 backgroundColor: 'var(--color-surface)',
-                                px: 1.5,
-                                py: 0.5,
-                                borderRadius: 'var(--radius-md)',
+                                color: 'var(--color-text-primary)',
+                                fontWeight: 600,
+                                textTransform: 'none',
                                 border: '1px solid var(--color-border)'
-                            }}>
-                                <Typography variant="caption" sx={{ 
-                                    fontWeight: 600,
-                                    color: 'var(--color-text-primary)',
-                                    textTransform: 'uppercase',
-                                    fontSize: '0.7rem'
-                                }}>
-                                    {props.size}
-                                </Typography>
-                            </Box>
-                            
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: 0.5,
-                                backgroundColor: 'var(--color-surface)',
-                                px: 1.5,
-                                py: 0.5,
-                                borderRadius: 'var(--radius-md)',
-                                border: '1px solid var(--color-border)'
-                            }}>
-                                <Typography variant="caption" sx={{ 
-                                    fontWeight: 600,
-                                    color: 'var(--color-text-primary)',
-                                    textTransform: 'uppercase',
-                                    fontSize: '0.7rem'
-                                }}>
-                                    {levelDisplayText}
-                                </Typography>
-                            </Box>
-                        </Box>
+                            }}
+                        />
 
                         {/* Favorite Button */}
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 'auto' }}>
@@ -341,7 +262,7 @@ const LightSkateparkCard = memo(function LightSkateparkCard(props: LightSkatepar
                 open={modalOpen}
                 onClose={closeModal}
                 title={props.title}
-                description={props.description}
+                description={props.description ?? ''}
                 photoNames={props.photoNames}
                 isPark={props.isPark}
                 size={props.size}
@@ -360,12 +281,12 @@ const LightSkateparkCard = memo(function LightSkateparkCard(props: LightSkatepar
                 spot={{
                     _id: props._id,
                     title: props.title,
-                    description: props.description,
+                    description: props.description ?? '',
                     photoNames: props.photoNames,
                     isPark: props.isPark,
                     size: props.size,
-                    levels: props.levels,
-                    tags: props.tags
+                    levels: props.levels ?? [],
+                    tags: props.tags ?? []
                 }}
                 isDeleting={isDeleting}
             />
