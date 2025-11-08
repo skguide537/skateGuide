@@ -12,9 +12,9 @@ export const HOME_PAGE_CONSTANTS = {
         DESKTOP: 3,
     },
     VIRTUAL_SCROLL: {
-        CARD_HEIGHT: 420,
-        SPACING: 20,
-        ROW_HEIGHT: 440, // card height + spacing
+        CARD_HEIGHT: 360,
+        SPACING: 16,
+        ROW_HEIGHT: 376, // card height + spacing
         OVERSCAN: 3,
     },
     LOCAL_STORAGE_KEYS: {
