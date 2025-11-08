@@ -29,7 +29,6 @@ export default function StatusIndicators({ lastUpdated, parksWithDistance, parks
                 </Typography>
             </Box>
 
-            {/* Virtual Scrolling Status */}
            
         </>
     );
