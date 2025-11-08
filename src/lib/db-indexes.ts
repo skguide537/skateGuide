@@ -22,6 +22,10 @@ export async function createDatabaseIndexes() {
             { createdAt: -1 },
             { background: true }
         );
+        await db.collection('skateparks').createIndex(
+            { isApproved: 1, createdAt: -1 },
+            { background: true }
+        );
         
         // Create text search index on title, description, and tags
         await db.collection('skateparks').createIndex(
@@ -34,6 +38,29 @@ export async function createDatabaseIndexes() {
                     description: 1
                 }
             }
+        );
+
+        await db.collection('activities').createIndex(
+            { createdAt: -1 },
+            { background: true }
+        );
+        await db.collection('activities').createIndex(
+            { type: 1, createdAt: -1 },
+            { background: true }
+        );
+
+        await db.collection('adminlogs').createIndex(
+            { createdAt: -1 },
+            { background: true }
+        );
+        await db.collection('adminlogs').createIndex(
+            { category: 1, createdAt: -1 },
+            { background: true }
+        );
+
+        await db.collection('users').createIndex(
+            { role: 1, createdAt: -1 },
+            { background: true }
         );
         
         logger.info('🎉 Essential database indexes created successfully!', undefined, 'DatabaseIndexes');

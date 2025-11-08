@@ -1,0 +1,22 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/admin-auth';
+import { searchUsers } from '@/services/admin.service';
+import { handleAdminError } from '../_utils/error-response';
+
+export async function GET(request: NextRequest) {
+  try {
+    await requireAdmin(request);
+    const { searchParams } = new URL(request.url);
+    const query = searchParams.get('query') || undefined;
+    const role = searchParams.get('role') || undefined;
+    const page = searchParams.get('page') ? Number(searchParams.get('page')) : undefined;
+    const limit = searchParams.get('limit') ? Number(searchParams.get('limit')) : undefined;
+
+    const result = await searchUsers({ query, role, page, limit });
+    return NextResponse.json(result);
+  } catch (error) {
+    return handleAdminError(error, '/api/admin/users');
+  }
+}
+
+
