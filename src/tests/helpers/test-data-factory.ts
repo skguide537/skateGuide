@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import User from '../../models/User';
 import { SkateparkModel } from '../../models/skatepark.model';
 import { connectToDatabase } from '../../lib/mongodb';
+import { Tag } from '../../types/enums';
 
 /**
  * Test data factories for creating realistic test data
@@ -85,7 +86,7 @@ export async function createTestSkatepark(
     },
     size: options.size || 'Medium',
     levels: options.levels || ['Beginner', 'Intermediate'],
-    tags: options.tags || ['street', 'park'],
+    tags: options.tags || [Tag.Rail, Tag.Bowl],
     isPark: options.isPark !== undefined ? options.isPark : true,
     isApproved: options.isApproved !== undefined ? options.isApproved : false,
     photoNames: options.photoNames || ['test-photo.jpg'],

@@ -10,6 +10,8 @@ import { CreateSkateparkRequest, BaseSkatepark, ExternalLink } from "@/types/ska
 import "@/models/User";
 import mongoose from "mongoose";
 import User from "@/models/User";
+import { ActivityType } from "@/models/activity.model";
+import { recordActivity } from "./activity-log.service";
 
 class SkateparkService {
     // 1. Helper Functions:
@@ -433,6 +435,17 @@ class SkateparkService {
         }
 
         await skatepark.save();
+        try {
+            await recordActivity({
+                type: ActivityType.PARK_CREATED,
+                actorUserId: userId,
+                targetType: 'park',
+                targetId: skatepark._id.toString(),
+                metadata: { title: skatepark.title },
+            });
+        } catch (error) {
+            logger.warn('Failed to record PARK_CREATED activity', error, 'SkateparkService');
+        }
         
         // Invalidate relevant caches
         this.invalidateCache();
@@ -518,6 +531,18 @@ class SkateparkService {
 
             await skatepark.save();
             createdParks.push(await this.checkSkatepark(skatepark._id?.toString() || ""));
+
+            try {
+                await recordActivity({
+                    type: ActivityType.PARK_CREATED,
+                    actorUserId: userId,
+                    targetType: 'park',
+                    targetId: skatepark._id.toString(),
+                    metadata: { title: skatepark.title },
+                });
+            } catch (error) {
+                logger.warn('Failed to record PARK_CREATED activity (bulk)', error, 'SkateparkService');
+            }
         }
 
         return createdParks;
