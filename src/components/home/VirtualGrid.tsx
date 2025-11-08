@@ -66,7 +66,7 @@ export default function VirtualGrid({
                                     left: `${colIndex * (100 / gridColumns)}%`,
                                     width: `${100 / gridColumns}%`,
                                     height: `${HOME_PAGE_CONSTANTS.VIRTUAL_SCROLL.CARD_HEIGHT}px`,
-                                    padding: '10px',
+                                    padding: '0.75rem',
                                     boxSizing: 'border-box',
                                 }}
                             >

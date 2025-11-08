@@ -567,22 +567,6 @@ export default function MapSidebar({
           </Box>
         )}
 
-        {/* Virtual Scrolling Status */}
-        {filteredSpots && filteredSpots.length > 0 && (
-          <Box sx={{ 
-            textAlign: 'center', 
-            mt: 2, 
-            p: 2,
-            backgroundColor: 'var(--color-surface-elevated)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--color-border)',
-            fontSize: '0.75rem'
-          }}>
-            <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)' }}>
-              🚀 Virtual scrolling enabled • Smooth performance with {filteredSpots.length} spots
-            </Typography>
-          </Box>
-        )}
       </Box>
     </Box>
   );
