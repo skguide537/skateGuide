@@ -3,6 +3,8 @@ import { BadRequestError, NotFoundError } from '@/types/error-models';
 import { CommentModel, ICommentModel } from '@/models/comment.model';
 import { logger } from '@/lib/logger';
 import mongoose from 'mongoose';
+import { recordActivity } from './activity-log.service';
+import { ActivityType } from '@/models/activity.model';
 
 export interface CommentDTO {
     id: string;
@@ -116,6 +118,18 @@ class CommentService {
             await comment.save();
             
             logger.info(`Comment created for skatepark ${skateparkId} by user ${userId}`, undefined, 'CommentService');
+
+            try {
+                await recordActivity({
+                    type: ActivityType.COMMENT_ADDED,
+                    actorUserId: userId,
+                    targetType: 'comment',
+                    targetId: comment._id.toString(),
+                    metadata: { skateparkId },
+                });
+            } catch (error) {
+                logger.warn('Failed to record COMMENT_ADDED activity', error, 'CommentService');
+            }
             
             return this.mapToDTO(comment);
         } catch (error) {

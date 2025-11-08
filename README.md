@@ -151,6 +151,32 @@ Delete a comment (requires authentication, owner or admin only).
 - Limit: 1-50 (clamped automatically)
 - All IDs must be valid MongoDB ObjectIds
 
+## Admin APIs
+
+All admin endpoints require an authenticated user with the `admin` role. Non-admin requests return `403` and unauthenticated requests return `401`.
+
+### Parks Moderation
+- `GET /api/admin/parks/pending?page=&limit=` – Paginated queue of pending parks (`isApproved=false`). Returns `_id`, `title`, `thumbnail`, `createdBy`, `createdAt`, and canonical link (`/parks/[id]`). Defaults: `page=1`, `limit=20`, max `limit=100`.
+- `PATCH /api/admin/parks/:id/approve` – Approves a park. Body `{ "approve": true }` (defaults to `true`). Idempotent and emits a `PARK_APPROVED` activity.
+
+### Activity Feed
+- `GET /api/admin/activity?type=&limit=&cursor=` – Cursor-based feed of activities (`PARK_CREATED`, `PARK_APPROVED`, `COMMENT_ADDED`, `USER_ROLE_CHANGED`, `USER_DELETED`). `limit` capped at 100, returns `nextCursor` for pagination.
+
+### Statistics
+- `GET /api/admin/stats/overview?newUsersDays=&topContributorsLimit=` – Aggregated snapshot for dashboard widgets (user totals, new users per day, park totals, breakdowns by type/size/level, top contributors, 0.25° geo bins). Defaults: `newUsersDays=30`, `topContributorsLimit=5`.
+
+### User Administration
+- `GET /api/admin/users?query=&role=&page=&limit=` – Search/filter users by name/email and role. Paginated (default `page=1`, `limit=20`, max `limit=100`).
+- `PATCH /api/admin/users/:id/role` – Change a user’s role (`admin` | `user`). Prevents self-change and demoting the last admin.
+- `DELETE /api/admin/users/:id` – Hard deletes the user while anonymising their parks/comments. Blocks self-deletion and last-admin removal.
+
+### Monitoring
+- `GET /api/admin/monitoring/auth-failures?from=&to=&page=&limit=` – Auth failure logs surfaced from admin guard.
+- `GET /api/admin/monitoring/api-errors?from=&to=&page=&limit=` – Admin API error logs.
+- `GET /api/admin/monitoring/rate-limit?from=&to=&page=&limit=` – Placeholder for future rate-limit integration (currently records TODOs). All endpoints support ISO timestamps for `from`/`to` and pagination options (`limit` max 100).
+
+Each admin endpoint emits activity records and persists operational logs to the `activities` and `adminlogs` collections respectively, enabling the frontend admin panel to render approvals, activity timelines, stats dashboards, and monitoring tables.
+
 ## Contributing
 
 1. Fork the repository
