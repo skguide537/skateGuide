@@ -26,6 +26,8 @@ export interface GeoapifyResult {
 
 export class GeoapifyService {
   private static baseUrl = '/api/geoapify/autocomplete';
+  private static reverseUrl = '/api/geoapify/reverse';
+  private static reverseCache = new Map<string, string>();
 
   /**
    * Search for address suggestions
@@ -206,6 +208,39 @@ export class GeoapifyService {
       
       return aPriority - bPriority;
     });
+  }
+
+  /**
+   * Reverse geocode coordinates to a readable location label.
+   * Results are cached in-memory for the session.
+   */
+  static async reverseGeocode(lat: number, lon: number): Promise<string> {
+    const cacheKey = `${lat.toFixed(4)},${lon.toFixed(4)}`;
+    if (this.reverseCache.has(cacheKey)) {
+      return this.reverseCache.get(cacheKey)!;
+    }
+
+    try {
+      const params = new URLSearchParams({
+        lat: lat.toString(),
+        lon: lon.toString(),
+      });
+      const response = await fetch(`${this.reverseUrl}?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error(`Reverse geocode failed: ${response.statusText}`);
+      }
+      const data = await response.json();
+      const label =
+        data?.formatted ||
+        data?.rawFormatted ||
+        data?.results?.[0]?.formatted ||
+        cacheKey;
+      this.reverseCache.set(cacheKey, label);
+      return label;
+    } catch (error) {
+      console.error('Geoapify reverse geocode error:', error);
+      return cacheKey;
+    }
   }
 }
 

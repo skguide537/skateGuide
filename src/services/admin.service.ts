@@ -326,18 +326,27 @@ export async function getStatsOverview({
         .aggregate([
           {
             $project: {
+              _id: 1,
+              title: 1,
+              slug: 1,
               lat: { $arrayElemAt: ['$location.coordinates', 1] },
               lon: { $arrayElemAt: ['$location.coordinates', 0] },
             },
           },
           {
             $project: {
+              _id: 1,
+              title: 1,
+              slug: 1,
               latIndex: { $floor: { $divide: ['$lat', 0.25] } },
               lonIndex: { $floor: { $divide: ['$lon', 0.25] } },
             },
           },
           {
             $project: {
+              _id: 1,
+              title: 1,
+              slug: 1,
               latBin: { $multiply: ['$latIndex', 0.25] },
               lonBin: { $multiply: ['$lonIndex', 0.25] },
             },
@@ -346,6 +355,13 @@ export async function getStatsOverview({
             $group: {
               _id: { latBin: '$latBin', lonBin: '$lonBin' },
               count: { $sum: 1 },
+              parks: {
+                $push: {
+                  parkId: { $toString: '$_id' },
+                  title: '$title',
+                  slug: '$slug',
+                },
+              },
             },
           },
           { $sort: { '_id.latBin': 1, '_id.lonBin': 1 } },
@@ -387,6 +403,11 @@ export async function getStatsOverview({
         latBin: bucket._id.latBin,
         lonBin: bucket._id.lonBin,
         count: bucket.count,
+        parks: (bucket.parks ?? []).map((park: any) => ({
+          parkId: park.parkId,
+          title: park.title,
+          slug: park.slug,
+        })),
       })),
     },
   };

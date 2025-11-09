@@ -59,6 +59,9 @@ describe('Admin Stats API', () => {
     expect(data.parks.totals).toHaveProperty('total');
     expect(Array.isArray(data.parks.topContributors)).toBe(true);
     expect(Array.isArray(data.parks.geo)).toBe(true);
+    if (data.parks.geo.length > 0) {
+      expect(Array.isArray(data.parks.geo[0].parks)).toBe(true);
+    }
   });
 });
 
