@@ -27,6 +27,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import LoginIcon from '@mui/icons-material/Login';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import PersonIcon from '@mui/icons-material/Person';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import Link from 'next/link';
 
 export default function NavBar() {
@@ -184,6 +185,14 @@ export default function NavBar() {
                             </MenuItem>
                             {user && (
                                 <>
+                                    {user.role === 'admin' && (
+                                        <MenuItem onClick={handleCloseNavMenu} sx={{ py: 1, px: 2 }}>
+                                            <Link href="/admin-panel" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit', width: '100%' }}>
+                                                <AdminPanelSettingsIcon sx={{ mr: 1, fontSize: 20 }} />
+                                                <Typography textAlign="center" fontWeight={500} fontSize="0.9rem" color="var(--color-text-primary)">Admin Panel</Typography>
+                                            </Link>
+                                        </MenuItem>
+                                    )}
                                     <MenuItem onClick={handleCloseNavMenu} sx={{ py: 1, px: 2 }}>
                                         <Link href={`/profile/${user._id}`} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit', width: '100%' }}>
                                             <PersonIcon sx={{ mr: 1, fontSize: 20 }} />
@@ -296,6 +305,31 @@ export default function NavBar() {
                                 </IconButton>
                             </Link>
                         </Tooltip>
+
+                        {user?.role === 'admin' && (
+                            <Tooltip title="Admin Panel">
+                                <Link href="/admin-panel" style={{ textDecoration: 'none' }}>
+                                    <IconButton
+                                        sx={{
+                                            color: 'var(--color-accent-purple, #8e44ad)',
+                                            backgroundColor: 'rgba(142, 68, 173, 0.12)',
+                                            border: '2px solid rgba(142, 68, 173, 0.6)',
+                                            borderRadius: 'var(--radius-md)',
+                                            transition: 'all var(--transition-fast)',
+                                            boxShadow: 'var(--shadow-sm)',
+                                            p: 1,
+                                            '&:hover': {
+                                                backgroundColor: 'rgba(142, 68, 173, 0.2)',
+                                                transform: 'translateY(-2px)',
+                                                boxShadow: 'var(--shadow-md)',
+                                            }
+                                        }}
+                                    >
+                                        <AdminPanelSettingsIcon />
+                                    </IconButton>
+                                </Link>
+                            </Tooltip>
+                        )}
 
                         {/* Auth Buttons */}
                         {!user ? (
