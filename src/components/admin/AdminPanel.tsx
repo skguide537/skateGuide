@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect, SyntheticEvent } from 'react';
-import { Box, Container, Tab, Tabs, Typography, Divider, Stack } from '@mui/material';
+import { Box, Container, Tab, Tabs, Typography, Divider, Stack, CircularProgress } from '@mui/material';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import PlaylistAddCheckIcon from '@mui/icons-material/PlaylistAddCheck';
 import TimelineIcon from '@mui/icons-material/Timeline';
@@ -11,6 +11,11 @@ import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/context/UserContext';
 import { useToast } from '@/context/ToastContext';
+import { PendingApprovalsSection } from './sections/PendingApprovalsSection';
+import { ActivityFeedSection } from './sections/ActivityFeedSection';
+import { StatsDashboardSection } from './sections/StatsDashboardSection';
+import { UsersAdminSection } from './sections/UsersAdminSection';
+import {MonitoringSection} from './sections/MonitoringSection'
 
 const TAB_CONFIG = [
   { label: 'Pending Approvals', icon: <PlaylistAddCheckIcon fontSize="small" />, key: 'approvals' },
@@ -27,14 +32,14 @@ export default function AdminPanel() {
   const { showToast } = useToast();
 
   useEffect(() => {
-    if (!isLoading && user && user.role !== 'admin') {
-      showToast('Admin access required', 'error');
-      router.replace('/');
-    }
-
-    if (!isLoading && !user) {
-      showToast('Please sign in as an admin to continue', 'info');
-      router.replace('/login');
+    if (!isLoading) {
+      if (user && user.role !== 'admin') {
+        showToast('Admin access required', 'error');
+        router.replace('/');
+      } else if (!user) {
+        showToast('Please sign in as an admin to continue', 'info');
+        router.replace('/login');
+      }
     }
   }, [user, isLoading, router, showToast]);
 
@@ -46,19 +51,27 @@ export default function AdminPanel() {
     const tabKey = TAB_CONFIG[activeTab]?.key;
     switch (tabKey) {
       case 'approvals':
-        return <Placeholder message="Pending approvals will appear here." />;
+        return <PendingApprovalsSection />;
       case 'activity':
-        return <Placeholder message="Activity feed coming soon." />;
+        return <ActivityFeedSection />;
       case 'stats':
-        return <Placeholder message="Statistics dashboard under construction." />;
+        return <StatsDashboardSection />;
       case 'users':
-        return <Placeholder message="User management panel loading soon." />;
+        return <UsersAdminSection />;
       case 'monitoring':
-        return <Placeholder message="Monitoring logs will be displayed here." />;
+        return <MonitoringSection />;
       default:
         return null;
     }
   }, [activeTab]);
+
+  if (isLoading || !user || user.role !== 'admin') {
+    return (
+      <Container maxWidth="xl" sx={{ mt: 6, mb: 6, display: 'flex', justifyContent: 'center' }}>
+        <CircularProgress />
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 6 }}>
@@ -102,21 +115,5 @@ export default function AdminPanel() {
 }
 
 function Placeholder({ message }: { message: string }) {
-  return (
-    <Box
-      sx={{
-        borderRadius: 2,
-        border: theme => `1px dashed ${theme.palette.divider}`,
-        p: 4,
-        textAlign: 'center',
-        backgroundColor: theme => theme.palette.background.paper,
-      }}
-    >
-      <Typography variant="body1" color="text.secondary">
-        {message}
-      </Typography>
-    </Box>
-  );
+
 }
-
-
