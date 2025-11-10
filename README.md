@@ -59,6 +59,32 @@ npm run dev
 
 The application will be available at `http://localhost:3000`
 
+## Docker (Production)
+
+1. Copy `env.docker.example` to `.env.docker` and populate the runtime secrets:
+   - `MONGO_URI`
+   - `CLOUDINARY_CLOUD_NAME`
+   - `CLOUDINARY_API_KEY`
+   - `CLOUDINARY_API_SECRET`
+   - `CLOUDINARY_URL`
+   - `GEOAPIFY_API_KEY`
+   - `JWT_SECRET`
+2. Build the image:
+   ```bash
+   docker build -t skateguide:prod .
+   ```
+3. Run the container:
+   ```bash
+   docker run --rm -p 3500:3000 --env-file .env.docker skateguide:prod
+   ```
+   The app serves traffic at `http://localhost:3500`.
+4. Or use Docker Compose:
+   ```bash
+   docker compose up --build
+   ```
+
+> MongoDB is expected to be reachable via Atlas or another external URI; no Mongo container is provided.
+
 ## Project Structure
 
 ```

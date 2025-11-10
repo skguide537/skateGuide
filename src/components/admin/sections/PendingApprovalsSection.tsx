@@ -14,8 +14,8 @@ import {
   Stack,
   Typography,
   Chip,
+  Grid,
 } from '@mui/material';
-import Grid from '@mui/material/Grid2';
 import CheckIcon from '@mui/icons-material/Check';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import PendingIcon from '@mui/icons-material/Pending';

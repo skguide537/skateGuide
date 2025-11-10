@@ -6,6 +6,8 @@ import {
   requireAdmin,
 } from '@/lib/admin-auth';
 
+export const dynamic = 'force-dynamic';
+
 type RateLimitState = { count: number; resetTime: number };
 
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
