@@ -21,8 +21,8 @@ import {
   TableHead,
   TableRow,
   Typography,
+  Grid,
 } from '@mui/material';
-import Grid from '@mui/material/Grid2';
 import InsightsIcon from '@mui/icons-material/Insights';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import ParkIcon from '@mui/icons-material/Park';

@@ -1,7 +1,6 @@
 'use client';
 
-import { Box, Typography } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import { Box, Typography, Grid } from '@mui/material';
 import SkateparkCard from '../skateparkCard/SkateparkCard';
 
 interface SpotsTabProps {

@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Container, Typography, Box, CircularProgress, Avatar, Chip, Stack, Tooltip } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import { Container, Typography, Box, CircularProgress, Avatar, Chip, Stack, Tooltip, Grid } from '@mui/material';
 import { useProfile } from '@/hooks/useProfile';
 import { useUser } from '@/context/UserContext';
 import { formatJoinedDate } from '@/utils/timeUtils';
