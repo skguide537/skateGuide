@@ -4,6 +4,8 @@ import { getActivities } from '@/services/admin.service';
 import { handleAdminError } from '../_utils/error-response';
 import { ActivityType } from '@/models/activity.model';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     await requireAdmin(request);

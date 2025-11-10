@@ -5,12 +5,16 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  output: 'standalone',
+  
+  // Skip prerendering API routes during build (they need runtime DB)
+  skipTrailingSlashRedirect: true,
   
   // Performance optimizations
   experimental: {
     // Temporarily disabled optimizeCss due to critters dependency issue
     // optimizeCss: true,
-    optimizePackageImports: ['@mui/material', '@mui/icons-material', 'leaflet'],
+    optimizePackageImports: ['@mui/icons-material', 'leaflet'],
     webpackBuildWorker: true, // Use separate process for webpack builds
     turbo: {
       rules: {
@@ -47,9 +51,6 @@ const nextConfig = {
   // Build optimizations
   swcMinify: true,
   modularizeImports: {
-    '@mui/material': {
-      transform: '@mui/material/{{member}}',
-    },
     '@mui/icons-material': {
       transform: '@mui/icons-material/{{member}}',
     },

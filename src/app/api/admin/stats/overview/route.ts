@@ -3,6 +3,8 @@ import { requireAdmin } from '@/lib/admin-auth';
 import { getStatsOverview } from '@/services/admin.service';
 import { handleAdminError } from '../../_utils/error-response';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     await requireAdmin(request);

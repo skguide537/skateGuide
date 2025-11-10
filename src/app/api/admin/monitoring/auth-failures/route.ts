@@ -3,6 +3,8 @@ import { requireAdmin } from '@/lib/admin-auth';
 import { getMonitoringLogs } from '@/services/admin.service';
 import { handleAdminError } from '../../_utils/error-response';
 
+export const dynamic = 'force-dynamic';
+
 function parseDate(value: string | null) {
   if (!value) return undefined;
   const date = new Date(value);
