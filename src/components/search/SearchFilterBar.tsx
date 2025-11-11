@@ -305,7 +305,8 @@ export default function SearchFilterBar({
                              distanceFilterEnabled={state.distanceFilterEnabled}
                              onDistanceFilterEnabledChange={handleDistanceFilterEnabledChange}
                              distanceFilter={state.distanceFilter}
-                             onDistanceFilterChange={handleDistanceFilterChange}
+                            onDistanceFilterChange={handleDistanceFilterChange}
+                            disabled={!userLocation}
                          />
                      </Box>
                 </Box>
