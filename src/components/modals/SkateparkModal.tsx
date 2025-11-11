@@ -459,7 +459,7 @@ export default function SkateparkModal({
                   }}
                 />
 
-                {resolvedDistanceKm !== undefined && (
+                {typeof resolvedDistanceKm === 'number' && (
                   <Chip
                     icon={<LocationOn sx={{ fontSize: 16 }} />}
                     label={`${resolvedDistanceKm.toFixed(1)}km away`}

@@ -10,14 +10,26 @@ interface DistanceFilterProps {
     onDistanceFilterEnabledChange: (enabled: boolean) => void;
     distanceFilter: number;
     onDistanceFilterChange: (distance: number) => void;
+    disabled?: boolean;
 }
 
 export default function DistanceFilter({ 
     distanceFilterEnabled, 
     onDistanceFilterEnabledChange, 
     distanceFilter, 
-    onDistanceFilterChange 
+    onDistanceFilterChange,
+    disabled = false,
 }: DistanceFilterProps) {
+    const handleToggle = (enabled: boolean) => {
+        if (disabled) return;
+        onDistanceFilterEnabledChange(enabled);
+    };
+
+    const handleDistanceChange = (value: number) => {
+        if (disabled) return;
+        onDistanceFilterChange(value);
+    };
+
     return (
         <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
@@ -27,7 +39,8 @@ export default function DistanceFilter({
                 </Typography>
                 <Switch
                     checked={distanceFilterEnabled}
-                    onChange={(e) => onDistanceFilterEnabledChange(e.target.checked)}
+                    onChange={(e) => handleToggle(e.target.checked)}
+                    disabled={disabled}
                     sx={{
                         '& .MuiSwitch-switchBase.Mui-checked': {
                             color: 'var(--color-accent-blue)',
@@ -39,12 +52,12 @@ export default function DistanceFilter({
                 />
             </Box>
             
-            {distanceFilterEnabled && (
+            {distanceFilterEnabled && !disabled && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
                     <Box sx={{ width: 200 }}>
                         <Slider
                             value={distanceFilter}
-                            onChange={(_, value) => onDistanceFilterChange(value as number)}
+                            onChange={(_, value) => handleDistanceChange(value as number)}
                             min={SEARCH_FILTER_CONSTANTS.DISTANCE_RANGE.min}
                             max={SEARCH_FILTER_CONSTANTS.DISTANCE_RANGE.max}
                             step={SEARCH_FILTER_CONSTANTS.DISTANCE_RANGE.step}
@@ -71,6 +84,12 @@ export default function DistanceFilter({
                         Max Distance: {distanceFilter}km
                     </Typography>
                 </Box>
+            )}
+
+            {disabled && (
+                <Typography variant="caption" sx={{ color: 'var(--color-text-secondary)' }}>
+                    Enable location services to filter by distance.
+                </Typography>
             )}
         </Box>
     );

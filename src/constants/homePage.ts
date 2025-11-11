@@ -29,6 +29,7 @@ export const HOME_PAGE_CONSTANTS = {
         NEW_SPOT_CHECK: 2000, // 2 seconds
         NEW_SPOT_REFRESH: 1000, // 1 second
         NEW_SPOT_THRESHOLD: 10000, // 10 seconds
+        GEOLOCATION: 5000, // 5 seconds
     },
 } as const;
 

@@ -25,7 +25,7 @@ export class ParksFilterService {
         deletedSpotIds: Set<string>,
         deletingSpotIds: Set<string>
     ): FilteredSkatepark[] {
-        if (!userCoords) return [];
+        const hasUserCoords = Boolean(userCoords);
 
         // Filter out deleted spots and null parks
         let filtered = parks
@@ -35,7 +35,7 @@ export class ParksFilterService {
             .filter(Boolean) as FilteredSkatepark[];
 
         // Apply sorting
-        filtered = this.sortParks(filtered, filterState.sortBy, filterState.distanceFilterEnabled);
+        filtered = this.sortParks(filtered, filterState.sortBy, hasUserCoords);
 
         return filtered;
     }
@@ -43,7 +43,7 @@ export class ParksFilterService {
     private static applyFilters(
         park: BaseSkatepark,
         filterState: FilterState,
-        userCoords: { lat: number; lng: number },
+        userCoords: { lat: number; lng: number } | null,
         favorites: string[]
     ): boolean {
         // Search filter
@@ -80,6 +80,11 @@ export class ParksFilterService {
 
         // Distance filter
         if (filterState.distanceFilterEnabled) {
+            if (!userCoords) {
+                // Without user coordinates we can't evaluate the distance filter; allow the item through.
+                return true;
+            }
+
             const distance = UtilityService.getDistanceKm(
                 userCoords.lat,
                 userCoords.lng,
@@ -102,7 +107,7 @@ export class ParksFilterService {
 
     private static addDistanceAndMetadata(
         park: BaseSkatepark,
-        userCoords: { lat: number; lng: number },
+        userCoords: { lat: number; lng: number } | null,
         deletingSpotIds: Set<string>
     ): FilteredSkatepark | null {
         if (!park || !park.location || !park.location.coordinates) return null;
@@ -111,12 +116,14 @@ export class ParksFilterService {
             lat: park.location.coordinates[1],
             lng: park.location.coordinates[0],
         };
-        const distanceKm = UtilityService.getDistanceKm(
-            userCoords.lat,
-            userCoords.lng,
-            parkCoords.lat,
-            parkCoords.lng
-        );
+        const distanceKm = userCoords
+            ? UtilityService.getDistanceKm(
+                userCoords.lat,
+                userCoords.lng,
+                parkCoords.lat,
+                parkCoords.lng
+            )
+            : null;
 
         return {
             ...park,
@@ -129,11 +136,19 @@ export class ParksFilterService {
     private static sortParks(
         parks: FilteredSkatepark[],
         sortBy: string,
-        distanceFilterEnabled: boolean
+        hasUserCoords: boolean
     ): FilteredSkatepark[] {
         if (sortBy === 'distance') {
-            // Sort by distance (closest first)
-            return parks.sort((a, b) => a.distanceKm - b.distanceKm);
+            if (!hasUserCoords) {
+                // Fallback to rating when distance data is unavailable
+                return parks.sort((a, b) => b.avgRating - a.avgRating);
+            }
+
+            return parks.sort((a, b) => {
+                const distanceA = typeof a.distanceKm === 'number' ? a.distanceKm : Number.POSITIVE_INFINITY;
+                const distanceB = typeof b.distanceKm === 'number' ? b.distanceKm : Number.POSITIVE_INFINITY;
+                return distanceA - distanceB;
+            });
         } else if (sortBy === 'rating') {
             // Sort by rating (highest first)
             return parks.sort((a, b) => b.avgRating - a.avgRating);

@@ -12,10 +12,8 @@ RUN apk add --no-cache python3 make g++
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-# Set dummy MONGO_URI for build-time (API routes won't actually connect)
 ENV MONGO_URI=mongodb://localhost:27017/skateguide
-# API routes will error during prerender but that's expected (they're runtime-only)
-RUN npm run build; exit 0
+RUN npm run build
 
 # Minimal runtime image
 FROM node:20-alpine AS runner
