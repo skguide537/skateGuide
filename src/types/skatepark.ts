@@ -101,7 +101,7 @@ export interface SkateparkDetail extends Skatepark {
  * Skatepark with calculated distance from user location
  */
 export interface SkateparkWithDistance extends BaseSkatepark {
-  distanceKm: number;
+  distanceKm: number | null;
 }
 
 /**
@@ -136,7 +136,7 @@ export interface SkateparkMapMarker extends BaseSkatepark {
  * Skatepark data for filtering and sorting
  */
 export interface FilteredSkatepark extends BaseSkatepark {
-  distanceKm: number;
+  distanceKm: number | null;
   isDeleting: boolean;
   coordinates: {
     lat: number;

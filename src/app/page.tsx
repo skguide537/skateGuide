@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Container from '@mui/material/Container';
 import SearchFilterBar from '@/components/search/SearchFilterBar';
 import HeroSection from '@/components/home/HeroSection';
@@ -11,12 +11,10 @@ import { useParksData } from '@/hooks/useParksData';
 import { useParksFiltering } from '@/hooks/useParksFiltering';
 import { useResponsiveGrid, useVirtualGrid } from '@/hooks/useVirtualGrid';
 import { HOME_PAGE_CONSTANTS } from '@/constants/homePage';
-import { logger } from '@/lib/logger';
+import { useGeolocation } from '@/hooks/useGeolocation';
+import { LocationFallbackBanner } from '@/components/home/LocationFallbackBanner';
 
 export default function HomePage() {
-    // Get user's location
-     const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
-    
     // Hero visibility state
     const [showHero, setShowHero] = useState(true);
 
@@ -40,14 +38,7 @@ export default function HomePage() {
         localStorage.setItem(HOME_PAGE_CONSTANTS.LOCAL_STORAGE_KEYS.SHOW_HERO, 'true');
     };
 
-    // Get user coordinates
-    useEffect(() => {
-        navigator.geolocation.getCurrentPosition(
-            pos => setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-            err => logger.error('Geolocation error', err, 'HomePage'),
-            { enableHighAccuracy: true }
-        );
-    }, []);
+    const { status: geoStatus, coords: userCoords, failureReason, retry, isLoading: isGeoLoading } = useGeolocation();
 
     // Use custom hooks for data management
     const {
@@ -86,9 +77,38 @@ export default function HomePage() {
         parksWithDistance,
     } = useParksFiltering(parks, userCoords, deletedSpotIds, deletingSpotIds);
 
+    const forcedSortRef = useRef<'rating' | null>(null);
+
+    useEffect(() => {
+        if (geoStatus === 'fallback') {
+            if (sortBy === 'distance') {
+                handleSortByChange('rating');
+                forcedSortRef.current = 'rating';
+            }
+
+            if (distanceFilterEnabled) {
+                handleDistanceFilterEnabledChange(false);
+            }
+        }
+
+        if (geoStatus === 'success' && forcedSortRef.current === 'rating' && sortBy === 'rating') {
+            handleSortByChange('distance');
+            forcedSortRef.current = null;
+        }
+    }, [
+        geoStatus,
+        sortBy,
+        handleSortByChange,
+        distanceFilterEnabled,
+        handleDistanceFilterEnabledChange,
+    ]);
+
     // Use custom hooks for virtual grid
     const gridColumns = useResponsiveGrid();
     const { parentRef, virtualizer } = useVirtualGrid(parksWithDistance, gridColumns);
+
+    const shouldShowSkeleton = isGeoLoading || isLoading;
+    const showFallbackBanner = geoStatus === 'fallback';
 
     return (
         <Container maxWidth="lg" sx={{ mt: 6 }}>
@@ -100,10 +120,18 @@ export default function HomePage() {
             />
 
             {/* Loading or Content */}
-            {!userCoords || isLoading ? (
-                <LoadingSection userCoords={userCoords} />
+            {shouldShowSkeleton ? (
+                <LoadingSection />
             ) : (
                 <>
+                    {showFallbackBanner && (
+                        <LocationFallbackBanner
+                            reason={failureReason}
+                            onRetry={retry}
+                            isRetrying={geoStatus === 'loading'}
+                        />
+                    )}
+
                                                               {/* Search and Filter Bar */}
                      <SearchFilterBar
                          searchTerm={searchTerm}
@@ -130,7 +158,7 @@ export default function HomePage() {
                          onSortByChange={handleSortByChange}
                          filteredCount={parksWithDistance.length}
                          totalCount={parks.length}
-                         userLocation={userCoords}
+                         userLocation={geoStatus === 'success' ? userCoords : null}
                      />
 
                     {/* Status Indicators */}
