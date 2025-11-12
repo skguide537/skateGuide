@@ -8,12 +8,13 @@ import { skateparkClient } from '@/services/skateparkClient';
 import { LocationOn, Park, Streetview } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
 import PersonIcon from '@mui/icons-material/Person';
-import { Box, Button, Chip, Dialog, DialogContent, DialogTitle, IconButton, Stack, Typography, Avatar } from '@mui/material';
+import { Box, Button, Chip, Dialog, DialogContent, DialogTitle, IconButton, Stack, Typography, Avatar, Tooltip } from '@mui/material';
 import Link from 'next/link';
 import Rating from '@mui/material/Rating';
 import { useEffect, useMemo, useState } from 'react';
 import FavoriteButton from '../common/FavoriteButton';
 import FastCarousel from '../ui/FastCarousel';
+import ApprovedBadge from '../common/ApprovedBadge';
 import { SkateparkDetail } from '@/types/skatepark';
 
 interface SkateparkModalProps {
@@ -258,13 +259,20 @@ export default function SkateparkModal({
           }
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, pr: 6 }}>
           {resolvedIsPark ? (
             <Park sx={{ color: 'var(--color-accent-green)', fontSize: 28 }} />
           ) : (
             <Streetview sx={{ color: 'var(--color-accent-rust)', fontSize: 28 }} />
           )}
           {resolvedTitle}
+          {parkDetails?.isApproved && (
+            <Tooltip title="This park is approved by an admin" arrow>
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', ml: 1 }}>
+                <ApprovedBadge size="large" variant="icon" />
+              </Box>
+            </Tooltip>
+          )}
         </Box>
         <IconButton
           aria-label="close"
