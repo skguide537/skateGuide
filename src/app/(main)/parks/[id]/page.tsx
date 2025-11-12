@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { 
   Avatar, Box, Button, Chip, Container, Divider, Drawer, FormControl, IconButton, 
-  InputLabel, MenuItem, OutlinedInput, Select, Stack, Switch, TextField, Typography 
+  InputLabel, MenuItem, OutlinedInput, Select, Stack, Switch, TextField, Typography, Tooltip 
 } from '@mui/material';
 import Rating from '@mui/material/Rating';
 import EditIcon from '@mui/icons-material/Edit';
@@ -14,6 +14,7 @@ import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import FastCarousel from '@/components/ui/FastCarousel';
 import FavoriteButton from '@/components/common/FavoriteButton';
+import ApprovedBadge from '@/components/common/ApprovedBadge';
 import CollapsibleCommentSection from '@/components/comments/CollapsibleCommentSection';
 import Loading from '@/components/loading/Loading';
 import { useToast } from '@/context/ToastContext';
@@ -297,7 +298,16 @@ export default function ParkDetailsPage() {
     <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800 }}>{title}</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Typography variant="h4" sx={{ fontWeight: 800 }}>{title}</Typography>
+          {(park as any)?.isApproved && (
+            <Tooltip title="This park is approved by an admin" arrow>
+              <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                <ApprovedBadge size="large" variant="icon" />
+              </Box>
+            </Tooltip>
+          )}
+        </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {canEdit && (
             <Button
