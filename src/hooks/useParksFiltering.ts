@@ -14,6 +14,7 @@ export function useParksFiltering(parks: BaseSkatepark[], userCoords: { lat: num
     const [levelFilter, setLevelFilter] = useState<string[]>([]);
     const [tagFilter, setTagFilter] = useState<Tag[]>([]);
     const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
+    const [showOnlyApproved, setShowOnlyApproved] = useState(false);
     const [distanceFilterEnabled, setDistanceFilterEnabled] = useState(false);
     const [distanceFilter, setDistanceFilter] = useState<number>(10);
     const [ratingFilterEnabled, setRatingFilterEnabled] = useState<boolean>(false);
@@ -27,6 +28,7 @@ export function useParksFiltering(parks: BaseSkatepark[], userCoords: { lat: num
     const handleLevelFilterChange = useCallback((levels: string[]) => setLevelFilter(levels), []);
     const handleTagFilterChange = useCallback((tags: Tag[]) => setTagFilter(tags), []);
     const handleShowOnlyFavoritesChange = useCallback((show: boolean) => setShowOnlyFavorites(show), []);
+    const handleShowOnlyApprovedChange = useCallback((show: boolean) => setShowOnlyApproved(show), []);
     const handleDistanceFilterEnabledChange = useCallback((enabled: boolean) => setDistanceFilterEnabled(enabled), []);
     const handleDistanceFilterChange = useCallback((distance: number) => setDistanceFilter(distance), []);
     const handleRatingFilterEnabledChange = useCallback((enabled: boolean) => setRatingFilterEnabled(enabled), []);
@@ -41,6 +43,7 @@ export function useParksFiltering(parks: BaseSkatepark[], userCoords: { lat: num
         levelFilter,
         tagFilter,
         showOnlyFavorites,
+        showOnlyApproved,
         distanceFilterEnabled,
         distanceFilter,
         ratingFilterEnabled,
@@ -53,6 +56,7 @@ export function useParksFiltering(parks: BaseSkatepark[], userCoords: { lat: num
         levelFilter,
         tagFilter,
         showOnlyFavorites,
+        showOnlyApproved,
         distanceFilterEnabled,
         distanceFilter,
         ratingFilterEnabled,
@@ -87,6 +91,7 @@ export function useParksFiltering(parks: BaseSkatepark[], userCoords: { lat: num
         levelFilter,
         tagFilter,
         showOnlyFavorites,
+        showOnlyApproved,
         distanceFilterEnabled,
         distanceFilter,
         ratingFilterEnabled,
@@ -100,6 +105,7 @@ export function useParksFiltering(parks: BaseSkatepark[], userCoords: { lat: num
         handleLevelFilterChange,
         handleTagFilterChange,
         handleShowOnlyFavoritesChange,
+        handleShowOnlyApprovedChange,
         handleDistanceFilterEnabledChange,
         handleDistanceFilterChange,
         handleRatingFilterEnabledChange,

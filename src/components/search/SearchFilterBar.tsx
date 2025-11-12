@@ -14,6 +14,7 @@ import FilterSelect from './filters/FilterSelect';
 import DistanceFilter from './filters/DistanceFilter';
 import RatingFilter from './filters/RatingFilter';
 import FavoritesFilter from './filters/FavoritesFilter';
+import ApprovedFilter from './filters/ApprovedFilter';
 import ActiveFilters from './ActiveFilters';
 import FilterActions from './FilterActions';
 import FilterSummary from './FilterSummary';
@@ -31,6 +32,8 @@ interface SearchFilterBarProps {
     onTagFilterChange: (tags: Tag[]) => void;
     showOnlyFavorites: boolean;
     onShowOnlyFavoritesChange: (show: boolean) => void;
+    showOnlyApproved: boolean;
+    onShowOnlyApprovedChange: (show: boolean) => void;
     distanceFilterEnabled: boolean;
     onDistanceFilterEnabledChange: (enabled: boolean) => void;
     distanceFilter: number;
@@ -59,6 +62,8 @@ export default function SearchFilterBar({
     onTagFilterChange,
     showOnlyFavorites,
     onShowOnlyFavoritesChange,
+    showOnlyApproved,
+    onShowOnlyApprovedChange,
     distanceFilterEnabled,
     onDistanceFilterEnabledChange,
     distanceFilter,
@@ -149,6 +154,10 @@ export default function SearchFilterBar({
     const handleShowOnlyFavoritesChange = (value: boolean) => {
         updateShowOnlyFavorites(value);
         onShowOnlyFavoritesChange(value);
+    };
+
+    const handleShowOnlyApprovedChange = (value: boolean) => {
+        onShowOnlyApprovedChange(value);
     };
 
     const handleDistanceFilterEnabledChange = (value: boolean) => {
@@ -286,6 +295,10 @@ export default function SearchFilterBar({
                              showOnlyFavorites={state.showOnlyFavorites}
                              onShowOnlyFavoritesChange={handleShowOnlyFavoritesChange}
                              user={user}
+                         />
+                         <ApprovedFilter
+                             showOnlyApproved={showOnlyApproved}
+                             onShowOnlyApprovedChange={handleShowOnlyApprovedChange}
                          />
                      </Box>
 

@@ -58,6 +58,7 @@ export default function HomePage() {
         levelFilter,
         tagFilter,
         showOnlyFavorites,
+        showOnlyApproved,
         distanceFilterEnabled,
         distanceFilter,
         ratingFilterEnabled,
@@ -69,6 +70,7 @@ export default function HomePage() {
         handleLevelFilterChange,
         handleTagFilterChange,
         handleShowOnlyFavoritesChange,
+        handleShowOnlyApprovedChange,
         handleDistanceFilterEnabledChange,
         handleDistanceFilterChange,
         handleRatingFilterEnabledChange,
@@ -146,6 +148,8 @@ export default function HomePage() {
                          onTagFilterChange={handleTagFilterChange}
                          showOnlyFavorites={showOnlyFavorites}
                          onShowOnlyFavoritesChange={handleShowOnlyFavoritesChange}
+                         showOnlyApproved={showOnlyApproved}
+                         onShowOnlyApprovedChange={handleShowOnlyApprovedChange}
                          distanceFilterEnabled={distanceFilterEnabled}
                          onDistanceFilterEnabledChange={handleDistanceFilterEnabledChange}
                          distanceFilter={distanceFilter}
