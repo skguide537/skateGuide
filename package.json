@@ -8,19 +8,12 @@
         "start": "next start",
         "lint": "npx next lint",
         "test": "jest --detectOpenHandles --forceExit",
-        "test:unit": "jest --detectOpenHandles --forceExit --testPathIgnorePatterns=integration",
-        "test:integration": "jest --detectOpenHandles --forceExit --testPathPattern=integration",
         "test:ui": "playwright test",
         "test:ui:headed": "playwright test --headed",
-        "test:ui:debug": "playwright test --debug",
-        "test:ui:report": "playwright show-report",
-        "test:all": "npm run test:unit && npm run test:integration && npm run test:ui",
-        "test:watch": "jest --watch",
-        "test:coverage": "jest --coverage",
-        "test:clean": "jest --clearCache",
-        "analyze": "set ANALYZE=true && npm run build",
-        "analyze:server": "set BUNDLE_ANALYZE=server && npm run build",
-        "analyze:browser": "set BUNDLE_ANALYZE=browser && npm run build"
+        "docker:build": "docker compose build",
+        "docker:up": "docker compose up -d",
+        "docker:down": "docker compose down",
+        "docker:up:build": "docker compose up --build"
     },
     "dependencies": {
         "@emotion/react": "^11.14.0",
