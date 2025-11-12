@@ -111,7 +111,7 @@ class SkateparkService {
         // Optimize query with lean() and select only needed fields
         const skateparks = await SkateparkModel
             .find()
-            .select('title description tags location photoNames isPark size levels avgRating rating externalLinks createdBy')
+            .select('title description tags location photoNames isPark size levels avgRating rating externalLinks createdBy isApproved')
             .populate("externalLinks.sentBy", "name")
             .populate('createdBy', 'name photoUrl')
             .lean()
@@ -131,7 +131,7 @@ class SkateparkService {
         
         const skateparks = await SkateparkModel
             .find({ _id: { $in: objectIds } })
-            .select('title description tags location photoNames isPark size levels avgRating rating externalLinks createdBy')
+            .select('title description tags location photoNames isPark size levels avgRating rating externalLinks createdBy isApproved')
             .populate("externalLinks.sentBy", "name")
             .populate('createdBy', 'name photoUrl')
             .lean()
@@ -287,7 +287,7 @@ class SkateparkService {
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
-            .select('title description tags location photoNames isPark size levels avgRating rating externalLinks createdBy createdAt')
+            .select('title description tags location photoNames isPark size levels avgRating rating externalLinks createdBy createdAt isApproved')
             .populate('externalLinks.sentBy', 'name')
             .populate('createdBy', 'name photoUrl')
             .lean();
