@@ -111,7 +111,7 @@ export default function HomePage() {
     const showFallbackBanner = geoStatus === 'fallback';
 
     return (
-        <Container maxWidth="lg" sx={{ mt: 6 }}>
+        <Container maxWidth="lg" sx={{ mt: 6, pb: 4}}>
             {/* Hero Section */}
             <HeroSection
                 showHero={showHero}
