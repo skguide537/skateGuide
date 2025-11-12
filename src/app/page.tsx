@@ -6,7 +6,6 @@ import SearchFilterBar from '@/components/search/SearchFilterBar';
 import HeroSection from '@/components/home/HeroSection';
 import LoadingSection from '@/components/home/LoadingSection';
 import VirtualGrid from '@/components/home/VirtualGrid';
-import StatusIndicators from '@/components/home/StatusIndicators';
 import { useParksData } from '@/hooks/useParksData';
 import { useParksFiltering } from '@/hooks/useParksFiltering';
 import { useResponsiveGrid, useVirtualGrid } from '@/hooks/useVirtualGrid';
@@ -160,17 +159,8 @@ export default function HomePage() {
                          onRatingFilterChange={handleRatingFilterChange}
                          sortBy={sortBy}
                          onSortByChange={handleSortByChange}
-                         filteredCount={parksWithDistance.length}
-                         totalCount={parks.length}
                          userLocation={geoStatus === 'success' ? userCoords : null}
                      />
-
-                    {/* Status Indicators */}
-                    <StatusIndicators
-                        lastUpdated={lastUpdated}
-                        parksWithDistance={parksWithDistance}
-                        parks={parks}
-                    />
 
                     {/* Virtual Scrolling Grid */}
                     <VirtualGrid

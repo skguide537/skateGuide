@@ -17,7 +17,6 @@ import FavoritesFilter from './filters/FavoritesFilter';
 import ApprovedFilter from './filters/ApprovedFilter';
 import ActiveFilters from './ActiveFilters';
 import FilterActions from './FilterActions';
-import FilterSummary from './FilterSummary';
 
 interface SearchFilterBarProps {
     searchTerm: string;
@@ -44,8 +43,6 @@ interface SearchFilterBarProps {
     onRatingFilterChange: (rating: number[]) => void;
     sortBy: 'distance' | 'rating' | 'recent';
     onSortByChange: (sort: 'distance' | 'rating' | 'recent') => void;
-    filteredCount: number;
-    totalCount: number;
     userLocation: { lat: number; lng: number } | null;
 }
 
@@ -74,8 +71,6 @@ export default function SearchFilterBar({
     onRatingFilterChange,
     sortBy,
     onSortByChange,
-    filteredCount,
-    totalCount,
     userLocation
 }: SearchFilterBarProps) {
     const { user } = useUser();
@@ -204,12 +199,12 @@ export default function SearchFilterBar({
     return (
         <Box sx={SEARCH_FILTER_STYLES.container} data-testid="search-filter-bar">
             {/* Header */}
-            <Typography variant="h5" sx={SEARCH_FILTER_STYLES.header}>
+            <Typography variant="h6" sx={SEARCH_FILTER_STYLES.header}>
                 🔍 Search & Filter Skate Spots
-                    </Typography>
+            </Typography>
                     
             {/* Search Bar and Sort Options */}
-            <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+            <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'flex-start' }}>
                 <KeywordFilter
                     searchTerm={state.searchTerm}
                     onSearchChange={handleSearchChange}
@@ -220,12 +215,6 @@ export default function SearchFilterBar({
                     onSortByChange={handleSortByChange}
                 />
             </Box>
-
-            {/* Filter Summary */}
-            <FilterSummary
-                filteredCount={filteredCount}
-                totalCount={totalCount}
-            />
 
             {/* Active Filters Display */}
             <ActiveFilters
@@ -243,66 +232,67 @@ export default function SearchFilterBar({
 
             {/* Collapsible Filter Sections */}
             <Collapse in={filtersExpanded} timeout="auto">
-                <Box sx={SEARCH_FILTER_STYLES.filterSection}>
-                    {/* Line 1: Size | Skill Level | Tags */}
+                <Box sx={{ ...SEARCH_FILTER_STYLES.filterSection, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    {/* Line 1: Size | Skill Level | Tag | Type */}
                     <Box sx={SEARCH_FILTER_STYLES.filterRow}>
-                                                       <FilterSelect
-                                   label="Size"
-                                   value={state.sizeFilter}
-                                   onChange={handleSizeFilterChange}
-                                   options={SEARCH_FILTER_CONSTANTS.SIZE_OPTIONS.map(size => ({ value: size, label: size }))}
-                                   selectionMode="single"
-                                   placeholder="Select Size"
-                               />
-                        
-                                                       <FilterSelect
-                                   label="Skill Level"
-                                   value={state.levelFilter}
-                                   onChange={handleLevelFilterChange}
-                                   options={SEARCH_FILTER_CONSTANTS.LEVEL_OPTIONS.map(level => ({ value: level, label: level }))}
-                                   selectionMode="exclusive"
-                                   placeholder="Select Skill Level"
-                               />
-                        
-                                                       <FilterSelect
-                                   label="Tag"
-                                   value={state.tagFilter}
-                                   onChange={handleTagFilterChange}
-                                   options={SEARCH_FILTER_CONSTANTS.TAG_OPTIONS.map(tag => ({ value: tag, label: tag }))}
-                                   selectionMode="multiple"
-                                   placeholder="Select Tags"
-                               />
+                        <FilterSelect
+                            label="Size"
+                            value={state.sizeFilter}
+                            onChange={handleSizeFilterChange}
+                            options={SEARCH_FILTER_CONSTANTS.SIZE_OPTIONS.map(size => ({ value: size, label: size }))}
+                            selectionMode="single"
+                            placeholder="Select Size"
+                            sx={{ flex: 1, minWidth: 0, maxWidth: 200 }}
+                        />
+                        <FilterSelect
+                            label="Skill Level"
+                            value={state.levelFilter}
+                            onChange={handleLevelFilterChange}
+                            options={SEARCH_FILTER_CONSTANTS.LEVEL_OPTIONS.map(level => ({ value: level, label: level }))}
+                            selectionMode="exclusive"
+                            placeholder="Select Skill Level"
+                            sx={{ flex: 1, minWidth: 0, maxWidth: 200 }}
+                        />
+                        <FilterSelect
+                            label="Tag"
+                            value={state.tagFilter}
+                            onChange={handleTagFilterChange}
+                            options={SEARCH_FILTER_CONSTANTS.TAG_OPTIONS.map(tag => ({ value: tag, label: tag }))}
+                            selectionMode="multiple"
+                            placeholder="Select Tags"
+                            sx={{ flex: 1, minWidth: 0, maxWidth: 200 }}
+                        />
+                        <FilterSelect
+                            label="Type"
+                            value={state.typeFilter === 'all' ? [] : [state.typeFilter]}
+                            onChange={(values) => {
+                                const newType = values.length === 0 ? 'all' : values[0] as 'park' | 'street';
+                                handleTypeFilterChange(newType);
+                            }}
+                            options={[
+                                { value: 'park', label: 'Park' },
+                                { value: 'street', label: 'Street' }
+                            ]}
+                            selectionMode="single"
+                            placeholder="Select Type"
+                            sx={{ flex: 1, minWidth: 0, maxWidth: 200 }}
+                        />
                     </Box>
 
-                                         {/* Line 2: Type | Show Favorites */}
-                     <Box sx={SEARCH_FILTER_STYLES.filterRow}>
-                                                        <FilterSelect
-                                    label="Type"
-                                    value={state.typeFilter === 'all' ? [] : [state.typeFilter]}
-                                    onChange={(values) => {
-                                        const newType = values.length === 0 ? 'all' : values[0] as 'park' | 'street';
-                                        handleTypeFilterChange(newType);
-                                    }}
-                                    options={[
-                                        { value: 'park', label: 'Park' },
-                                        { value: 'street', label: 'Street' }
-                                    ]}
-                                    selectionMode="single"
-                                    placeholder="Select Type"
-                                />
-                         
-                         <FavoritesFilter
-                             showOnlyFavorites={state.showOnlyFavorites}
-                             onShowOnlyFavoritesChange={handleShowOnlyFavoritesChange}
-                             user={user}
-                         />
-                         <ApprovedFilter
-                             showOnlyApproved={showOnlyApproved}
-                             onShowOnlyApprovedChange={handleShowOnlyApprovedChange}
-                         />
-                     </Box>
+                    {/* Line 2: Show Favorites | Show Approved */}
+                    <Box sx={SEARCH_FILTER_STYLES.filterRow}>
+                        <FavoritesFilter
+                            showOnlyFavorites={state.showOnlyFavorites}
+                            onShowOnlyFavoritesChange={handleShowOnlyFavoritesChange}
+                            user={user}
+                        />
+                        <ApprovedFilter
+                            showOnlyApproved={showOnlyApproved}
+                            onShowOnlyApprovedChange={handleShowOnlyApprovedChange}
+                        />
+                    </Box>
 
-                     {/* Line 3: Rating Filter (below Show Only Favorites) */}
+                     {/* Line 3: Rating Filter | Distance Filter */}
                      <Box sx={SEARCH_FILTER_STYLES.filterRow}>
                          <RatingFilter
                              ratingFilterEnabled={state.ratingFilterEnabled}
@@ -310,10 +300,6 @@ export default function SearchFilterBar({
                              ratingFilter={state.ratingFilter}
                              onRatingFilterChange={handleRatingFilterChange}
                          />
-                     </Box>
-
-                     {/* Line 4: Distance Filter (full width) */}
-                     <Box sx={SEARCH_FILTER_STYLES.filterRow}>
                          <DistanceFilter
                              distanceFilterEnabled={state.distanceFilterEnabled}
                              onDistanceFilterEnabledChange={handleDistanceFilterEnabledChange}
