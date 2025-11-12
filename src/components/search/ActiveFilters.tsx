@@ -14,7 +14,7 @@ export default function ActiveFilters({ hasActiveFilters, filterSummary, onClear
     if (!hasActiveFilters) return null;
 
     return (
-        <Box sx={{ mb: 3, p: 2, backgroundColor: 'var(--color-surface)', borderRadius: 'var(--radius-md)' }}>
+        <Box sx={{ mb: 1.5, p: 1.5, backgroundColor: 'var(--color-surface)', borderRadius: 'var(--radius-md)' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
                 <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)' }}>
                     Active Filters:

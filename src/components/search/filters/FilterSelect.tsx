@@ -116,7 +116,7 @@ export default function FilterSelect({
     const isMultiple = selectionMode !== 'single';
 
     return (
-        <Box sx={{ flex: 1, ...sx }}>
+        <Box sx={{ flex: 1, minWidth: 0, ...sx }}>
             <FormControl fullWidth>
                 <InputLabel sx={{ color: 'var(--color-text-secondary)' }}>
                     {label}

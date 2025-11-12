@@ -68,7 +68,7 @@ export const SEARCH_FILTER_CONSTANTS = {
 
 export const SEARCH_FILTER_STYLES = {
     container: {
-        p: 3,
+        p: 2,
         backgroundColor: 'var(--color-surface-elevated)',
         borderRadius: 'var(--radius-xl)',
         boxShadow: 'var(--shadow-lg)',
@@ -87,11 +87,12 @@ export const SEARCH_FILTER_STYLES = {
         },
     },
     header: {
-        mb: 3,
+        mb: 1.5,
         color: 'var(--color-text-primary)',
         fontWeight: 700,
         textAlign: 'center' as const,
         textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+        fontSize: '1.25rem',
     },
     searchBar: {
         flex: 1,
@@ -133,8 +134,8 @@ export const SEARCH_FILTER_STYLES = {
         },
     },
     filterSection: {
-        mb: 3,
-        p: 3,
+        mb: 2,
+        p: 2,
         backgroundColor: 'var(--color-surface)',
         borderRadius: 'var(--radius-lg)',
         border: '1px solid var(--color-border)',
@@ -142,10 +143,15 @@ export const SEARCH_FILTER_STYLES = {
     },
     filterRow: {
         display: 'flex',
-        gap: 3,
+        gap: 2,
         alignItems: 'center',
         flexWrap: 'wrap' as const,
-        mb: 3,
+        mb: 2,
+        justifyContent: 'center',
+        width: '100%',
+        '&:last-child': {
+            mb: 0,
+        },
     },
     chip: {
         backgroundColor: 'var(--color-accent-blue)',

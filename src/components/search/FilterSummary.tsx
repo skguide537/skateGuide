@@ -13,13 +13,13 @@ export default function FilterSummary({ filteredCount, totalCount }: FilterSumma
     return (
         <Box sx={{ 
             textAlign: 'center', 
-            mb: 3, 
-            p: 2, 
+            mb: 1.5, 
+            p: 1.5, 
             backgroundColor: 'var(--color-surface)', 
             borderRadius: 'var(--radius-md)',
             border: '1px solid var(--color-border)'
         }}>
-            <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)', mb: 1 }}>
+            <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)', mb: 0.5 }}>
                 Showing {filteredCount} of {totalCount} spots
             </Typography>
             
