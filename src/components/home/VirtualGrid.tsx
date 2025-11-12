@@ -77,7 +77,7 @@ export default function VirtualGrid({
                                     tags={park.tags}
                                     photoNames={park.photoNames}
                                 location={park.location}
-                                    distanceKm={park.distanceKm}
+                                    distanceKm={park.distanceKm ?? undefined}
                                     coordinates={{
                                         lat: park.location.coordinates[1],
                                         lng: park.location.coordinates[0]
