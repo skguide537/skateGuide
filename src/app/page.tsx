@@ -128,7 +128,7 @@ export default function HomePage() {
                         <LocationFallbackBanner
                             reason={failureReason}
                             onRetry={retry}
-                            isRetrying={geoStatus === 'loading'}
+                            isRetrying={isGeoLoading}
                         />
                     )}
 
