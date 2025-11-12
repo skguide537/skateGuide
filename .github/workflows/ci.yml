@@ -34,38 +34,10 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    # # - name: Install Playwright browsers
-    # #   run: npx playwright install --with-deps
-
     - name: Run Unit Tests (Jest)
-      run: npm run test:unit
-
-    # Temporarily disabled - integration tests deleted in cleanup
-    # Will be re-added with real DB tests in next PR
-    # - name: Run Integration Tests (Jest)
-    #   run: npm run test:integration
+      run: npm run test
 
     - name: Run Linting
       run: npm run lint
 
-    # - name: Build Next.js (production)
-    #   run: npm run build
-
-    # - name: Verify API and database connection
-    #   run: |
-    #     # Start the server in background
-    #     npm start &
-    #     sleep 10
-        
-    #     # Test API endpoint
-    #     curl -f http://localhost:3000/api/skateparks || echo "❌ API endpoint failed"
-        
-    #     # Check if we get JSON data
-    #     RESPONSE=$(curl -s http://localhost:3000/api/skateparks)
-    #     echo "API Response: $RESPONSE"
-        
-    #     # Kill the background server
-    #     pkill -f "next start" || true
-
-    # - name: Run UI Tests (Playwright manages server)
-    #   run: npx playwright test --workers=5
+  
