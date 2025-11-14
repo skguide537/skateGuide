@@ -6,6 +6,7 @@ import { UserProvider } from '@/context/UserContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { FavoritesProvider } from '@/context/FavoritesContext';
 import { ThemeProvider } from '@/context/ThemeContext';
+import { GeolocationProvider } from '@/context/GeolocationContext';
 import Loading from '@/components/loading/Loading';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -27,10 +28,12 @@ export default function RootLayout({
           <UserProvider>
             <ToastProvider>
               <FavoritesProvider>
-                <NavBar />
-                <Suspense fallback={<Loading />}>
-                  {children}
-                </Suspense>
+                <GeolocationProvider>
+                  <NavBar />
+                  <Suspense fallback={<Loading />}>
+                    {children}
+                  </Suspense>
+                </GeolocationProvider>
               </FavoritesProvider>
             </ToastProvider>
           </UserProvider>
