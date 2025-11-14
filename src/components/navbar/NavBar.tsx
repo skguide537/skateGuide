@@ -28,7 +28,11 @@ import LoginIcon from '@mui/icons-material/Login';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import PersonIcon from '@mui/icons-material/Person';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import LocationOffIcon from '@mui/icons-material/LocationOff';
+import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
 import Link from 'next/link';
+import { useGeolocationContext } from '@/context/GeolocationContext';
 
 export default function NavBar() {
     const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
@@ -37,6 +41,7 @@ export default function NavBar() {
     const { theme, toggleTheme } = useTheme();
     const router = useRouter();
     const pathname = usePathname();
+    const { status: geoStatus, retry: onLocationRetry, isLoading: isGeoLoading } = useGeolocationContext();
 
     const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorElNav(event.currentTarget);
@@ -52,7 +57,7 @@ export default function NavBar() {
         setTimeout(() => router.push('/login'), 1000);
     };
 
-    const handleLogoClick = () => {
+    const handleHomeClick = () => {
         if (pathname === '/') {
             window.dispatchEvent(new CustomEvent('resetToPageOne'));
         } else {
@@ -60,11 +65,9 @@ export default function NavBar() {
         }
     };
 
-    const handleHomeClick = () => {
-        if (pathname === '/') {
-            window.dispatchEvent(new CustomEvent('resetToPageOne'));
-        } else {
-            router.push('/');
+    const handleLocationRetry = () => {
+        if (geoStatus === 'fallback') {
+            onLocationRetry();
         }
     };
 
@@ -89,7 +92,7 @@ export default function NavBar() {
                     <Typography
                         variant="h5"
                         noWrap
-                        onClick={handleLogoClick}
+                        onClick={handleHomeClick}
                         sx={{
                             mr: 3,
                             fontWeight: 800,
@@ -108,6 +111,53 @@ export default function NavBar() {
                     >
                         🛹 SkateGuide
                     </Typography>
+
+                    {/* Location Status Icon */}
+                    <Tooltip 
+                            title={
+                                geoStatus === 'success' 
+                                    ? 'Location access is enabled.'
+                                    : 'Allow location access to see skateparks\' distance from you.'
+                            }
+                        >
+                            <IconButton
+                                onClick={handleLocationRetry}
+                                disabled={geoStatus === 'success' || isGeoLoading}
+                                sx={{
+                                    mr: 1,
+                                    color: geoStatus === 'success' 
+                                        ? 'var(--color-accent-green)' 
+                                        : 'var(--color-accent-rust)',
+                                    backgroundColor: geoStatus === 'success'
+                                        ? 'rgba(39, 174, 96, 0.1)'
+                                        : 'rgba(230, 126, 34, 0.1)',
+                                    border: `2px solid ${geoStatus === 'success' ? 'var(--color-accent-green)' : 'var(--color-accent-rust)'}`,
+                                    borderRadius: 'var(--radius-md)',
+                                    transition: 'all var(--transition-fast)',
+                                    p: 1,
+                                    cursor: geoStatus === 'fallback' ? 'pointer' : 'default',
+                                    '&:hover': {
+                                        backgroundColor: geoStatus === 'success'
+                                            ? 'rgba(39, 174, 96, 0.2)'
+                                            : 'rgba(230, 126, 34, 0.2)',
+                                        transform: geoStatus === 'fallback' ? 'translateY(-2px)' : 'none',
+                                        boxShadow: geoStatus === 'fallback' ? 'var(--shadow-md)' : 'none',
+                                    },
+                                    '&:disabled': {
+                                        opacity: 0.6,
+                                        cursor: 'default',
+                                    }
+                                }}
+                            >
+                                {geoStatus === 'loading' || isGeoLoading ? (
+                                    <LocationSearchingIcon />
+                                ) : geoStatus === 'success' ? (
+                                    <LocationOnIcon />
+                                ) : (
+                                    <LocationOffIcon />
+                                )}
+                            </IconButton>
+                    </Tooltip>
 
                     {/* Theme Toggle */}
                     <Tooltip title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>

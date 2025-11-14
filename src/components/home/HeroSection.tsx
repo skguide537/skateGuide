@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -8,6 +7,7 @@ import Typography from '@mui/material/Typography';
 import { IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { HERO_STYLES } from '@/constants/homePage';
+import SkateHeroAnimation from './SkateHeroAnimation';
 
 interface HeroSectionProps {
     showHero: boolean;
@@ -16,16 +16,15 @@ interface HeroSectionProps {
 }
 
 export default function HeroSection({ showHero, onHideHero, onShowHero }: HeroSectionProps) {
-    const router = useRouter();
     const { theme } = useTheme();
 
     if (showHero) {
         return (
             <Box 
-                textAlign="center" 
-                mb={8}
+                mb={4}
                 sx={{
                     ...HERO_STYLES.heroBox,
+                    p: { xs: 3, md: 4 },
                     background: theme === 'dark' 
                         ? 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%)'
                         : 'linear-gradient(135deg, rgba(52, 152, 219, 0.3) 0%, rgba(46, 204, 113, 0.3) 100%)',
@@ -61,83 +60,138 @@ export default function HeroSection({ showHero, onHideHero, onShowHero }: HeroSe
                     <CloseIcon />
                 </IconButton>
                 
-                <Typography 
-                    variant="h1" 
-                    fontWeight="800" 
-                    color="var(--color-accent-green)" 
-                    gutterBottom 
-                    id="home-welcome-heading"
+                {/* Two-column layout: Desktop side-by-side, Mobile stacked */}
+                <Box
                     sx={{
-                        ...HERO_STYLES.heroTitle,
-                        textShadow: theme === 'dark' 
-                            ? '0 4px 8px rgba(0, 0, 0, 0.7), 0 2px 4px rgba(0, 0, 0, 0.5)'
-                            : '0 2px 4px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.1)',
-                        filter: theme === 'dark' 
-                            ? 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8))'
-                            : 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))',
+                        display: 'flex',
+                        flexDirection: { xs: 'column', md: 'row' },
+                        alignItems: { xs: 'flex-start', md: 'center' },
+                        gap: { xs: 3, md: 4 },
+                        position: 'relative' as const,
+                        zIndex: 2,
                     }}
                 >
-                    WELCOME TO SKATEGUIDE 🛹
-                </Typography>
-                
-                <Typography 
-                    variant="h5" 
-                    sx={{ 
-                        ...HERO_STYLES.heroSubtitle,
-                        color: 'var(--color-accent-green)',
-                        fontWeight: 600,
-                        textShadow: theme === 'dark'
-                            ? '0 2px 4px rgba(0, 0, 0, 0.8), 0 1px 2px rgba(0, 0, 0, 0.6)'
-                            : '0 1px 2px rgba(0, 0, 0, 0.2)',
-                        filter: theme === 'dark'
-                            ? 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9))'
-                            : 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2))',
-                    }} 
-                    id="home-subtitle"
-                >
-                    Discover, rate, and share skateparks around the city — from wooden ramps to metallic rails.
-                </Typography>
-                
-                <Button
-                    variant="contained"
-                    onClick={() => router.push('/map')}
-                    id="home-explore-map-btn"
-                    sx={{
-                        ...HERO_STYLES.exploreButton,
-                        backgroundColor: 'var(--color-accent-rust)',
-                        color: 'var(--color-surface-elevated)',
-                        '&:hover': { 
-                            backgroundColor: 'var(--color-accent-rust)',
-                            transform: 'translateY(-3px)',
-                            boxShadow: 'var(--shadow-xl)',
-                        }
-                    }}
-                >
-                    Explore the Map
-                </Button>
+                    {/* Left Column: Text Content */}
+                    <Box
+                        sx={{
+                            flex: { xs: '1 1 auto', md: '1 1 50%' },
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: { xs: 'flex-start', md: 'flex-start' },
+                            justifyContent: 'center',
+                        }}
+                    >
+                        <Typography 
+                            variant="h1" 
+                            fontWeight="800" 
+                            color="var(--color-accent-green)" 
+                            gutterBottom 
+                            id="home-welcome-heading"
+                            sx={{
+                                fontSize: { xs: '2rem', md: '2.5rem', lg: '3rem' },
+                                mb: { xs: 1.5, md: 2 },
+                                textShadow: theme === 'dark' 
+                                    ? '0 4px 8px rgba(0, 0, 0, 0.7), 0 2px 4px rgba(0, 0, 0, 0.5)'
+                                    : '0 2px 4px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.1)',
+                                filter: theme === 'dark' 
+                                    ? 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8))'
+                                    : 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))',
+                            }}
+                        >
+                            WELCOME TO SKATEGUIDE
+                        </Typography>
+                        
+                        <Typography 
+                            variant="h6" 
+                            sx={{ 
+                                color: 'var(--color-accent-green)',
+                                fontWeight: 500,
+                                fontSize: { xs: '1rem', md: '1.125rem' },
+                                lineHeight: 1.5,
+                                textShadow: theme === 'dark'
+                                    ? '0 2px 4px rgba(0, 0, 0, 0.8), 0 1px 2px rgba(0, 0, 0, 0.6)'
+                                    : '0 1px 2px rgba(0, 0, 0, 0.2)',
+                                filter: theme === 'dark'
+                                    ? 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9))'
+                                    : 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2))',
+                            }} 
+                            id="home-subtitle"
+                        >
+                            Discover, rate, and share skateparks around your city.
+                        </Typography>
+                    </Box>
+                    
+                    {/* Right Column: Animation */}
+                    <Box
+                        sx={{
+                            flex: { xs: '1 1 auto', md: '1 1 50%' },
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '100%',
+                        }}
+                    >
+                        <SkateHeroAnimation />
+                    </Box>
+                </Box>
             </Box>
         );
     }
 
     return (
         <Box sx={{ 
-            textAlign: 'left', 
-            mb: 6,
-            p: 3,
+            mb: 4,
+            p: { xs: 2, md: 2.5 },
             backgroundColor: 'var(--color-surface-elevated)',
             borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--color-border)',
-            boxShadow: 'var(--shadow-md)',
-            background: 'linear-gradient(135deg, var(--color-surface-elevated) 0%, var(--color-surface) 100%)'
+            boxShadow: 'var(--shadow-sm)',
+            background: 'linear-gradient(135deg, var(--color-surface-elevated) 0%, var(--color-surface) 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 2,
+            transition: 'all var(--transition-fast)',
+            '&:hover': {
+                boxShadow: 'var(--shadow-md)',
+                borderColor: 'var(--color-accent-green)',
+            }
         }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box
+                    sx={{
+                        fontSize: '1.5rem',
+                        lineHeight: 1,
+                    }}
+                >
+                    🛹
+                </Box>
+                <Typography
+                    variant="body2"
+                    sx={{
+                        color: 'var(--color-text-secondary)',
+                        fontWeight: 500,
+                        fontSize: { xs: '0.875rem', md: '0.9375rem' },
+                    }}
+                >
+                    Welcome message hidden
+                </Typography>
+            </Box>
             <Button
                 variant="contained"
                 onClick={onShowHero}
                 size="small"
                 sx={{
-                    ...HERO_STYLES.showHeroButton,
                     backgroundColor: 'var(--color-accent-green)',
                     color: 'var(--color-surface-elevated)',
+                    fontWeight: 600,
+                    px: 2.5,
+                    py: 1,
+                    borderRadius: 'var(--radius-md)',
+                    boxShadow: 'var(--shadow-sm)',
+                    transition: 'all var(--transition-fast)',
+                    textTransform: 'none',
+                    fontSize: { xs: '0.875rem', md: '0.9375rem' },
                     '&:hover': { 
                         backgroundColor: 'var(--color-accent-green)',
                         transform: 'translateY(-1px)',

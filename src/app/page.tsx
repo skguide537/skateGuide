@@ -10,12 +10,13 @@ import { useParksData } from '@/hooks/useParksData';
 import { useParksFiltering } from '@/hooks/useParksFiltering';
 import { useResponsiveGrid, useVirtualGrid } from '@/hooks/useVirtualGrid';
 import { HOME_PAGE_CONSTANTS } from '@/constants/homePage';
-import { useGeolocation } from '@/hooks/useGeolocation';
-import { LocationFallbackBanner } from '@/components/home/LocationFallbackBanner';
+import { useGeolocationContext } from '@/context/GeolocationContext';
+import { useToast } from '@/context/ToastContext';
 
 export default function HomePage() {
     // Hero visibility state
     const [showHero, setShowHero] = useState(true);
+    const { showToast } = useToast();
 
          // Load hero visibility preference from localStorage after component mounts
          useEffect(() => {
@@ -37,7 +38,16 @@ export default function HomePage() {
         localStorage.setItem(HOME_PAGE_CONSTANTS.LOCAL_STORAGE_KEYS.SHOW_HERO, 'true');
     };
 
-    const { status: geoStatus, coords: userCoords, failureReason, retry, isLoading: isGeoLoading } = useGeolocation();
+    const { status: geoStatus, coords: userCoords, isLoading: isGeoLoading } = useGeolocationContext();
+    const prevGeoStatusRef = useRef<typeof geoStatus>('loading');
+
+    // Show toast when location is denied/blocked (only when status changes to fallback)
+    useEffect(() => {
+        if (geoStatus === 'fallback' && prevGeoStatusRef.current !== 'fallback') {
+            showToast('We couldn\'t access your location. Showing popular parks instead.', 'info');
+        }
+        prevGeoStatusRef.current = geoStatus;
+    }, [geoStatus, showToast]);
 
     // Use custom hooks for data management
     const {
@@ -109,7 +119,6 @@ export default function HomePage() {
     const { parentRef, virtualizer } = useVirtualGrid(parksWithDistance, gridColumns);
 
     const shouldShowSkeleton = isGeoLoading || isLoading;
-    const showFallbackBanner = geoStatus === 'fallback';
 
     return (
         <Container maxWidth="lg" sx={{ mt: 6, pb: 4}}>
@@ -125,15 +134,7 @@ export default function HomePage() {
                 <LoadingSection />
             ) : (
                 <>
-                    {showFallbackBanner && (
-                        <LocationFallbackBanner
-                            reason={failureReason}
-                            onRetry={retry}
-                            isRetrying={isGeoLoading}
-                        />
-                    )}
-
-                                                              {/* Search and Filter Bar */}
+                    {/* Search and Filter Bar */}
                      <SearchFilterBar
                          searchTerm={searchTerm}
                          onSearchChange={handleSearchChange}
