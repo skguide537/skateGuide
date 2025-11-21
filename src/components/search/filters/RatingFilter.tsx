@@ -42,7 +42,7 @@ export default function RatingFilter({
                         <Box sx={{ flex: 1, minWidth: 200, maxWidth: 300, ml: 2, display: 'flex', alignItems: 'center' }}>
                             <Slider
                                 value={ratingFilter}
-                                onChange={(_, value) => onRatingFilterChange(value as number[])}
+                                onChange={(_: Event, value: number | number[]) => onRatingFilterChange(value as number[])}
                                 min={SEARCH_FILTER_CONSTANTS.RATING_RANGE.min}
                                 max={SEARCH_FILTER_CONSTANTS.RATING_RANGE.max}
                                 step={SEARCH_FILTER_CONSTANTS.RATING_RANGE.step}

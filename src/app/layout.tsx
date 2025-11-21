@@ -2,12 +2,9 @@ import { Suspense } from 'react';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import NavBar from '@/components/navbar/NavBar';
-import { UserProvider } from '@/context/UserContext';
-import { ToastProvider } from '@/context/ToastContext';
-import { FavoritesProvider } from '@/context/FavoritesContext';
-import { ThemeProvider } from '@/context/ThemeContext';
-import { GeolocationProvider } from '@/context/GeolocationContext';
 import Loading from '@/components/loading/Loading';
+import ReduxProvider from '@/components/providers/ReduxProvider';
+import Toast from '@/components/common/Toast';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -24,20 +21,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ThemeProvider>
-          <UserProvider>
-            <ToastProvider>
-              <FavoritesProvider>
-                <GeolocationProvider>
-                  <NavBar />
-                  <Suspense fallback={<Loading />}>
-                    {children}
-                  </Suspense>
-                </GeolocationProvider>
-              </FavoritesProvider>
-            </ToastProvider>
-          </UserProvider>
-        </ThemeProvider>
+        <ReduxProvider>
+          <NavBar />
+          <Suspense fallback={<Loading />}>
+            {children}
+          </Suspense>
+          <Toast />
+        </ReduxProvider>
       </body>
     </html>
   );

@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useToast } from '@/context/ToastContext';
-import { useUser } from '@/context/UserContext';
+import { useToast } from '@/hooks/useToast';
+import { useUser } from '@/hooks/useUser';
 import { FormValidationService, SpotFormData } from '@/services/formValidation.service';
 import { skateparkClient } from '@/services/skateparkClient';
 import { Size, Tag, SkaterLevel } from '@/types/enums';

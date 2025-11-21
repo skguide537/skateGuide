@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { adminClient } from '@/services/adminClient';
 import { AdminLogEntry, AdminLogResponse, AdminMonitoringCategory } from '@/types/admin';
-import { useToast } from '@/context/ToastContext';
+import { useToast } from '@/hooks/useToast';
 
 interface MonitoringOptions {
   category: AdminMonitoringCategory;

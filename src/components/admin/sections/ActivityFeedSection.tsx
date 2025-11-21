@@ -17,6 +17,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import HistoryIcon from '@mui/icons-material/History';
 import LoopIcon from '@mui/icons-material/Loop';
 import TimelineIcon from '@mui/icons-material/Timeline';
@@ -103,10 +104,10 @@ export function ActivityFeedSection() {
         <Box
           sx={{
             borderRadius: 2,
-            border: theme => `1px dashed ${theme.palette.divider}`,
+            border: (theme: Theme) => `1px dashed ${theme.palette.divider}`,
             p: 4,
             textAlign: 'center',
-            backgroundColor: theme => theme.palette.background.paper,
+            backgroundColor: (theme: Theme) => theme.palette.background.paper,
           }}
         >
           <Typography variant="body1" color="text.secondary">
@@ -117,8 +118,8 @@ export function ActivityFeedSection() {
         <List
           sx={{
             borderRadius: 2,
-            border: theme => `1px solid ${theme.palette.divider}`,
-            backgroundColor: theme => theme.palette.background.paper,
+            border: (theme: Theme) => `1px solid ${theme.palette.divider}`,
+            backgroundColor: (theme: Theme) => theme.palette.background.paper,
           }}
         >
           {activities.map(activity => (
@@ -133,7 +134,7 @@ export function ActivityFeedSection() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      backgroundColor: theme => theme.palette.action.hover,
+                      backgroundColor: (theme: Theme) => theme.palette.action.hover,
                     }}
                   >
                     {TYPE_ICON[activity.type]}
@@ -154,6 +155,7 @@ export function ActivityFeedSection() {
                       />
                     </Stack>
                   }
+                  secondaryTypographyProps={{ component: 'div' }}
                   secondary={
                     <Stack spacing={0.5}>
                       {activity.description && (

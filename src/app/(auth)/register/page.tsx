@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Container, TextField, Typography, Alert, Link } from '@mui/material';
-import { useToast } from '@/context/ToastContext';
-import { useTheme } from '@/context/ThemeContext';
+import { useToast } from '@/hooks/useToast';
+import { useTheme } from '@/hooks/useTheme';
 import { authClient } from '@/services/authClient';
 
 export default function RegisterPage() {

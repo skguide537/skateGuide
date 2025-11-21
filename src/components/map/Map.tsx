@@ -1,16 +1,14 @@
 'use client';
 
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-import { useEffect, useState, useRef, useCallback } from 'react';
-import { Map } from 'leaflet';
-import { Box, CircularProgress, Typography } from '@mui/material';
-import { useCache } from '@/context/ToastContext';
-import { skateparkClient } from '@/services/skateparkClient';
 import { logger } from '@/lib/logger';
-import SkateparkModal from '../modals/SkateparkModal';
+import { skateparkClient } from '@/services/skateparkClient';
 import { BaseSkatepark } from '@/types/skatepark';
+import { Box } from '@mui/material';
+import L, { Map } from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { useEffect, useRef, useState } from 'react';
+import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
+import SkateparkModal from '../modals/SkateparkModal';
 
 
 const icon = L.icon({

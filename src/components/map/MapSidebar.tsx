@@ -22,7 +22,7 @@ import {
   Divider
 } from '@mui/material';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 import { 
   Search, 
   FilterList, 
@@ -358,7 +358,7 @@ export default function MapSidebar({
                   </Typography>
                   <Slider
                     value={filters.distanceFilter}
-                    onChange={(_, value) => onUpdateDistanceFilter(value as number)}
+                    onChange={(_: Event, value: number | number[]) => onUpdateDistanceFilter(value as number)}
                     min={1}
                     max={50}
                     step={1}
@@ -380,7 +380,7 @@ export default function MapSidebar({
                 </Typography>
                 <Slider
                   value={filters.ratingFilter}
-                  onChange={(_, value) => onUpdateRatingFilter(value as number[])}
+                  onChange={(_: Event, value: number | number[]) => onUpdateRatingFilter(value as number[])}
                   min={0}
                   max={5}
                   step={0.5}

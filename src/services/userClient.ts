@@ -55,12 +55,28 @@ class UserClient {
       
       if (!response.ok) {
         const error = await response.json().catch(() => ({ error: 'Failed to fetch profile' }));
-        throw new Error(error.error || `HTTP ${response.status}`);
+        const errorMessage = error.error || `HTTP ${response.status}`;
+        
+        // Log 404s as warnings since missing users are expected in some cases
+        // (e.g., when parks reference deleted users)
+        if (response.status === 404) {
+          logger.warn(`User profile not found: ${userId}`, { userId, status: response.status }, 'UserClient');
+        } else {
+          logger.error('Failed to get user profile', { userId, status: response.status, error: errorMessage }, 'UserClient');
+        }
+        
+        const err = new Error(errorMessage);
+        // Mark error as already logged to prevent duplicate logging in catch block
+        (err as Error & { _alreadyLogged?: boolean })._alreadyLogged = true;
+        throw err;
       }
 
       return await response.json();
     } catch (error) {
-      logger.error('Failed to get user profile', error, 'UserClient');
+      // Only log as error if it's not already logged above (network errors, etc.)
+      if (error instanceof Error && !(error as Error & { _alreadyLogged?: boolean })._alreadyLogged) {
+        logger.error('Failed to get user profile', error, 'UserClient');
+      }
       throw error;
     }
   }

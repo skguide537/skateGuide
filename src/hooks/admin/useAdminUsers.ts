@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { adminClient } from '@/services/adminClient';
 import { userClient } from '@/services/userClient';
 import { AdminUserSummary, AdminUsersResponse } from '@/types/admin';
-import { useToast } from '@/context/ToastContext';
+import { useToast } from '@/hooks/useToast';
 
 interface UseAdminUsersOptions {
   query?: string;
@@ -12,6 +12,9 @@ interface UseAdminUsersOptions {
   page?: number;
   limit?: number;
 }
+
+// Cache for failed user profile lookups to prevent repeated 404s
+const failedProfileCache = new Set<string>();
 
 export function useAdminUsers(initialOptions: UseAdminUsersOptions = { page: 1, limit: 20 }) {
   const [data, setData] = useState<AdminUserSummary[]>([]);
@@ -35,10 +38,20 @@ export function useAdminUsers(initialOptions: UseAdminUsersOptions = { page: 1, 
 
       const profiles = await Promise.all(
         response.data.map(async user => {
+          // Skip if we've already tried and failed to fetch this profile
+          if (failedProfileCache.has(user._id)) {
+            return null;
+          }
+
           try {
             const profile = await userClient.getProfile(user._id);
             return { id: user._id, photoUrl: profile.photoUrl, name: profile.name };
-          } catch {
+          } catch (err: any) {
+            // Cache failed lookups (especially 404s) to prevent repeated attempts
+            const errorMsg = err?.message || '';
+            if (errorMsg.includes('not found') || errorMsg.includes('404') || errorMsg.includes('HTTP 404')) {
+              failedProfileCache.add(user._id);
+            }
             return null;
           }
         })

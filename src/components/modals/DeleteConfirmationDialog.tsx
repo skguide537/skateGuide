@@ -14,7 +14,7 @@ import {
     CircularProgress
 } from '@mui/material';
 import { Warning, Delete, Cancel } from '@mui/icons-material';
-import { useTheme } from '@/context/ThemeContext';
+import { useTheme } from '@/hooks/useTheme';
 
 interface DeleteConfirmationDialogProps {
     open: boolean;

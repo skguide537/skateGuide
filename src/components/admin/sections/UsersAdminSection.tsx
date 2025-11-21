@@ -28,6 +28,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import PersonOffIcon from '@mui/icons-material/PersonOff';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -125,7 +126,7 @@ export function UsersAdminSection() {
           <CircularProgress />
         </Box>
       ) : error ? (
-        <Box sx={{ border: theme => `1px dashed ${theme.palette.error.main}`, borderRadius: 2, p: 4, textAlign: 'center' }}>
+        <Box sx={{ border: (theme: Theme) => `1px dashed ${theme.palette.error.main}`, borderRadius: 2, p: 4, textAlign: 'center' }}>
           <Typography color="error">{error}</Typography>
         </Box>
       ) : (

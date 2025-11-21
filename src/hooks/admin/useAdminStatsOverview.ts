@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { adminClient } from '@/services/adminClient';
 import { AdminStatsOverviewResponse } from '@/types/admin';
-import { useToast } from '@/context/ToastContext';
+import { useToast } from '@/hooks/useToast';
 
 interface StatsOptions {
   newUsersDays?: number;

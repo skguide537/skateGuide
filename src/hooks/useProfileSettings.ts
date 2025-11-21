@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { useToast } from '@/context/ToastContext';
-import { useUser } from '@/context/UserContext';
+import { useToast } from '@/hooks/useToast';
+import { useUser } from '@/hooks/useUser';
 import { userClient } from '@/services/userClient';
 import { logger } from '@/lib/logger';
 

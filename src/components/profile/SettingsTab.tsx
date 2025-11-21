@@ -20,7 +20,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { useProfileSettings, BioSocialsData, PasswordChangeData } from '@/hooks/useProfileSettings';
 import { authClient } from '@/services/authClient';
-import { useToast } from '@/context/ToastContext';
+import { useToast } from '@/hooks/useToast';
 
 interface SettingsTabProps {
   userId: string;

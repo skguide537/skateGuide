@@ -4,7 +4,7 @@ import React from 'react';
 import { IconButton, Tooltip, Box, Typography } from '@mui/material';
 import { Favorite, FavoriteBorder } from '@mui/icons-material';
 import { useFavorites } from '@/hooks/useFavorites';
-import { useUser } from '@/context/UserContext';
+import { useUser } from '@/hooks/useUser';
 
 interface FavoriteButtonProps {
     spotId: string;
@@ -112,30 +112,32 @@ export default function FavoriteButton({
     return (
         <Tooltip title={aria}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <IconButton
-                    onClick={handleClick}
-                    size={size}
-                    sx={{
-                        color: isFavoritedByUser ? '#d32f2f' : '#A7A9AC',
-                        '&:hover': {
-                            backgroundColor: isFavoritedByUser 
-                                ? 'rgba(211, 47, 47, 0.1)' 
-                                : 'rgba(167, 169, 172, 0.1)',
-                            transform: 'scale(1.1)',
-                        },
-                        transition: 'all 0.2s ease',
-                        ...sx
-                    }}
-                    aria-label={aria}
-                    data-testid="favorite-toggle"
-                    disabled={!isLoggedIn}
-                >
-                    {isFavoritedByUser ? (
-                        <Favorite sx={{ fontSize: iconSize }} />
-                    ) : (
-                        <FavoriteBorder sx={{ fontSize: iconSize }} />
-                    )}
-                </IconButton>
+                <span>
+                    <IconButton
+                        onClick={handleClick}
+                        size={size}
+                        sx={{
+                            color: isFavoritedByUser ? '#d32f2f' : '#A7A9AC',
+                            '&:hover': {
+                                backgroundColor: isFavoritedByUser 
+                                    ? 'rgba(211, 47, 47, 0.1)' 
+                                    : 'rgba(167, 169, 172, 0.1)',
+                                transform: 'scale(1.1)',
+                            },
+                            transition: 'all 0.2s ease',
+                            ...sx
+                        }}
+                        aria-label={aria}
+                        data-testid="favorite-toggle"
+                        disabled={!isLoggedIn}
+                    >
+                        {isFavoritedByUser ? (
+                            <Favorite sx={{ fontSize: iconSize }} />
+                        ) : (
+                            <FavoriteBorder sx={{ fontSize: iconSize }} />
+                        )}
+                    </IconButton>
+                </span>
                 {showCount && (
                     <Typography 
                         variant="caption"
