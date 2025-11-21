@@ -5,12 +5,15 @@ import { adminClient } from '@/services/adminClient';
 import { userClient } from '@/services/userClient';
 import { skateparkClient } from '@/services/skateparkClient';
 import { AdminActivity, ActivityType } from '@/types/admin';
-import { useToast } from '@/context/ToastContext';
+import { useToast } from '@/hooks/useToast';
 
 interface UseAdminActivityOptions {
   limit?: number;
   type?: ActivityType | 'all';
 }
+
+// Cache for failed user profile lookups to prevent repeated 404s
+const failedProfileCache = new Set<string>();
 
 export function useAdminActivityFeed(initialOptions: UseAdminActivityOptions = { limit: 20, type: 'all' }) {
   const [activities, setActivities] = useState<AdminActivity[]>([]);
@@ -56,10 +59,20 @@ export function useAdminActivityFeed(initialOptions: UseAdminActivityOptions = {
         const [actorProfiles, parkSummaries, userProfiles] = await Promise.all([
           Promise.all(
             Array.from(actorIds).map(async id => {
+              // Skip if we've already tried and failed to fetch this profile
+              if (failedProfileCache.has(id)) {
+                return null;
+              }
+
               try {
                 const profile = await userClient.getProfile(id);
                 return { id, name: profile.name, photoUrl: profile.photoUrl };
-              } catch {
+              } catch (err: any) {
+                // Cache failed lookups (especially 404s) to prevent repeated attempts
+                const errorMsg = err?.message || '';
+                if (errorMsg.includes('not found') || errorMsg.includes('404') || errorMsg.includes('HTTP 404')) {
+                  failedProfileCache.add(id);
+                }
                 return null;
               }
             })
@@ -67,10 +80,20 @@ export function useAdminActivityFeed(initialOptions: UseAdminActivityOptions = {
           parkIds.size ? skateparkClient.getSkateparksByIds(Array.from(parkIds)) : Promise.resolve([]),
           Promise.all(
             Array.from(userIds).map(async id => {
+              // Skip if we've already tried and failed to fetch this profile
+              if (failedProfileCache.has(id)) {
+                return null;
+              }
+
               try {
                 const profile = await userClient.getProfile(id);
                 return { id, name: profile.name, photoUrl: profile.photoUrl };
-              } catch {
+              } catch (err: any) {
+                // Cache failed lookups (especially 404s) to prevent repeated attempts
+                const errorMsg = err?.message || '';
+                if (errorMsg.includes('not found') || errorMsg.includes('404') || errorMsg.includes('HTTP 404')) {
+                  failedProfileCache.add(id);
+                }
                 return null;
               }
             })

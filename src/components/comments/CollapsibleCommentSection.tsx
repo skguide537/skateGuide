@@ -12,8 +12,8 @@ import { ExpandMore, ExpandLess } from '@mui/icons-material';
 import { useComments } from '@/hooks/useComments';
 import CommentComposer from './CommentComposer';
 import CommentItem from './CommentItem';
-import { useUser } from '@/context/UserContext';
-import { useToast } from '@/context/ToastContext';
+import { useUser } from '@/hooks/useUser';
+import { useToast } from '@/hooks/useToast';
 import { CommentDTO } from '@/services/commentsClient';
 
 interface CollapsibleCommentSectionProps {

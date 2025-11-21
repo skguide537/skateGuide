@@ -1,6 +1,6 @@
 // Custom hook for LightSkateparkCard state and logic
 import { useState, useCallback, useMemo } from 'react';
-import { useUser } from '@/context/UserContext';
+import { useUser } from '@/hooks/useUser';
 import { CardService, CardData } from '@/services/card.service';
 
 export interface LightSkateparkCardState {

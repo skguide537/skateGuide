@@ -14,9 +14,9 @@ import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import { useRouter, usePathname } from 'next/navigation';
 import { DEFAULT_AVATAR_URL } from '@/types/constants';
-import { useToast } from '@/context/ToastContext';
-import { useUser } from '@/context/UserContext';
-import { useTheme } from '@/context/ThemeContext';
+import { useToast } from '@/hooks/useToast';
+import { useUser } from '@/hooks/useUser';
+import { useTheme } from '@/hooks/useTheme';
 import Tooltip from '@mui/material/Tooltip';
 import HomeIcon from '@mui/icons-material/Home';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
@@ -32,7 +32,7 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LocationOffIcon from '@mui/icons-material/LocationOff';
 import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
 import Link from 'next/link';
-import { useGeolocationContext } from '@/context/GeolocationContext';
+import { useGeolocationContext } from '@/hooks/useGeolocationContext';
 
 export default function NavBar() {
     const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
@@ -120,43 +120,45 @@ export default function NavBar() {
                                     : 'Allow location access to see skateparks\' distance from you.'
                             }
                         >
-                            <IconButton
-                                onClick={handleLocationRetry}
-                                disabled={geoStatus === 'success' || isGeoLoading}
-                                sx={{
-                                    mr: 1,
-                                    color: geoStatus === 'success' 
-                                        ? 'var(--color-accent-green)' 
-                                        : 'var(--color-accent-rust)',
-                                    backgroundColor: geoStatus === 'success'
-                                        ? 'rgba(39, 174, 96, 0.1)'
-                                        : 'rgba(230, 126, 34, 0.1)',
-                                    border: `2px solid ${geoStatus === 'success' ? 'var(--color-accent-green)' : 'var(--color-accent-rust)'}`,
-                                    borderRadius: 'var(--radius-md)',
-                                    transition: 'all var(--transition-fast)',
-                                    p: 1,
-                                    cursor: geoStatus === 'fallback' ? 'pointer' : 'default',
-                                    '&:hover': {
+                            <span>
+                                <IconButton
+                                    onClick={handleLocationRetry}
+                                    disabled={geoStatus === 'success' || isGeoLoading}
+                                    sx={{
+                                        mr: 1,
+                                        color: geoStatus === 'success' 
+                                            ? 'var(--color-accent-green)' 
+                                            : 'var(--color-accent-rust)',
                                         backgroundColor: geoStatus === 'success'
-                                            ? 'rgba(39, 174, 96, 0.2)'
-                                            : 'rgba(230, 126, 34, 0.2)',
-                                        transform: geoStatus === 'fallback' ? 'translateY(-2px)' : 'none',
-                                        boxShadow: geoStatus === 'fallback' ? 'var(--shadow-md)' : 'none',
-                                    },
-                                    '&:disabled': {
-                                        opacity: 0.6,
-                                        cursor: 'default',
-                                    }
-                                }}
-                            >
-                                {geoStatus === 'loading' || isGeoLoading ? (
-                                    <LocationSearchingIcon />
-                                ) : geoStatus === 'success' ? (
-                                    <LocationOnIcon />
-                                ) : (
-                                    <LocationOffIcon />
-                                )}
-                            </IconButton>
+                                            ? 'rgba(39, 174, 96, 0.1)'
+                                            : 'rgba(230, 126, 34, 0.1)',
+                                        border: `2px solid ${geoStatus === 'success' ? 'var(--color-accent-green)' : 'var(--color-accent-rust)'}`,
+                                        borderRadius: 'var(--radius-md)',
+                                        transition: 'all var(--transition-fast)',
+                                        p: 1,
+                                        cursor: geoStatus === 'fallback' ? 'pointer' : 'default',
+                                        '&:hover': {
+                                            backgroundColor: geoStatus === 'success'
+                                                ? 'rgba(39, 174, 96, 0.2)'
+                                                : 'rgba(230, 126, 34, 0.2)',
+                                            transform: geoStatus === 'fallback' ? 'translateY(-2px)' : 'none',
+                                            boxShadow: geoStatus === 'fallback' ? 'var(--shadow-md)' : 'none',
+                                        },
+                                        '&:disabled': {
+                                            opacity: 0.6,
+                                            cursor: 'default',
+                                        }
+                                    }}
+                                >
+                                    {geoStatus === 'loading' || isGeoLoading ? (
+                                        <LocationSearchingIcon />
+                                    ) : geoStatus === 'success' ? (
+                                        <LocationOnIcon />
+                                    ) : (
+                                        <LocationOffIcon />
+                                    )}
+                                </IconButton>
+                            </span>
                     </Tooltip>
 
                     {/* Theme Toggle */}

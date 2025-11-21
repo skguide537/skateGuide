@@ -2,7 +2,7 @@
 
 import { Box, Typography, Grid } from '@mui/material';
 import SkateparkCard from '../skateparkCard/SkateparkCard';
-import { useFavoritesContext } from '@/context/FavoritesContext';
+import { useFavorites } from '@/hooks/useFavorites';
 import { useEffect, useState } from 'react';
 import { skateparkClient } from '@/services/skateparkClient';
 
@@ -12,7 +12,7 @@ interface FavoritesTabProps {
 }
 
 export default function FavoritesTab({ userId, isOwner }: FavoritesTabProps) {
-  const { favorites } = useFavoritesContext();
+  const { favorites } = useFavorites();
   const [favoriteSpots, setFavoriteSpots] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

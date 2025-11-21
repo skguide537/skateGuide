@@ -17,9 +17,9 @@ import FavoriteButton from '@/components/common/FavoriteButton';
 import ApprovedBadge from '@/components/common/ApprovedBadge';
 import CollapsibleCommentSection from '@/components/comments/CollapsibleCommentSection';
 import Loading from '@/components/loading/Loading';
-import { useToast } from '@/context/ToastContext';
-import { useUser } from '@/context/UserContext';
-import { useTheme } from '@/context/ThemeContext';
+import { useToast } from '@/hooks/useToast';
+import { useUser } from '@/hooks/useUser';
+import { useTheme } from '@/hooks/useTheme';
 import { skateparkClient } from '@/services/skateparkClient';
 import { UtilityService } from '@/services/utility.service';
 import { Size, Tag, SkaterLevel } from '@/types/enums';
@@ -427,7 +427,7 @@ export default function ParkDetailsPage() {
             <Rating
               name="user-rating"
               value={userRating}
-              onChange={async (_, value) => {
+              onChange={async (_: React.SyntheticEvent, value: number | null) => {
                 if (!value) return;
                 if (!user?._id) return showToast('You must be logged in to rate.', 'error');
                 setRatingBusy(true);
@@ -625,7 +625,7 @@ export default function ParkDetailsPage() {
               <Button
                 variant="outlined"
                 size="small"
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.preventDefault();
                   const input = (e.target as HTMLElement).closest('div')?.querySelector('input') as HTMLInputElement;
                   if (input) {

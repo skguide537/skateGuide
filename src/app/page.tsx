@@ -10,8 +10,8 @@ import { useParksData } from '@/hooks/useParksData';
 import { useParksFiltering } from '@/hooks/useParksFiltering';
 import { useResponsiveGrid, useVirtualGrid } from '@/hooks/useVirtualGrid';
 import { HOME_PAGE_CONSTANTS } from '@/constants/homePage';
-import { useGeolocationContext } from '@/context/GeolocationContext';
-import { useToast } from '@/context/ToastContext';
+import { useGeolocationContext } from '@/hooks/useGeolocationContext';
+import { useToast } from '@/hooks/useToast';
 
 export default function HomePage() {
     // Hero visibility state

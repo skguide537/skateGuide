@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import NextLink from 'next/link';
 import {
   Avatar,
@@ -23,6 +23,7 @@ import {
   Typography,
   Grid,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import InsightsIcon from '@mui/icons-material/Insights';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import ParkIcon from '@mui/icons-material/Park';
@@ -42,13 +43,17 @@ import {
   Tooltip,
   Legend,
   ArcElement,
+  Filler,
 } from 'chart.js';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, ArcElement);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, ArcElement, Filler);
 
 const Line = dynamic(() => import('react-chartjs-2').then(mod => mod.Line), { ssr: false });
 const Bar = dynamic(() => import('react-chartjs-2').then(mod => mod.Bar), { ssr: false });
 const Doughnut = dynamic(() => import('react-chartjs-2').then(mod => mod.Doughnut), { ssr: false });
+
+// Cache for failed user profile lookups to prevent repeated 404s
+const failedProfileCache = new Set<string>();
 
 export function StatsDashboardSection() {
   const { stats, isLoading, error } = useAdminStatsOverview();
@@ -113,10 +118,20 @@ export function StatsDashboardSection() {
     (async () => {
       const profiles = await Promise.all(
         topContributors.map(async contributor => {
+          // Skip if we've already tried and failed to fetch this profile
+          if (failedProfileCache.has(contributor.userId)) {
+            return { id: contributor.userId, name: contributor.name ?? contributor.userId };
+          }
+
           try {
             const profile = await userClient.getProfile(contributor.userId);
             return { id: contributor.userId, name: profile.name, photoUrl: profile.photoUrl };
-          } catch {
+          } catch (err: any) {
+            // Cache failed lookups (especially 404s) to prevent repeated attempts
+            const errorMsg = err?.message || '';
+            if (errorMsg.includes('not found') || errorMsg.includes('404') || errorMsg.includes('HTTP 404')) {
+              failedProfileCache.add(contributor.userId);
+            }
             return { id: contributor.userId, name: contributor.name ?? contributor.userId };
           }
         })
@@ -180,7 +195,7 @@ export function StatsDashboardSection() {
 
   if (error || !stats) {
     return (
-      <Box sx={{ border: theme => `1px dashed ${theme.palette.error.main}`, borderRadius: 2, p: 4, textAlign: 'center' }}>
+      <Box sx={{ border: (theme: Theme) => `1px dashed ${theme.palette.error.main}`, borderRadius: 2, p: 4, textAlign: 'center' }}>
         <Typography color="error">{error || 'Failed to load statistics'}</Typography>
       </Box>
     );
@@ -376,7 +391,7 @@ export function StatsDashboardSection() {
                       sx={{
                         p: 1.5,
                         borderRadius: 1,
-                        backgroundColor: theme => theme.palette.action.hover,
+                        backgroundColor: (theme: Theme) => theme.palette.action.hover,
                       }}
                     >
                       <Stack direction="row" spacing={1.5} alignItems="center">
@@ -438,7 +453,7 @@ export function StatsDashboardSection() {
                                 size="small"
                                 color="primary"
                                 endIcon={<ArrowDropDownIcon fontSize="small" />}
-                                onClick={event => handleOpenGeoMenu(event, row.label)}
+                                onClick={(event: React.MouseEvent<HTMLButtonElement>) => handleOpenGeoMenu(event, row.label)}
                                 sx={{ mt: 0.5, textTransform: 'none' }}
                               >
                                 View {row.parks.length} parks
@@ -500,7 +515,7 @@ function SummaryCard({ title, value, subtitle, icon }: { title: string; value: n
           width: 56,
           height: 56,
           borderRadius: '50%',
-          backgroundColor: theme => theme.palette.action.hover,
+          backgroundColor: (theme: Theme) => theme.palette.action.hover,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

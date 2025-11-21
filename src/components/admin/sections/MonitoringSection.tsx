@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Button,
@@ -20,6 +20,7 @@ import {
   Chip,
   IconButton,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useAdminMonitoringLogs } from '@/hooks/admin';
@@ -34,6 +35,9 @@ const CATEGORIES: { value: AdminMonitoringCategory; label: string }[] = [
   { value: 'api_error', label: 'API Errors' },
   { value: 'rate_limit', label: 'Rate Limit' },
 ];
+
+// Cache for failed user profile lookups to prevent repeated 404s
+const failedProfileCache = new Set<string>();
 
 export function MonitoringSection() {
   const [activeCategory, setActiveCategory] = useState<AdminMonitoringCategory>('auth_failure');
@@ -84,10 +88,20 @@ export function MonitoringSection() {
     (async () => {
       const entries = await Promise.all(
         Array.from(ids).map(async id => {
+          // Skip if we've already tried and failed to fetch this profile
+          if (failedProfileCache.has(id)) {
+            return null;
+          }
+
           try {
             const profile = await userClient.getProfile(id);
             return { id, name: profile.name, photoUrl: profile.photoUrl };
-          } catch {
+          } catch (err: any) {
+            // Cache failed lookups (especially 404s) to prevent repeated attempts
+            const errorMsg = err?.message || '';
+            if (errorMsg.includes('not found') || errorMsg.includes('404') || errorMsg.includes('HTTP 404')) {
+              failedProfileCache.add(id);
+            }
             return null;
           }
         })
@@ -116,7 +130,7 @@ export function MonitoringSection() {
 
       <Tabs
         value={activeCategory}
-        onChange={(_event, value) => {
+        onChange={(_event: React.SyntheticEvent, value: AdminMonitoringCategory) => {
           setActiveCategory(value);
           setPage(1);
         }}
@@ -164,17 +178,17 @@ export function MonitoringSection() {
           <CircularProgress />
         </Box>
       ) : error ? (
-        <Box sx={{ border: theme => `1px dashed ${theme.palette.error.main}`, borderRadius: 2, p: 4, textAlign: 'center' }}>
+        <Box sx={{ border: (theme: Theme) => `1px dashed ${theme.palette.error.main}`, borderRadius: 2, p: 4, textAlign: 'center' }}>
           <Typography color="error">{error}</Typography>
         </Box>
       ) : logs.length === 0 ? (
         <Box
           sx={{
             borderRadius: 2,
-            border: theme => `1px dashed ${theme.palette.divider}`,
+            border: (theme: Theme) => `1px dashed ${theme.palette.divider}`,
             p: 4,
             textAlign: 'center',
-            backgroundColor: theme => theme.palette.background.paper,
+            backgroundColor: (theme: Theme) => theme.palette.background.paper,
           }}
         >
           <Typography variant="body1" color="text.secondary">

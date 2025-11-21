@@ -1,9 +1,9 @@
 'use client';
 
 import Loading from "@/components/loading/Loading";
-import { useTheme } from '@/context/ThemeContext';
-import { useToast } from '@/context/ToastContext';
-import { useUser } from '@/context/UserContext';
+import { useTheme } from '@/hooks/useTheme';
+import { useToast } from '@/hooks/useToast';
+import { useUser } from '@/hooks/useUser';
 import { skateparkClient } from '@/services/skateparkClient';
 import { LocationOn, Park, Streetview } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
@@ -11,7 +11,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import { Box, Button, Chip, Dialog, DialogContent, DialogTitle, IconButton, Stack, Typography, Avatar, Tooltip } from '@mui/material';
 import Link from 'next/link';
 import Rating from '@mui/material/Rating';
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import FavoriteButton from '../common/FavoriteButton';
 import FastCarousel from '../ui/FastCarousel';
 import ApprovedBadge from '../common/ApprovedBadge';
@@ -419,7 +419,7 @@ export default function SkateparkModal({
                       name="user-rating"
                       value={userRating}
                       disabled={isRatingLoading}
-                      onChange={async (_, value) => {
+                      onChange={async (_: React.SyntheticEvent, value: number | null) => {
                         if (!value) return;
                         if (!user) return showToast("You must be logged in to rate.", "error");
 

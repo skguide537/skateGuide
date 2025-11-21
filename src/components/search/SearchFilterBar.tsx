@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Box, Typography, Collapse } from '@mui/material';
-import { useUser } from '@/context/UserContext';
+import { useUser } from '@/hooks/useUser';
 import { useSearchFilterBar } from '@/hooks/useSearchFilterBar';
 import { SEARCH_FILTER_STYLES, SEARCH_FILTER_CONSTANTS } from '@/constants/searchFilters';
 import { Tag } from '@/types/enums';
