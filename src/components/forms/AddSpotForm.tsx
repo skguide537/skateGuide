@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Button, Chip, FormControl, FormLabel, InputLabel, MenuItem, OutlinedInput, Select, Switch, TextField, Typography, Autocomplete, CircularProgress } from '@mui/material';
-import { useTheme } from '@/context/ThemeContext';
+import { useTheme } from '@/hooks/useTheme';
 import AddSpotMap from '@/components/map/AddSpotMap';
 import { useAddSpotForm } from '@/hooks/useAddSpotForm';
 import { GeoapifyService } from '@/services/geoapify.service';

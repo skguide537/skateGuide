@@ -1,13 +1,24 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { useToast } from '@/context/ToastContext';
+import { useCallback, useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { lazyLoadParksSlice } from '@/store';
+import { useToast } from '@/hooks/useToast';
 import { HOME_PAGE_CONSTANTS } from '@/constants/homePage';
-import { logger } from '@/lib/logger';
-import { skateparkClient } from '@/services/skateparkClient';
-import { authClient } from '@/services/authClient';
-import { BaseSkatepark } from '@/types/skatepark';
+
+// Lazy load parks slice - load immediately when hook is called
+let parksSliceLoadPromise: Promise<void> | null = null;
+const ensureParksSliceLoaded = () => {
+  if (!parksSliceLoadPromise) {
+    parksSliceLoadPromise = lazyLoadParksSlice();
+  }
+  return parksSliceLoadPromise;
+};
+
+// Stable fallback values to prevent unnecessary re-renders
+const EMPTY_ARRAY: string[] = [];
+const DEFAULT_LAST_UPDATED = new Date().toISOString();
 
 export function useParksData(): {
-    parks: BaseSkatepark[];
+    parks: import('@/types/skatepark').BaseSkatepark[];
     isLoading: boolean;
     deletedSpotIds: Set<string>;
     deletingSpotIds: Set<string>;
@@ -16,134 +27,54 @@ export function useParksData(): {
     refreshParks: () => Promise<void>;
     handleSpotDelete: (spotId: string) => Promise<void>;
 } {
-    const [parks, setParks] = useState<BaseSkatepark[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [deletedSpotIds, setDeletedSpotIds] = useState<Set<string>>(new Set());
-    const [deletingSpotIds, setDeletingSpotIds] = useState<Set<string>>(new Set());
-    const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-    
-    const { showToast, invalidateCache } = useToast();
-    
-    // Refs to avoid stale closures
-    const parksRef = useRef(parks);
-    const showToastRef = useRef(showToast);
-    const invalidateCacheRef = useRef(invalidateCache);
-    
-    // Update refs when values change
-    useEffect(() => {
-        parksRef.current = parks;
-    }, [parks]);
-    
-    useEffect(() => {
-        showToastRef.current = showToast;
-    }, [showToast]);
-    
-    useEffect(() => {
-        invalidateCacheRef.current = invalidateCache;
-    }, [invalidateCache]);
+    const dispatch = useAppDispatch();
+    const { showToast } = useToast();
 
-    const fetchParks = useCallback(async () => {
-        try {
-            setIsLoading(true);
-            
-            const data = await skateparkClient.getAllSkateparks(1000);
-
-            // Update parks data for virtual scrolling
-            setParks(Array.isArray(data) ? data : []);
-        } catch (err) {
-            logger.error('Failed to fetch parks', err, 'useParksData');
-            setParks([]);
-        } finally {
-            setIsLoading(false);
-        }
+    // Ensure slice is loaded before using selectors
+    useEffect(() => {
+        ensureParksSliceLoaded();
     }, []);
 
-    const refreshParks = useCallback(async () => {
-        try {
-            // Refresh all parks data for virtual scrolling
-            const data = await skateparkClient.getAllSkateparks(1000);
+    // Use selectors with fallback for initial state (before slice loads)
+    const parks = useAppSelector((state) => (state as any).parks?.parks ?? EMPTY_ARRAY);
+    const isLoading = useAppSelector((state) => (state as any).parks?.isLoading ?? true);
+    const deletedSpotIdsArray = useAppSelector((state) => (state as any).parks?.deletedSpotIds ?? EMPTY_ARRAY);
+    const deletingSpotIdsArray = useAppSelector((state) => (state as any).parks?.deletingSpotIds ?? EMPTY_ARRAY);
+    const lastUpdatedString = useAppSelector((state) => (state as any).parks?.lastUpdated ?? DEFAULT_LAST_UPDATED);
 
-            // Add robust null checks to prevent crashes
-            const parksData = Array.isArray(data) ? data : [];
-            
-            // Only update if we got valid data, otherwise keep existing data
-            if (parksData.length > 0) {
-                setParks(parksData);
-            }
-            
-            // Clear any deleted spot IDs since we're refreshing
-            setDeletedSpotIds(new Set());
-            
-            // Update last updated timestamp
-            setLastUpdated(new Date());
+    // Convert arrays to Sets for API compatibility
+    const deletedSpotIds = new Set<string>(deletedSpotIdsArray);
+    const deletingSpotIds = new Set<string>(deletingSpotIdsArray);
+    const lastUpdated = new Date(lastUpdatedString);
 
-        } catch (err) {
-            logger.error('Error refreshing parks', err, 'useParksData');
-            // Don't clear existing data on error - keep what we have
+    const handleFetchParks = useCallback(async () => {
+        await ensureParksSliceLoaded();
+        const { fetchParks } = await import('@/store/slices/parksSlice');
+        await dispatch(fetchParks());
+    }, [dispatch]);
+
+    const handleRefreshParks = useCallback(async () => {
+        await ensureParksSliceLoaded();
+        const { refreshParks } = await import('@/store/slices/parksSlice');
+        const result = await dispatch(refreshParks());
+        if (refreshParks.fulfilled.match(result)) {
+            showToast('Data refreshed in background', 'info');
         }
-    }, []);
+    }, [dispatch, showToast]);
 
     const handleSpotDelete = useCallback(async (spotId: string) => {
-        // Optimistically mark as deleting
-        setDeletingSpotIds(prev => new Set([...prev, spotId]));
-        
-        // Create a timeout promise
-        const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Delete operation timed out')), HOME_PAGE_CONSTANTS.TIMEOUTS.DELETE_OPERATION);
-        });
-        
-        try {
-            // Get user ID from auth client
-            const user = await authClient.getCurrentUser();
-            if (!user) {
-                throw new Error('User not authenticated');
-            }
-            
-            // Delete from backend with timeout
-            const deletePromise = skateparkClient.deleteSkatepark(spotId, user._id);
-            
-            await Promise.race([deletePromise, timeoutPromise]);
-
-            // Success - mark as deleted and remove from state
-            setDeletedSpotIds(prev => new Set([...prev, spotId]));
-            setDeletingSpotIds(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(spotId);
-                return newSet;
-            });
-            
-            // Get spot title for better toast message
-            const deletedSpot = parksRef.current.find(park => park._id === spotId);
-            const spotTitle = deletedSpot?.title || 'Spot';
-            
-            // Show success toast
-            showToastRef.current(`"${spotTitle}" deleted successfully!`, 'success');
-            
-            // Remove from local state FIRST
-            setParks(prev => prev.filter(park => park._id !== spotId));
-            
-            // Invalidate caches AFTER state updates are complete to prevent race conditions
-            setTimeout(() => {
-                invalidateCacheRef.current('skateparks');
-                invalidateCacheRef.current('spots');
-                invalidateCacheRef.current('map-markers');
-            }, HOME_PAGE_CONSTANTS.TIMEOUTS.CACHE_INVALIDATION);
-            
-        } catch (error: unknown) {
-            logger.error('Delete failed', error, 'useParksData');
-            
-            // Remove from deleting state
-            setDeletingSpotIds(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(spotId);
-                return newSet;
-            });
-            
-            // Show error to user
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            showToastRef.current(`Failed to delete spot: ${errorMessage}`, 'error');
+        await ensureParksSliceLoaded();
+        const { deleteSpot } = await import('@/store/slices/parksSlice');
+        const result = await dispatch(deleteSpot(spotId));
+        if (deleteSpot.fulfilled.match(result)) {
+            const spotTitle = result.payload.spotTitle;
+            showToast(`"${spotTitle}" deleted successfully!`, 'success');
+        } else if (deleteSpot.rejected.match(result)) {
+            const payload = result.payload as { error?: string } | undefined;
+            const error = payload?.error || 'Unknown error';
+            showToast(`Failed to delete spot: ${error}`, 'error');
         }
-    }, []);
+    }, [dispatch, showToast]);
 
     // Check for newly added spots when component mounts (only once)
     useEffect(() => {
@@ -157,7 +88,7 @@ export function useParksData(): {
                     localStorage.removeItem(HOME_PAGE_CONSTANTS.LOCAL_STORAGE_KEYS.SPOT_JUST_ADDED);
                     localStorage.removeItem(HOME_PAGE_CONSTANTS.LOCAL_STORAGE_KEYS.SPOT_ADDED_AT);
                     setTimeout(() => {
-                        fetchParks();
+                        handleFetchParks();
                     }, HOME_PAGE_CONSTANTS.TIMEOUTS.NEW_SPOT_REFRESH);
                 }
             }
@@ -165,7 +96,7 @@ export function useParksData(): {
         checkForNewSpots();
         const timer = setTimeout(checkForNewSpots, HOME_PAGE_CONSTANTS.TIMEOUTS.NEW_SPOT_CHECK);
         return () => clearTimeout(timer);
-    }, [fetchParks]);
+    }, [handleFetchParks]);
 
     // Background refresh - periodically update data based on user preference
     useEffect(() => {
@@ -182,19 +113,17 @@ export function useParksData(): {
         const interval = setInterval(() => {
             // Only refresh if user is actively viewing the page
             if (document.visibilityState === 'visible') {
-                refreshParks();
-                // Show a subtle toast to indicate background refresh
-                showToast('Data refreshed in background', 'info');
+                handleRefreshParks();
             }
         }, refreshInterval);
 
         return () => clearInterval(interval);
-    }, [refreshParks, showToast]);
+    }, [handleRefreshParks]);
 
     // Fetch parks when component mounts
     useEffect(() => {
-        fetchParks();
-    }, [fetchParks]);
+        handleFetchParks();
+    }, [handleFetchParks]);
 
     return {
         parks,
@@ -202,8 +131,8 @@ export function useParksData(): {
         deletedSpotIds,
         deletingSpotIds,
         lastUpdated,
-        fetchParks,
-        refreshParks,
+        fetchParks: handleFetchParks,
+        refreshParks: handleRefreshParks,
         handleSpotDelete,
     };
 }

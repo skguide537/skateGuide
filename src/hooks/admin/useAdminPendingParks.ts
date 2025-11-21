@@ -4,12 +4,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { adminClient } from '@/services/adminClient';
 import { userClient } from '@/services/userClient';
 import { AdminPendingPark, AdminPendingParksResponse } from '@/types/admin';
-import { useToast } from '@/context/ToastContext';
+import { useToast } from '@/hooks/useToast';
 
 interface UseAdminPendingParksOptions {
   page?: number;
   limit?: number;
 }
+
+// Cache for failed user profile lookups to prevent repeated 404s
+const failedProfileCache = new Set<string>();
 
 export function useAdminPendingParks(initialOptions: UseAdminPendingParksOptions = {}) {
   const [data, setData] = useState<AdminPendingPark[]>([]);
@@ -30,6 +33,11 @@ export function useAdminPendingParks(initialOptions: UseAdminPendingParksOptions
 
       await Promise.all(
         uniqueCreatorIds.map(async creatorId => {
+          // Skip if we've already tried and failed to fetch this profile
+          if (failedProfileCache.has(creatorId)) {
+            return;
+          }
+
           try {
             const profile = await userClient.getProfile(creatorId);
             creatorMap.set(creatorId, {
@@ -37,7 +45,12 @@ export function useAdminPendingParks(initialOptions: UseAdminPendingParksOptions
               name: profile.name,
               photoUrl: profile.photoUrl,
             });
-          } catch {
+          } catch (err: any) {
+            // Cache failed lookups (especially 404s) to prevent repeated attempts
+            const errorMsg = err?.message || '';
+            if (errorMsg.includes('not found') || errorMsg.includes('404') || errorMsg.includes('HTTP 404')) {
+              failedProfileCache.add(creatorId);
+            }
             // ignore missing profile
           }
         })

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Container, Typography, Box, CircularProgress, Avatar, Chip, Stack, Tooltip, Grid } from '@mui/material';
 import { useProfile } from '@/hooks/useProfile';
-import { useUser } from '@/context/UserContext';
+import { useUser } from '@/hooks/useUser';
 import { formatJoinedDate } from '@/utils/timeUtils';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import StarIcon from '@mui/icons-material/Star';

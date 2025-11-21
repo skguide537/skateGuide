@@ -9,7 +9,7 @@ import {
   CircularProgress,
   Alert 
 } from '@mui/material';
-import { useTheme } from '@/context/ThemeContext';
+import { useTheme } from '@/hooks/useTheme';
 import { commentsClient, CommentDTO } from '@/services/commentsClient';
 
 interface CommentComposerProps {

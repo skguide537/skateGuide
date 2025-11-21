@@ -9,11 +9,11 @@ import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
 import Rating from '@mui/material/Rating';
-import { useEffect, useState, memo } from 'react';
+import React, { useEffect, useState, memo } from 'react';
 import Image from 'next/image';
 import SkateparkModal from '../modals/SkateparkModal';
 import FastCarousel from '../ui/FastCarousel';
-import { useUser } from '@/context/UserContext';
+import { useUser } from '@/hooks/useUser';
 import { skateparkClient } from '@/services/skateparkClient';
 
 
@@ -171,7 +171,7 @@ const SkateparkCard = memo(function SkateparkCard({
                         <Button
                             variant="contained"
                             size="small"
-                            onClick={(e) => {
+                            onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                                 e.stopPropagation();
                                 openInMaps();
                             }}
@@ -189,7 +189,7 @@ const SkateparkCard = memo(function SkateparkCard({
                         <Button
                             variant="outlined"
                             size="small"
-                            onClick={(e) => {
+                            onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                                 e.stopPropagation();
                                 const wazeUrl = `https://waze.com/ul?ll=${coordinates.lat},${coordinates.lng}&navigate=yes`;
                                 window.open(wazeUrl, '_blank');

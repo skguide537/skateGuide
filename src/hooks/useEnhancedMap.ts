@@ -1,7 +1,7 @@
 // Custom hook for EnhancedMap state and logic
 import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import { Map } from 'leaflet';
-import { useCache } from '@/context/ToastContext';
+import { useCache } from '@/hooks/useCache';
 import { MapService } from '@/services/map.service';
 import { BaseSkatepark } from '@/types/skatepark';
 import { MapFilterService, MapFilterOptions, MapFilterState } from '@/services/mapFilter.service';

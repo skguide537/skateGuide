@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Container, TextField, Typography, Alert, Link } from '@mui/material';
-import { useToast } from '@/context/ToastContext';
-import { useUser } from '@/context/UserContext';
-import { useTheme } from '@/context/ThemeContext';
+import { useToast } from '@/hooks/useToast';
+import { useUser } from '@/hooks/useUser';
+import { useTheme } from '@/hooks/useTheme';
 import { authClient } from '@/services/authClient';
 
 export default function LoginPage() {
