@@ -1,18 +1,11 @@
 import { useFavorites } from '@/hooks/useFavorites';
 import { FilterState, ParksFilterService } from '@/services/parksFilter.service';
 import { BaseSkatepark } from '@/types/skatepark';
-import { useCallback, useMemo, useEffect } from 'react';
+import { useCallback, useMemo, useEffect, useState, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { lazyLoadFiltersSlice } from '@/store';
+import { lazyLoadFiltersSlice, store } from '@/store';
 
-// Lazy load filters slice - load immediately when hook is called
-let filtersSliceLoadPromise: Promise<void> | null = null;
-const ensureFiltersSliceLoaded = () => {
-  if (!filtersSliceLoadPromise) {
-    filtersSliceLoadPromise = lazyLoadFiltersSlice();
-  }
-  return filtersSliceLoadPromise;
-};
+// No need for separate loading - page.tsx pre-loads this slice
 
 // Stable fallback values to prevent unnecessary re-renders
 const EMPTY_STRING_ARRAY: string[] = [];
@@ -39,10 +32,60 @@ export function useParksFiltering(parks: BaseSkatepark[], userCoords: { lat: num
     const dispatch = useAppDispatch();
     const { favorites } = useFavorites();
 
-    // Ensure slice is loaded before using selectors
+    // Check if slice is already loaded (from store) - use ref to avoid infinite loops
+    const sliceExistsRef = useRef(false);
+    const [sliceLoaded, setSliceLoaded] = useState(false);
+
+    // Check if slice exists in store and subscribe to changes
     useEffect(() => {
-        ensureFiltersSliceLoaded();
-    }, []);
+        const checkSlice = () => {
+            try {
+                const state = store.getState();
+                const exists = (state as any).filters !== undefined;
+                if (exists && !sliceExistsRef.current) {
+                    sliceExistsRef.current = true;
+                    setSliceLoaded(true);
+                    return true;
+                }
+            } catch (error) {
+                // Store might not be ready yet, ignore
+                console.warn('Error checking filters slice:', error);
+            }
+            return false;
+        };
+
+        // Check immediately
+        if (checkSlice()) return;
+
+        // Subscribe to store changes to detect when slice is loaded
+        let unsubscribe: (() => void) | null = null;
+        try {
+            unsubscribe = store.subscribe(() => {
+                if (checkSlice() && unsubscribe) {
+                    unsubscribe();
+                    unsubscribe = null;
+                }
+            });
+        } catch (error) {
+            console.warn('Error subscribing to store:', error);
+        }
+
+        // Also try to load if it doesn't exist (fallback for non-home pages)
+        if (!sliceLoaded) {
+            lazyLoadFiltersSlice().catch((error) => {
+                console.warn('Error loading filters slice:', error);
+            }).then(() => {
+                if (checkSlice() && unsubscribe) {
+                    unsubscribe();
+                    unsubscribe = null;
+                }
+            });
+        }
+
+        return () => {
+            if (unsubscribe) unsubscribe();
+        };
+    }, [sliceLoaded]);
 
     // Get filter state from Redux with fallback
     const filterState = useAppSelector((state) => (state as any).filters ?? DEFAULT_FILTER_STATE);
