@@ -40,13 +40,24 @@ export class HomePage {
   async goto() {
     await this.page.goto('/');
     await this.helpers.waitForPageLoad();
+    // Wait for Redux to be ready
+    await this.helpers.waitForReduxReady();
+    // Wait for home page slices to be loaded
+    await this.helpers.waitForHomeSlicesReady();
   }
 
   /**
    * Wait for page to be fully loaded
    */
   async waitForLoad() {
-    await this.helpers.waitForElement('#home-welcome-heading');
+    // Wait for Redux and slices first
+    await this.helpers.waitForReduxReady();
+    await this.helpers.waitForHomeSlicesReady();
+    // Wait for filter bar instead of hero heading (which is commented out)
+    await this.helpers.waitForElement('[data-testid="search-filter-bar"]', 10000).catch(() => {
+      // Fallback: wait for any skatepark card to appear
+      return this.page.waitForSelector('.MuiCard-root', { timeout: 10000 });
+    });
   }
 
   /**
@@ -320,9 +331,14 @@ export class HomePage {
    * Check if cards are displayed
    */
   async hasSkateparkCards(): Promise<boolean> {
-    // Check if virtual scrolling container exists
-    const virtualContainer = this.page.locator('.MuiBox-root.css-1f2autu');
-    return await virtualContainer.isVisible();
+    // Check for skatepark cards directly (more reliable than virtual container selector)
+    try {
+      const cards = this.page.locator('.MuiCard-root');
+      await cards.first().waitFor({ state: 'visible', timeout: 5000 });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /**

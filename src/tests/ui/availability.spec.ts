@@ -26,7 +26,6 @@ test.describe('Availability', () => {
         test('Home Page Availability', async () => {
             await homePage.goto();
             await homePage.waitForLoad();
-            await expect(homePage.subtitle).toBeVisible();
             await testHelpers.waitForApiCall('/api/skateparks');
             expect(await homePage.hasSkateparkCards()).toBe(true);
             expect(await homePage.hasFilterBar()).toBe(true);

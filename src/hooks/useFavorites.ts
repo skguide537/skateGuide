@@ -1,17 +1,10 @@
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { lazyLoadFavoritesSlice } from '@/store';
+import { lazyLoadFavoritesSlice, store } from '@/store';
 import { useUser } from './useUser';
 import { useToast } from './useToast';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 
-// Lazy load favorites slice - load immediately when hook is called
-let favoritesSliceLoadPromise: Promise<void> | null = null;
-const ensureFavoritesSliceLoaded = () => {
-  if (!favoritesSliceLoadPromise) {
-    favoritesSliceLoadPromise = lazyLoadFavoritesSlice();
-  }
-  return favoritesSliceLoadPromise;
-};
+// No need for separate loading - page.tsx pre-loads this slice
 
 // Stable fallback values to prevent unnecessary re-renders
 const EMPTY_FAVORITES_ARRAY: string[] = [];
@@ -22,10 +15,60 @@ export const useFavorites = () => {
     const { user } = useUser();
     const { showToast } = useToast();
 
-    // Ensure slice is loaded before using selectors
+    // Check if slice is already loaded (from store) - use ref to avoid infinite loops
+    const sliceExistsRef = useRef(false);
+    const [sliceLoaded, setSliceLoaded] = useState(false);
+
+    // Check if slice exists in store and subscribe to changes
     useEffect(() => {
-        ensureFavoritesSliceLoaded();
-    }, []);
+        const checkSlice = () => {
+            try {
+                const state = store.getState();
+                const exists = (state as any).favorites !== undefined;
+                if (exists && !sliceExistsRef.current) {
+                    sliceExistsRef.current = true;
+                    setSliceLoaded(true);
+                    return true;
+                }
+            } catch (error) {
+                // Store might not be ready yet, ignore
+                console.warn('Error checking favorites slice:', error);
+            }
+            return false;
+        };
+
+        // Check immediately
+        if (checkSlice()) return;
+
+        // Subscribe to store changes to detect when slice is loaded
+        let unsubscribe: (() => void) | null = null;
+        try {
+            unsubscribe = store.subscribe(() => {
+                if (checkSlice() && unsubscribe) {
+                    unsubscribe();
+                    unsubscribe = null;
+                }
+            });
+        } catch (error) {
+            console.warn('Error subscribing to store:', error);
+        }
+
+        // Also try to load if it doesn't exist (fallback for non-home pages)
+        if (!sliceLoaded) {
+            lazyLoadFavoritesSlice().catch((error) => {
+                console.warn('Error loading favorites slice:', error);
+            }).then(() => {
+                if (checkSlice() && unsubscribe) {
+                    unsubscribe();
+                    unsubscribe = null;
+                }
+            });
+        }
+
+        return () => {
+            if (unsubscribe) unsubscribe();
+        };
+    }, [sliceLoaded]);
     
     // Use selectors with fallback for initial state
     const favorites = useAppSelector((state) => (state as any).favorites?.favorites ?? EMPTY_FAVORITES_ARRAY);
@@ -33,30 +76,34 @@ export const useFavorites = () => {
     const isLoading = useAppSelector((state) => (state as any).favorites?.isLoading ?? false);
     const favoritesLoaded = useAppSelector((state) => (state as any).favorites?.favoritesLoaded ?? false);
 
-    // Fetch favorites when user logs in
+    // Fetch favorites when user logs in and slice is loaded
     useEffect(() => {
-        if (user?._id) {
-            ensureFavoritesSliceLoaded().then(() => {
-                import('@/store/slices/favoritesSlice').then(({ fetchFavorites }) => {
-                    dispatch(fetchFavorites(user._id));
-                });
+        if (user?._id && sliceLoaded) {
+            import('@/store/slices/favoritesSlice').then(({ fetchFavorites }) => {
+                dispatch(fetchFavorites(user._id));
             });
         }
-    }, [dispatch, user?._id]);
+    }, [dispatch, user?._id, sliceLoaded]);
 
     const handleFetchFavorites = useCallback(async () => {
         if (user?._id) {
-            await ensureFavoritesSliceLoaded();
+            if (!sliceLoaded) {
+                await lazyLoadFavoritesSlice();
+                setSliceLoaded(true);
+            }
             const { fetchFavorites } = await import('@/store/slices/favoritesSlice');
             await dispatch(fetchFavorites(user._id));
         }
-    }, [dispatch, user?._id]);
+    }, [dispatch, user?._id, sliceLoaded]);
 
     const handleEnsureCounts = useCallback(async (spotIds: string[]) => {
-        await ensureFavoritesSliceLoaded();
+        if (!sliceLoaded) {
+            await lazyLoadFavoritesSlice();
+            setSliceLoaded(true);
+        }
         const { ensureCounts } = await import('@/store/slices/favoritesSlice');
         await dispatch(ensureCounts(spotIds));
-    }, [dispatch]);
+    }, [dispatch, sliceLoaded]);
 
     const getFavoritesCount = useCallback((spotId: string) => {
         return counts[spotId] ?? 0;
@@ -72,7 +119,10 @@ export const useFavorites = () => {
             return null;
         }
 
-        await ensureFavoritesSliceLoaded();
+        if (!sliceLoaded) {
+            await lazyLoadFavoritesSlice();
+            setSliceLoaded(true);
+        }
         const { toggleFavorite } = await import('@/store/slices/favoritesSlice');
         const result = await dispatch(toggleFavorite({ spotId, userId: user._id }));
         
@@ -90,7 +140,7 @@ export const useFavorites = () => {
             await handleFetchFavorites();
             return null;
         }
-    }, [user?._id, showToast, dispatch, handleFetchFavorites]);
+    }, [user?._id, showToast, dispatch, handleFetchFavorites, sliceLoaded]);
 
     return {
         favorites,

@@ -9,7 +9,7 @@ export default defineConfig({
   testDir: './src/tests/ui',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 1, // Add retries for flaky tests
+  retries: process.env.CI ? 2 : 0, // Add retries for flaky tests
   // Use maximum recommended workers: all cores locally, half cores in CI for stability
   workers: process.env.CI ? '50%' : '100%',
   reporter: 'list', // Minimal console output, no HTML files

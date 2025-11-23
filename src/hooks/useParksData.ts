@@ -1,17 +1,8 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { lazyLoadParksSlice } from '@/store';
+import { lazyLoadParksSlice, store } from '@/store';
 import { useToast } from '@/hooks/useToast';
 import { HOME_PAGE_CONSTANTS } from '@/constants/homePage';
-
-// Lazy load parks slice - load immediately when hook is called
-let parksSliceLoadPromise: Promise<void> | null = null;
-const ensureParksSliceLoaded = () => {
-  if (!parksSliceLoadPromise) {
-    parksSliceLoadPromise = lazyLoadParksSlice();
-  }
-  return parksSliceLoadPromise;
-};
 
 // Stable fallback values to prevent unnecessary re-renders
 const EMPTY_ARRAY: string[] = [];
@@ -30,17 +21,71 @@ export function useParksData(): {
     const dispatch = useAppDispatch();
     const { showToast } = useToast();
 
-    // Ensure slice is loaded before using selectors
+    // Check if slice is already loaded (from store) - use ref to avoid infinite loops
+    const sliceExistsRef = useRef(false);
+    const [sliceLoaded, setSliceLoaded] = useState(false);
+
+    // Check if slice exists in store and subscribe to changes
     useEffect(() => {
-        ensureParksSliceLoaded();
-    }, []);
+        const checkSlice = () => {
+            try {
+                const state = store.getState();
+                const exists = (state as any).parks !== undefined;
+                if (exists && !sliceExistsRef.current) {
+                    sliceExistsRef.current = true;
+                    setSliceLoaded(true);
+                    return true;
+                }
+            } catch (error) {
+                // Store might not be ready yet, ignore
+                console.warn('Error checking parks slice:', error);
+            }
+            return false;
+        };
+
+        // Check immediately
+        if (checkSlice()) return;
+
+        // Subscribe to store changes to detect when slice is loaded
+        let unsubscribe: (() => void) | null = null;
+        try {
+            unsubscribe = store.subscribe(() => {
+                if (checkSlice() && unsubscribe) {
+                    unsubscribe();
+                    unsubscribe = null;
+                }
+            });
+        } catch (error) {
+            console.warn('Error subscribing to store:', error);
+        }
+
+        // Also try to load if it doesn't exist (fallback for non-home pages)
+        if (!sliceLoaded) {
+            lazyLoadParksSlice().catch((error) => {
+                console.warn('Error loading parks slice:', error);
+            }).then(() => {
+                if (checkSlice() && unsubscribe) {
+                    unsubscribe();
+                    unsubscribe = null;
+                }
+            });
+        }
+
+        return () => {
+            if (unsubscribe) unsubscribe();
+        };
+    }, [sliceLoaded]);
 
     // Use selectors with fallback for initial state (before slice loads)
     const parks = useAppSelector((state) => (state as any).parks?.parks ?? EMPTY_ARRAY);
-    const isLoading = useAppSelector((state) => (state as any).parks?.isLoading ?? true);
+    const parksIsLoading = useAppSelector((state) => (state as any).parks?.isLoading ?? true);
     const deletedSpotIdsArray = useAppSelector((state) => (state as any).parks?.deletedSpotIds ?? EMPTY_ARRAY);
     const deletingSpotIdsArray = useAppSelector((state) => (state as any).parks?.deletingSpotIds ?? EMPTY_ARRAY);
     const lastUpdatedString = useAppSelector((state) => (state as any).parks?.lastUpdated ?? DEFAULT_LAST_UPDATED);
+
+    // Only show loading if slice is loaded AND parks are actually loading
+    // If slice isn't loaded yet, we're still in initial state
+    const isLoading = sliceLoaded ? parksIsLoading : true;
 
     // Convert arrays to Sets for API compatibility
     const deletedSpotIds = new Set<string>(deletedSpotIdsArray);
@@ -48,22 +93,31 @@ export function useParksData(): {
     const lastUpdated = new Date(lastUpdatedString);
 
     const handleFetchParks = useCallback(async () => {
-        await ensureParksSliceLoaded();
+        if (!sliceLoaded) {
+            await lazyLoadParksSlice();
+            setSliceLoaded(true);
+        }
         const { fetchParks } = await import('@/store/slices/parksSlice');
         await dispatch(fetchParks());
-    }, [dispatch]);
+    }, [dispatch, sliceLoaded]);
 
     const handleRefreshParks = useCallback(async () => {
-        await ensureParksSliceLoaded();
+        if (!sliceLoaded) {
+            await lazyLoadParksSlice();
+            setSliceLoaded(true);
+        }
         const { refreshParks } = await import('@/store/slices/parksSlice');
         const result = await dispatch(refreshParks());
         if (refreshParks.fulfilled.match(result)) {
             showToast('Data refreshed in background', 'info');
         }
-    }, [dispatch, showToast]);
+    }, [dispatch, showToast, sliceLoaded]);
 
     const handleSpotDelete = useCallback(async (spotId: string) => {
-        await ensureParksSliceLoaded();
+        if (!sliceLoaded) {
+            await lazyLoadParksSlice();
+            setSliceLoaded(true);
+        }
         const { deleteSpot } = await import('@/store/slices/parksSlice');
         const result = await dispatch(deleteSpot(spotId));
         if (deleteSpot.fulfilled.match(result)) {
@@ -74,7 +128,7 @@ export function useParksData(): {
             const error = payload?.error || 'Unknown error';
             showToast(`Failed to delete spot: ${error}`, 'error');
         }
-    }, [dispatch, showToast]);
+    }, [dispatch, showToast, sliceLoaded]);
 
     // Check for newly added spots when component mounts (only once)
     useEffect(() => {
@@ -120,10 +174,12 @@ export function useParksData(): {
         return () => clearInterval(interval);
     }, [handleRefreshParks]);
 
-    // Fetch parks when component mounts
+    // Fetch parks when component mounts and slice is loaded
     useEffect(() => {
-        handleFetchParks();
-    }, [handleFetchParks]);
+        if (sliceLoaded) {
+            handleFetchParks();
+        }
+    }, [handleFetchParks, sliceLoaded]);
 
     return {
         parks,

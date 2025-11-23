@@ -25,6 +25,53 @@ export default function ReduxProvider({ children }: ReduxProviderProps) {
     }
   }, []);
 
+  // Add data attribute for test readiness detection (reactive)
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    // Mark Redux as ready when essential slices are loaded
+    const checkReady = () => {
+      try {
+        const state = store.getState();
+        const essentialReady = ['auth', 'theme', 'toast', 'cache'].every(slice => 
+          state && (state as any)[slice] !== undefined
+        );
+        
+        if (essentialReady) {
+          document.body.setAttribute('data-redux-ready', 'true');
+          return true;
+        }
+      } catch (error) {
+        // Store might not be ready yet
+      }
+      return false;
+    };
+
+    // Check immediately
+    if (checkReady()) return;
+
+    // Subscribe to store changes and check on every state update
+    const unsubscribe = store.subscribe(() => {
+      if (checkReady()) {
+        unsubscribe();
+      }
+    });
+
+    // Also check periodically as fallback
+    const interval = setInterval(() => {
+      if (checkReady()) {
+        clearInterval(interval);
+        unsubscribe();
+      }
+    }, 100);
+
+    // Cleanup
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
+  }, []);
+
   return <Provider store={store}>{children}</Provider>;
 }
 
