@@ -15,6 +15,9 @@ const essentialReducers = {
 // Lazy-loaded reducers (loaded on-demand)
 const lazyReducers: Record<string, Reducer> = {};
 
+// Track which slices are loaded for readiness indicator
+export const loadedSlices = new Set<string>(['auth', 'theme', 'toast', 'cache']);
+
 // Create root reducer with lazy reducer injection support
 const createRootReducer = (): Reducer => {
   const combinedReducer = combineReducers({
@@ -51,7 +54,11 @@ export const injectReducer = (name: string, reducer: Reducer) => {
   }
 
   lazyReducers[name] = reducer;
+  loadedSlices.add(name);
   store.replaceReducer(createRootReducer());
+  
+  // Dispatch a custom action to notify that slice is ready (for tests)
+  store.dispatch({ type: `@redux/SLICE_LOADED`, payload: name });
 };
 
 // Lazy load functions for each slice
@@ -77,6 +84,25 @@ export const lazyLoadGeolocationSlice = async () => {
   if (lazyReducers.geolocation) return;
   const { default: geolocationReducer } = await import('./slices/geolocationSlice');
   injectReducer('geolocation', geolocationReducer);
+};
+
+// Check if all required slices are loaded
+export const areSlicesReady = (requiredSlices: string[]): boolean => {
+  return requiredSlices.every(slice => loadedSlices.has(slice));
+};
+
+// Wait for slices to be ready (for tests)
+export const waitForSlices = async (requiredSlices: string[], timeout: number = 10000): Promise<void> => {
+  const startTime = Date.now();
+  
+  while (Date.now() - startTime < timeout) {
+    if (areSlicesReady(requiredSlices)) {
+      return;
+    }
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  
+  throw new Error(`Timeout waiting for slices: ${requiredSlices.filter(s => !loadedSlices.has(s)).join(', ')}`);
 };
 
 // Re-export types for convenience

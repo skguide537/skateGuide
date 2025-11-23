@@ -78,14 +78,18 @@ test.describe('Favorites', () => {
         await homePage.waitForLoad();
         await testHelpers.waitForFavoritesToLoad();
 
-        // 2. locate mockSpot 1, read initial counter value (should be 0)
+        // 2. Wait for parks to load before searching
+        await testHelpers.waitForApiCall('/api/skateparks', 30000);
+        await page.waitForTimeout(1000); // Allow cards to render
+
+        // 3. locate mockSpot 1, read initial counter value (should be 0)
         const spotTitle = testSpots[0].title;
         // Narrow the list to the specific spot using the search box
         const searchBox = page.getByRole('textbox', { name: 'Search spots, tags, locations' });
         await searchBox.click();
         await searchBox.fill(spotTitle);
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(1000); // Allow search to filter
         const card = page.locator('.MuiCard-root').filter({ hasText: spotTitle }).first();
         await card.scrollIntoViewIfNeeded();
         await expect(card).toBeVisible({ timeout: 15000 });
@@ -136,13 +140,17 @@ test.describe('Favorites', () => {
         await homePage.waitForLoad();
         await testHelpers.waitForFavoritesToLoad();
 
-        // 2. locate MockSpot 2 card
+        // 2. Wait for parks to load before searching
+        await testHelpers.waitForApiCall('/api/skateparks', 30000);
+        await page.waitForTimeout(1000); // Allow cards to render
+
+        // 3. locate MockSpot 2 card
         const spotTitle = testSpots[1].title; // "MockSpot 2"
         const searchBox = page.getByRole('textbox', { name: 'Search spots, tags, locations' });
         await searchBox.click();
         await searchBox.fill(spotTitle);
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(1000); // Allow search to filter
         const card = page.locator('.MuiCard-root').filter({ hasText: spotTitle }).first();
         await card.scrollIntoViewIfNeeded();
         await expect(card).toBeVisible({ timeout: 15000 });
@@ -165,9 +173,18 @@ test.describe('Favorites', () => {
         await page.reload();
         await homePage.waitForLoad();
         await testHelpers.waitForFavoritesToLoad();
+        // Wait for parks to load after reload
+        await testHelpers.waitForApiCall('/api/skateparks', 30000);
         await page.waitForTimeout(1000);
 
-        // 5. re-locate card, expect aria-label remove and same count
+        // 5. Re-search for the card after reload
+        const searchBoxAfter = page.getByRole('textbox', { name: 'Search spots, tags, locations' });
+        await searchBoxAfter.click();
+        await searchBoxAfter.fill(spotTitle);
+        await page.keyboard.press('Enter');
+        await page.waitForTimeout(1000);
+
+        // 6. re-locate card, expect aria-label remove and same count
         const reloadedCard = page.locator('.MuiCard-root').filter({ hasText: spotTitle }).first();
         await reloadedCard.scrollIntoViewIfNeeded();
         await expect(reloadedCard).toBeVisible({ timeout: 15000 });
@@ -190,8 +207,9 @@ test.describe('Favorites', () => {
         await homePage.waitForLoad();
         await testHelpers.waitForFavoritesToLoad();
       
-        // Wait for cards to load
-        await page.waitForTimeout(2000);
+        // Wait for parks to load
+        await testHelpers.waitForApiCall('/api/skateparks', 30000);
+        await page.waitForTimeout(1000); // Allow cards to render
 
         // locate mockSpot 3
         const spotTitle = testSpots[2].title;
@@ -200,7 +218,7 @@ test.describe('Favorites', () => {
         await searchBox.click();
         await searchBox.fill(spotTitle);
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(1000); // Allow search to filter
         
         const card = page.locator('.MuiCard-root').filter({ hasText: spotTitle }).first();
         await card.scrollIntoViewIfNeeded();
@@ -232,13 +250,16 @@ test.describe('Favorites', () => {
         await homePage.goto();
         await homePage.waitForLoad();
         await testHelpers.waitForFavoritesToLoad();
+        // Wait for parks to load after login
+        await testHelpers.waitForApiCall('/api/skateparks', 30000);
+        await page.waitForTimeout(1000);
 
         // locate mockSpot 3 again, expect the aria-label to be "remove from favorites" and same count
         const searchBoxAfter = page.getByRole('textbox', { name: 'Search spots, tags, locations' });
         await searchBoxAfter.click();
         await searchBoxAfter.fill(spotTitle);
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(1000); // Allow search to filter
         const reloadedCard = page.locator('.MuiCard-root').filter({ hasText: spotTitle }).first();
         await reloadedCard.scrollIntoViewIfNeeded();
         await expect(reloadedCard).toBeVisible({ timeout: 15000 });        

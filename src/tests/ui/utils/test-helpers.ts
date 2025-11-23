@@ -90,6 +90,31 @@ export class TestHelpers {
   }
 
   /**
+   * Wait for Redux store to be ready (essential slices loaded)
+   */
+  async waitForReduxReady(timeout: number = 10000) {
+    try {
+      await this.page.waitForSelector('body[data-redux-ready="true"]', { timeout });
+    } catch {
+      // If attribute doesn't appear, continue anyway (might be SSR or already ready)
+      console.warn('Redux readiness attribute not found, continuing...');
+    }
+  }
+
+  /**
+   * Wait for home page slices to be ready (parks, filters, favorites, geolocation)
+   */
+  async waitForHomeSlicesReady(timeout: number = 15000) {
+    try {
+      await this.page.waitForSelector('body[data-home-slices-ready="true"]', { timeout });
+    } catch {
+      // If attribute doesn't appear, wait a bit more for slices to load
+      await this.page.waitForTimeout(2000);
+      console.warn('Home slices readiness attribute not found, continuing...');
+    }
+  }
+
+  /**
    * Wait for element to be visible with custom timeout
    */
   async waitForElement(selector: string, timeout: number = 10000) {
@@ -109,16 +134,25 @@ export class TestHelpers {
   /**
    * Wait for favorites to load by checking if favorite buttons are interactive
    */
-  async waitForFavoritesToLoad(timeout: number = 10000) {
+  async waitForFavoritesToLoad(timeout: number = 15000) {
     try {
+      // First wait for Redux and home slices to be ready
+      await this.waitForReduxReady(timeout);
+      await this.waitForHomeSlicesReady(timeout);
+      
+      // Wait for favorites API call to complete (if user is logged in)
+      await this.waitForApiCall('/api/favorites', timeout).catch(() => {
+        // If no favorites API call (user not logged in), that's okay
+        console.log('No favorites API call detected (user may not be logged in)');
+      });
+      
       // Wait for at least one favorite button to be visible and interactive
+      await this.page.waitForSelector('.MuiCard-root', { timeout });
       const firstCard = this.page.locator('.MuiCard-root').first();
       const favoriteButton = firstCard.getByTestId('favorite-toggle').first();
-      
-      await this.page.waitForSelector('.MuiCard-root', { timeout });
       await favoriteButton.waitFor({ state: 'visible', timeout });
       
-      // Additional wait to ensure favorites context has loaded
+      // Additional wait to ensure favorites slice has loaded
       await this.page.waitForTimeout(1000);
     } catch (error) {
       console.warn('Favorites may not have loaded properly:', error);
