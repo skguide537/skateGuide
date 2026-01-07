@@ -78,8 +78,8 @@ test.describe('Favorites', () => {
         await homePage.waitForLoad();
         await testHelpers.waitForFavoritesToLoad();
 
-        // 2. Wait for parks to load before searching
-        await testHelpers.waitForApiCall('/api/skateparks', 30000);
+        // 2. Wait for cards to appear instead of API call
+        await expect(page.locator('.MuiCard-root').first()).toBeVisible({ timeout: 30000 });
         await page.waitForTimeout(1000); // Allow cards to render
 
         // 3. locate mockSpot 1, read initial counter value (should be 0)

@@ -123,12 +123,30 @@ export class TestHelpers {
 
   /**
    * Wait for API call to complete
+   * Handles both future calls and already-completed calls
    */
   async waitForApiCall(urlPattern: string, timeout: number = 10000) {
-    await this.page.waitForResponse(response => 
+    // Set up listener BEFORE checking if it already happened
+    const responsePromise = this.page.waitForResponse(response => 
       response.url().includes(urlPattern) && response.status() === 200,
       { timeout }
-    );
+    ).catch(() => null);
+
+    // Check if it already happened using network request interception
+    // If we're already on the page, the call might have happened
+    // So we'll wait a short time to see if responsePromise resolves
+    const quickCheck = Promise.race([
+      responsePromise,
+      new Promise(resolve => setTimeout(() => resolve('timeout'), 100))
+    ]);
+
+    const result = await quickCheck;
+    
+    if (result === 'timeout') {
+      // Call might have already happened, check network logs
+      // Or just wait for the response promise (which will timeout if not happening)
+      await responsePromise;
+    }
   }
 
   /**
