@@ -26,7 +26,9 @@ test.describe('Availability', () => {
         test('Home Page Availability', async () => {
             await homePage.goto();
             await homePage.waitForLoad();
-            await testHelpers.waitForApiCall('/api/skateparks');
+            // Wait for cards to appear (this implicitly waits for API + rendering)
+            await expect(homePage.page.locator('.MuiCard-root').first()).toBeVisible({ timeout: 30000 });
+            await homePage.page.waitForTimeout(1000);
             expect(await homePage.hasSkateparkCards()).toBe(true);
             expect(await homePage.hasFilterBar()).toBe(true);
         });

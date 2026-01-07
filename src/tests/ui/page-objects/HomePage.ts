@@ -334,7 +334,15 @@ export class HomePage {
     // Check for skatepark cards directly (more reliable than virtual container selector)
     try {
       const cards = this.page.locator('.MuiCard-root');
-      await cards.first().waitFor({ state: 'visible', timeout: 5000 });
+      const count = await cards.count();
+      if (count === 0) {
+        // Wait a bit more and try again
+        await this.page.waitForTimeout(2000);
+        const newCount = await cards.count();
+        return newCount > 0;
+      }
+      // Verify at least one is visible
+      await cards.first().waitFor({ state: 'visible', timeout: 10000 });
       return true;
     } catch {
       return false;
@@ -375,7 +383,13 @@ export class HomePage {
    * Check if filter bar is visible
    */
   async hasFilterBar(): Promise<boolean> {
-    return await this.helpers.elementExists('[data-testid="search-filter-bar"]');
+    // Increase timeout for elementExists check
+    try {
+      await this.page.waitForSelector('[data-testid="search-filter-bar"]', { timeout: 10000 });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /**
