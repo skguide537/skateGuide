@@ -1,11 +1,9 @@
 'use client';
 
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Typography, CircularProgress } from '@mui/material';
 import { logger } from '@/lib/logger';
-
-// Lazy load the heavy map component
-const EnhancedMap = lazy(() => import('@/components/map/EnhancedMap'));
+import dynamic from 'next/dynamic';
 
 // Loading component for the map
 const MapLoading = () => (
@@ -31,6 +29,11 @@ const MapLoading = () => (
     </Typography>
   </Box>
 );
+
+const EnhancedMap = dynamic(() => import('@/components/map/EnhancedMap'), {
+  ssr: false,
+  loading: MapLoading,
+});
 
 export default function MapPage() {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
@@ -85,9 +88,7 @@ export default function MapPage() {
       margin: 0,
       padding: 0
     }} id="map-container" className="map-page">
-      <Suspense fallback={<MapLoading />}>
-        <EnhancedMap userLocation={userLocation} />
-      </Suspense>
+      <EnhancedMap userLocation={userLocation} />
     </Box>
   );
 }

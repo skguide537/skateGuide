@@ -32,6 +32,7 @@ import { useAdminStatsOverview } from '@/hooks/admin';
 import { userClient } from '@/services/userClient';
 import { GeoapifyService } from '@/services/geoapify.service';
 import type { Theme } from '@mui/material/styles';
+import type { JSX } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,

@@ -5,7 +5,8 @@ import { convertToUploadedFile } from '@/lib/file-utils';
 import { BadRequestError, NotFoundError } from '@/types/error-models';
 
 // PUT /api/users/[id]/photo - Upload profile photo (owner only)
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+    const { id } = await context.params;
     try {
         // 1. Authenticate user
         const currentUser = await getUserFromRequest(request);
@@ -14,7 +15,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         }
 
         // 2. Check if current user is owner
-        if (currentUser._id.toString() !== params.id) {
+        if (currentUser._id.toString() !== id) {
             return NextResponse.json({ error: 'Forbidden - Only owner can update photo' }, { status: 403 });
         }
 
@@ -39,7 +40,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
         // 4. Convert to UploadedFile format and update photo
         const uploadedFile = await convertToUploadedFile(file);
-        const result = await userService.updateProfilePhoto(params.id, uploadedFile);
+        const result = await userService.updateProfilePhoto(id, uploadedFile);
         
         return NextResponse.json(result);
     } catch (error: any) {
@@ -54,7 +55,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 // DELETE /api/users/[id]/photo - Delete profile photo (owner only)
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+    const { id } = await context.params;
     try {
         // 1. Authenticate user
         const currentUser = await getUserFromRequest(request);
@@ -63,12 +65,12 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
         }
 
         // 2. Check if current user is owner or admin
-        if (currentUser._id.toString() !== params.id && currentUser.role !== 'admin') {
+        if (currentUser._id.toString() !== id && currentUser.role !== 'admin') {
             return NextResponse.json({ error: 'Forbidden - Only owner or admin can delete photo' }, { status: 403 });
         }
 
         // 3. Delete photo
-        await userService.deleteProfilePhoto(params.id);
+        await userService.deleteProfilePhoto(id);
         
         return NextResponse.json({ success: true, message: 'Photo deleted successfully' });
     } catch (error: any) {

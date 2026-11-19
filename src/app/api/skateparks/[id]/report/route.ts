@@ -4,8 +4,9 @@ import { getUserFromRequest } from "@/lib/auth-helpers";
 
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await context.params;
     try {
         // Get authenticated user from JWT cookie
         const currentUser = await getUserFromRequest(request);
@@ -15,7 +16,7 @@ export async function POST(
 
         const { reason } = await request.json();
         const message = await skateparkService.reportSkatepark(
-            params.id,
+            id,
             currentUser._id.toString(),
             reason
         );

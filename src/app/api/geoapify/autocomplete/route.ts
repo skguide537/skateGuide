@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cache } from '@/lib/cache';
+import { getRequestIp } from '@/lib/request-ip';
 
 /**
  * Geoapify Autocomplete API Proxy
@@ -86,7 +87,7 @@ export interface AutocompleteResult {
 export async function GET(request: NextRequest) {
   try {
     // Get client IP for rate limiting
-    const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+    const ip = getRequestIp(request.headers);
     
     // Check rate limiting
     if (!checkRateLimit(ip)) {

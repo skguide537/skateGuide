@@ -16,12 +16,12 @@ const nextConfig = {
     // optimizeCss: true,
     optimizePackageImports: ['@mui/icons-material', 'leaflet'],
     webpackBuildWorker: true, // Use separate process for webpack builds
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
+  },
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
       },
     },
   },
@@ -49,7 +49,6 @@ const nextConfig = {
   poweredByHeader: false,
   
   // Build optimizations
-  swcMinify: true,
   modularizeImports: {
     '@mui/icons-material': {
       transform: '@mui/icons-material/{{member}}',
@@ -138,4 +137,4 @@ const nextConfig = {
   },
 }
 
-module.exports = withBundleAnalyzer(nextConfig); 
+module.exports = withBundleAnalyzer(nextConfig);
