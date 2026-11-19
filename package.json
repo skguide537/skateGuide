@@ -34,7 +34,7 @@
         "leaflet": "^1.9.4",
         "leaflet-control-geocoder": "^3.2.1",
         "mongodb": "^6.16.0",
-        "mongoose": "^8.14.1",
+        "mongoose": "^8.24.10",
         "next": "14.1.0",
         "next-auth": "^4.24.11",
         "react": "^18.2.0",
