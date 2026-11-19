@@ -28,6 +28,7 @@ import { formatRelativeTime } from '@/utils/timeUtils';
 import { userClient } from '@/services/userClient';
 import Link from 'next/link';
 import Avatar from '@mui/material/Avatar';
+import type { Theme } from '@mui/material/styles';
 
 const CATEGORIES: { value: AdminMonitoringCategory; label: string }[] = [
   { value: 'auth_failure', label: 'Auth Failures' },
@@ -116,9 +117,12 @@ export function MonitoringSection() {
 
       <Tabs
         value={activeCategory}
-        onChange={(_event, value) => {
-          setActiveCategory(value);
-          setPage(1);
+        onChange={(_event: React.SyntheticEvent, value: string) => {
+          const category = CATEGORIES.find(item => item.value === value);
+          if (category) {
+            setActiveCategory(category.value);
+            setPage(1);
+          }
         }}
         variant="scrollable"
         allowScrollButtonsMobile
@@ -164,17 +168,17 @@ export function MonitoringSection() {
           <CircularProgress />
         </Box>
       ) : error ? (
-        <Box sx={{ border: theme => `1px dashed ${theme.palette.error.main}`, borderRadius: 2, p: 4, textAlign: 'center' }}>
+        <Box sx={{ border: (theme: Theme) => `1px dashed ${theme.palette.error.main}`, borderRadius: 2, p: 4, textAlign: 'center' }}>
           <Typography color="error">{error}</Typography>
         </Box>
       ) : logs.length === 0 ? (
         <Box
           sx={{
             borderRadius: 2,
-            border: theme => `1px dashed ${theme.palette.divider}`,
+            border: (theme: Theme) => `1px dashed ${theme.palette.divider}`,
             p: 4,
             textAlign: 'center',
-            backgroundColor: theme => theme.palette.background.paper,
+            backgroundColor: (theme: Theme) => theme.palette.background.paper,
           }}
         >
           <Typography variant="body1" color="text.secondary">

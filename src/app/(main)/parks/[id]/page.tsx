@@ -427,7 +427,7 @@ export default function ParkDetailsPage() {
             <Rating
               name="user-rating"
               value={userRating}
-              onChange={async (_, value) => {
+              onChange={async (_event: React.SyntheticEvent, value: number | null) => {
                 if (!value) return;
                 if (!user?._id) return showToast('You must be logged in to rate.', 'error');
                 setRatingBusy(true);
@@ -625,7 +625,7 @@ export default function ParkDetailsPage() {
               <Button
                 variant="outlined"
                 size="small"
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.preventDefault();
                   const input = (e.target as HTMLElement).closest('div')?.querySelector('input') as HTMLInputElement;
                   if (input) {

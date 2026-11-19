@@ -31,6 +31,7 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { useAdminStatsOverview } from '@/hooks/admin';
 import { userClient } from '@/services/userClient';
 import { GeoapifyService } from '@/services/geoapify.service';
+import type { Theme } from '@mui/material/styles';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -180,7 +181,7 @@ export function StatsDashboardSection() {
 
   if (error || !stats) {
     return (
-      <Box sx={{ border: theme => `1px dashed ${theme.palette.error.main}`, borderRadius: 2, p: 4, textAlign: 'center' }}>
+      <Box sx={{ border: (theme: Theme) => `1px dashed ${theme.palette.error.main}`, borderRadius: 2, p: 4, textAlign: 'center' }}>
         <Typography color="error">{error || 'Failed to load statistics'}</Typography>
       </Box>
     );
@@ -376,7 +377,7 @@ export function StatsDashboardSection() {
                       sx={{
                         p: 1.5,
                         borderRadius: 1,
-                        backgroundColor: theme => theme.palette.action.hover,
+                        backgroundColor: (theme: Theme) => theme.palette.action.hover,
                       }}
                     >
                       <Stack direction="row" spacing={1.5} alignItems="center">
@@ -438,7 +439,7 @@ export function StatsDashboardSection() {
                                 size="small"
                                 color="primary"
                                 endIcon={<ArrowDropDownIcon fontSize="small" />}
-                                onClick={event => handleOpenGeoMenu(event, row.label)}
+                                onClick={(event: React.MouseEvent<HTMLButtonElement>) => handleOpenGeoMenu(event, row.label)}
                                 sx={{ mt: 0.5, textTransform: 'none' }}
                               >
                                 View {row.parks.length} parks
@@ -500,7 +501,7 @@ function SummaryCard({ title, value, subtitle, icon }: { title: string; value: n
           width: 56,
           height: 56,
           borderRadius: '50%',
-          backgroundColor: theme => theme.palette.action.hover,
+          backgroundColor: (theme: Theme) => theme.palette.action.hover,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
