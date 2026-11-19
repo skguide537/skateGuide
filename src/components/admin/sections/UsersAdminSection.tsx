@@ -36,6 +36,7 @@ import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
 import { useAdminUsers } from '@/hooks/admin';
 import { formatJoinedDate } from '@/utils/timeUtils';
 import Link from 'next/link';
+import type { Theme } from '@mui/material/styles';
 
 export function UsersAdminSection() {
   const [page, setPage] = useState(1);
@@ -125,7 +126,7 @@ export function UsersAdminSection() {
           <CircularProgress />
         </Box>
       ) : error ? (
-        <Box sx={{ border: theme => `1px dashed ${theme.palette.error.main}`, borderRadius: 2, p: 4, textAlign: 'center' }}>
+        <Box sx={{ border: (theme: Theme) => `1px dashed ${theme.palette.error.main}`, borderRadius: 2, p: 4, textAlign: 'center' }}>
           <Typography color="error">{error}</Typography>
         </Box>
       ) : (

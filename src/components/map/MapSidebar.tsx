@@ -358,7 +358,9 @@ export default function MapSidebar({
                   </Typography>
                   <Slider
                     value={filters.distanceFilter}
-                    onChange={(_, value) => onUpdateDistanceFilter(value as number)}
+                    onChange={(_event: Event, value: number | number[]) => {
+                      if (typeof value === 'number') onUpdateDistanceFilter(value);
+                    }}
                     min={1}
                     max={50}
                     step={1}
@@ -380,7 +382,9 @@ export default function MapSidebar({
                 </Typography>
                 <Slider
                   value={filters.ratingFilter}
-                  onChange={(_, value) => onUpdateRatingFilter(value as number[])}
+                  onChange={(_event: Event, value: number | number[]) => {
+                    if (Array.isArray(value)) onUpdateRatingFilter(value);
+                  }}
                   min={0}
                   max={5}
                   step={0.5}

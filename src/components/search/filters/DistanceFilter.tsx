@@ -55,7 +55,9 @@ export default function DistanceFilter({
                         <Box sx={{ flex: 1, minWidth: 200, maxWidth: 300, ml: 2, display: 'flex', alignItems: 'center' }}>
                             <Slider
                                 value={distanceFilter}
-                                onChange={(_, value) => handleDistanceChange(value as number)}
+                                onChange={(_event: Event, value: number | number[]) => {
+                                    if (typeof value === 'number') handleDistanceChange(value);
+                                }}
                                 min={SEARCH_FILTER_CONSTANTS.DISTANCE_RANGE.min}
                                 max={SEARCH_FILTER_CONSTANTS.DISTANCE_RANGE.max}
                                 step={SEARCH_FILTER_CONSTANTS.DISTANCE_RANGE.step}

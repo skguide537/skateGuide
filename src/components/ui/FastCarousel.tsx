@@ -245,7 +245,7 @@ const FastCarousel = memo(function FastCarousel({
                 {images.map((_, index) => (
                     <Box
                         key={index}
-                        onClick={(e) => goToSlide(e, index)}
+                        onClick={(e: React.MouseEvent<HTMLDivElement>) => goToSlide(e, index)}
                         sx={{
                             width: 8,
                             height: 8,

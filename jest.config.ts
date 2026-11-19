@@ -70,6 +70,7 @@ const config: Config = {
     '/node_modules/',
     '/src/tests/ui/', // Exclude Playwright tests
   ],
+  modulePathIgnorePatterns: ['<rootDir>/.next/'],
   // Global setup and teardown for database connection
   globalSetup: '<rootDir>/src/tests/global-setup.ts',
   globalTeardown: '<rootDir>/src/tests/global-teardown.ts',

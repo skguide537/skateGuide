@@ -22,6 +22,7 @@ import PendingIcon from '@mui/icons-material/Pending';
 import { useAdminPendingParks } from '@/hooks/admin';
 import { formatJoinedDate } from '@/utils/timeUtils';
 import Link from 'next/link';
+import type { Theme } from '@mui/material/styles';
 
 export function PendingApprovalsSection() {
   const [page, setPage] = useState(1);
@@ -74,7 +75,7 @@ export function PendingApprovalsSection() {
       )}
 
       {!isLoading && error && (
-        <Box sx={{ border: theme => `1px dashed ${theme.palette.error.main}`, borderRadius: 2, p: 4, textAlign: 'center' }}>
+        <Box sx={{ border: (theme: Theme) => `1px dashed ${theme.palette.error.main}`, borderRadius: 2, p: 4, textAlign: 'center' }}>
           <Typography color="error">{error}</Typography>
         </Box>
       )}
@@ -83,10 +84,10 @@ export function PendingApprovalsSection() {
         <Box
           sx={{
             borderRadius: 2,
-            border: theme => `1px dashed ${theme.palette.divider}`,
+            border: (theme: Theme) => `1px dashed ${theme.palette.divider}`,
             p: 4,
             textAlign: 'center',
-            backgroundColor: theme => theme.palette.background.paper,
+            backgroundColor: (theme: Theme) => theme.palette.background.paper,
           }}
         >
           <Typography variant="body1" color="text.secondary">
@@ -111,7 +112,7 @@ export function PendingApprovalsSection() {
                 transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                 '&:hover': {
                   transform: 'translateY(-6px)',
-                  boxShadow: theme => theme.shadows[6],
+                  boxShadow: (theme: Theme) => theme.shadows[6],
                 },
               }}
             >
@@ -124,8 +125,8 @@ export function PendingApprovalsSection() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: theme => theme.palette.background.default,
-                    color: theme => theme.palette.text.secondary,
+                    backgroundColor: (theme: Theme) => theme.palette.background.default,
+                    color: (theme: Theme) => theme.palette.text.secondary,
                     typography: 'subtitle2',
                     fontWeight: 600,
                   }}

@@ -419,7 +419,7 @@ export default function SkateparkModal({
                       name="user-rating"
                       value={userRating}
                       disabled={isRatingLoading}
-                      onChange={async (_, value) => {
+                      onChange={async (_event: React.SyntheticEvent, value: number | null) => {
                         if (!value) return;
                         if (!user) return showToast("You must be logged in to rate.", "error");
 
