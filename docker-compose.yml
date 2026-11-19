@@ -1,0 +1,11 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3500:3000"
+    env_file:
+      - .env.docker
+    restart: unless-stopped
+
