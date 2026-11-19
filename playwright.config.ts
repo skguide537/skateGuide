@@ -1,66 +1,48 @@
 import { defineConfig, devices } from '@playwright/test';
-import os from 'os';
-import path from 'path';
-import dotenv from 'dotenv';
 
-dotenv.config({ quiet: true });
+const isCI = Boolean(process.env.GITHUB_ACTIONS || process.env.CI);
 
 export default defineConfig({
   testDir: './src/tests/ui',
   fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 1, // Add retries for flaky tests
-  // Use maximum recommended workers: all cores locally, half cores in CI for stability
-  workers: process.env.CI ? '50%' : '100%',
-  reporter: 'list', // Minimal console output, no HTML files
-  timeout: process.env.CI ? 120000 : 60000, // Increase global timeout to 2 minutes in CI
-  expect: {
-    timeout: process.env.CI ? 15000 : 10000, // Increase expect timeout in CI
-  },
+  forbidOnly: isCI,
+  retries: isCI ? 1 : 0,
+  workers: isCI ? 2 : undefined,
+  reporter: isCI
+    ? [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }]]
+    : 'list',
+  timeout: isCI ? 60000 : 45000,
+  expect: { timeout: 10000 },
+  globalSetup: './src/tests/ui/global-setup.ts',
   use: {
     baseURL: 'http://localhost:3000',
-    trace: 'off', // No tracing
-    screenshot: 'off', // No screenshots
-    actionTimeout: process.env.CI ? 20000 : 15000, // Increase action timeout in CI
-    navigationTimeout: process.env.CI ? 45000 : 30000, // Increase navigation timeout in CI
-    // Ensure geolocation-based features work consistently in all tests (especially CI)
+    trace: isCI ? 'retain-on-failure' : 'off',
+    screenshot: isCI ? 'only-on-failure' : 'off',
+    actionTimeout: 15000,
+    navigationTimeout: 30000,
     geolocation: { latitude: 32.073, longitude: 34.789 },
     permissions: ['geolocation'],
   },
-
   projects: [
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-    // Comment out other browsers for now to reduce complexity
-    // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
-    // },
-    // {
-    //   name: 'webkit',
-    //   use: { ...devices['Desktop Safari'] },
-    // },
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
   ],
-
   webServer: {
-    // Use production server; CI builds earlier
-    command: 'npm start',
+    command: 'mkdir -p .next/standalone/public .next/standalone/.next/static && cp -R public/. .next/standalone/public && cp -R .next/static/. .next/standalone/.next/static && node .next/standalone/server.js',
     url: 'http://localhost:3000',
-    reuseExistingServer: true,
-    timeout: 180 * 1000, // 3 minutes for build+start
+    reuseExistingServer: false,
+    timeout: 180000,
+    env: {
+      // The application uses CI-only mock API responses outside test mode.
+      // The workflow supplies an isolated local MongoDB URI to this server.
+      CI: '',
+      NEXT_TELEMETRY_DISABLED: '1',
+      HOSTNAME: '0.0.0.0',
+      PORT: '3000',
+    },
   },
-
-  // Use system temp directory for output (automatically cleaned up by OS)
-  outputDir: path.join(os.tmpdir(), 'playwright-output'),
-  preserveOutput: 'never', // Don't preserve any output
+  outputDir: 'test-results',
+  preserveOutput: 'failures-only',
 });

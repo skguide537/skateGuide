@@ -192,6 +192,7 @@ export default function NavBar() {
                             size="large" 
                             onClick={handleOpenNavMenu} 
                             color="inherit"
+                            aria-label="Open navigation menu"
                             sx={{ 
                                 color: 'var(--color-accent-green)',
                                 backgroundColor: 'rgba(39, 174, 96, 0.1)',

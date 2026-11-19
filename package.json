@@ -7,7 +7,7 @@
         "build": "next build --webpack",
         "start": "next start",
         "lint": "eslint .",
-        "typecheck": "tsc --noEmit",
+        "typecheck": "tsc --noEmit && tsc -p tsconfig.playwright.json --noEmit",
         "test": "jest --detectOpenHandles --forceExit",
         "test:ui": "playwright test",
         "test:ui:headed": "playwright test --headed",
