@@ -4,14 +4,15 @@ import { userService } from '@/services/user.service';
 import { BadRequestError, NotFoundError } from '@/types/error-models';
 
 // GET /api/users/[id] - Get user profile (public)
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+    const { id } = await context.params;
     try {
         // Validate ObjectId format
-        if (!/^[0-9a-fA-F]{24}$/.test(params.id)) {
+        if (!/^[0-9a-fA-F]{24}$/.test(id)) {
             return NextResponse.json({ error: 'Invalid user ID format' }, { status: 400 });
         }
         
-        const profile = await userService.getUserProfile(params.id);
+        const profile = await userService.getUserProfile(id);
         return NextResponse.json(profile);
     } catch (error: any) {
         if (error instanceof NotFoundError) {
@@ -22,7 +23,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // DELETE /api/users/[id] - Delete user account (owner or admin)
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+    const { id } = await context.params;
     try {
         // 1. Authenticate user
         const currentUser = await getUserFromRequest(request);
@@ -31,12 +33,12 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
         }
 
         // 2. Check if current user is owner or admin
-        if (currentUser._id.toString() !== params.id && currentUser.role !== 'admin') {
+        if (currentUser._id.toString() !== id && currentUser.role !== 'admin') {
             return NextResponse.json({ error: 'Forbidden - Only owner or admin can delete' }, { status: 403 });
         }
 
         // 3. Delete user account (will anonymize spots and comments)
-        await userService.deleteUserAccount(params.id);
+        await userService.deleteUserAccount(id);
         
         return NextResponse.json({ success: true, message: 'User account deleted successfully' });
     } catch (error: any) {

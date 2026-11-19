@@ -24,21 +24,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
     return 'light';
   });
-  const [isInitialized, setIsInitialized] = useState(false);
-
   useEffect(() => {
-    // Mark as initialized - theme is already set in initial state
-    setIsInitialized(true);
-  }, []);
-
-  useEffect(() => {
-    // Only apply theme after initialization to prevent hydration mismatch
-    if (isInitialized) {
-      // Set theme on body instead of html to avoid hydration issues
-      document.body.setAttribute('data-theme', theme);
-      localStorage.setItem('skateGuide-theme', theme);
-    }
-  }, [theme, isInitialized]);
+    document.body.setAttribute('data-theme', theme);
+    localStorage.setItem('skateGuide-theme', theme);
+  }, [theme]);
 
   const toggleTheme = () => {
     setThemeState(prev => prev === 'light' ? 'dark' : 'light');

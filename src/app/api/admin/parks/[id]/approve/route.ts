@@ -5,15 +5,16 @@ import { handleAdminError } from '../../../_utils/error-response';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await context.params;
   try {
     const admin = await requireAdmin(request);
     const body = await request.json().catch(() => ({}));
     const approve = typeof body?.approve === 'boolean' ? body.approve : true;
 
     const result = await approvePark({
-      parkId: params.id,
+      parkId: id,
       adminId: admin._id.toString(),
       approve,
     });
@@ -23,7 +24,7 @@ export async function PATCH(
       alreadyApproved: result.alreadyApproved,
     });
   } catch (error) {
-    return handleAdminError(error, `/api/admin/parks/${params.id}/approve`);
+    return handleAdminError(error, `/api/admin/parks/${id}/approve`);
   }
 }
 

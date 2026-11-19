@@ -6,7 +6,7 @@ import { HOME_PAGE_CONSTANTS } from '@/constants/homePage';
 import { FilteredSkatepark } from '@/types/skatepark';
 
 interface VirtualGridProps {
-    parentRef: React.RefObject<HTMLDivElement>;
+    parentRef: React.RefObject<HTMLDivElement | null>;
     virtualizer: {
         getVirtualItems: () => Array<{
             index: number;

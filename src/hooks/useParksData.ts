@@ -42,10 +42,8 @@ export function useParksData(): {
         invalidateCacheRef.current = invalidateCache;
     }, [invalidateCache]);
 
-    const fetchParks = useCallback(async () => {
+    const loadParks = useCallback(async () => {
         try {
-            setIsLoading(true);
-            
             const data = await skateparkClient.getAllSkateparks(1000);
 
             // Update parks data for virtual scrolling
@@ -57,6 +55,11 @@ export function useParksData(): {
             setIsLoading(false);
         }
     }, []);
+
+    const fetchParks = useCallback(async () => {
+        setIsLoading(true);
+        await loadParks();
+    }, [loadParks]);
 
     const refreshParks = useCallback(async () => {
         try {
@@ -157,7 +160,9 @@ export function useParksData(): {
                     localStorage.removeItem(HOME_PAGE_CONSTANTS.LOCAL_STORAGE_KEYS.SPOT_JUST_ADDED);
                     localStorage.removeItem(HOME_PAGE_CONSTANTS.LOCAL_STORAGE_KEYS.SPOT_ADDED_AT);
                     setTimeout(() => {
-                        fetchParks();
+                        void (async () => {
+                            await fetchParks();
+                        })();
                     }, HOME_PAGE_CONSTANTS.TIMEOUTS.NEW_SPOT_REFRESH);
                 }
             }
@@ -193,8 +198,10 @@ export function useParksData(): {
 
     // Fetch parks when component mounts
     useEffect(() => {
-        fetchParks();
-    }, [fetchParks]);
+        void (async () => {
+            await loadParks();
+        })();
+    }, [loadParks]);
 
     return {
         parks,

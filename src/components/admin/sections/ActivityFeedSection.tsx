@@ -29,6 +29,7 @@ import { ActivityType } from '@/types/admin';
 import { formatRelativeTime } from '@/utils/timeUtils';
 import Link from 'next/link';
 import type { Theme } from '@mui/material/styles';
+import type { JSX } from 'react';
 
 const TYPE_LABELS: Record<ActivityType, string> = {
   PARK_CREATED: 'Park created',

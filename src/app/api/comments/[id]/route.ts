@@ -6,8 +6,9 @@ import { BadRequestError, NotFoundError } from '@/types/error-models';
 // PATCH /api/comments/[id] - Edit a comment
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await context.params;
     try {
         // Get authenticated user
         const user = await getUserFromRequest(request);
@@ -18,7 +19,6 @@ export async function PATCH(
             );
         }
 
-        const { id } = params;
         const body = await request.json();
         const { commentBody } = body;
 
@@ -63,8 +63,9 @@ export async function PATCH(
 // DELETE /api/comments/[id] - Delete a comment (soft delete by default, hard delete for admin)
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await context.params;
     try {
         // Get authenticated user
         const user = await getUserFromRequest(request);
@@ -75,7 +76,6 @@ export async function DELETE(
             );
         }
 
-        const { id } = params;
         const isAdmin = user.role === 'admin';
 
         const result = await commentService.deleteComment({

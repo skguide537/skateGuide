@@ -8,13 +8,14 @@ import { getUserFromRequest } from "@/lib/auth-helpers";
 // GET one skatepark
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await context.params;
     try {
         // Ensure DB connection is established before querying
         await connectToDatabase();
 
-        const skateparkDoc = await skateparkService.getOneSkatepark(params.id);
+        const skateparkDoc = await skateparkService.getOneSkatepark(id);
         // Ensure we return a plain JSON object (not a Mongoose Document with internals)
         const skatepark = (typeof (skateparkDoc as any)?.toObject === 'function')
             ? (skateparkDoc as any).toObject()
@@ -42,11 +43,11 @@ export async function GET(
             if (db) {
                 favoritesCount = await db
                     .collection('users')
-                    .countDocuments({ favorites: new ObjectId(params.id) });
+                    .countDocuments({ favorites: new ObjectId(id) });
                 commentsCount = await db
                     .collection('comments')
                     .countDocuments({
-                        skateparkId: new ObjectId(params.id),
+                        skateparkId: new ObjectId(id),
                         isDeleted: { $ne: true },
                     });
             }
@@ -71,8 +72,9 @@ export async function GET(
 // PUT update skatepark
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await context.params;
     try {
         // 1. Authenticate user from JWT token
         const currentUser = await getUserFromRequest(request);
@@ -88,7 +90,7 @@ export async function PUT(
         }
         
         const skatepark = await db.collection('skateparks').findOne(
-            { _id: new ObjectId(params.id) }
+            { _id: new ObjectId(id) }
         );
 
         if (!skatepark) {
@@ -111,7 +113,7 @@ export async function PUT(
         const files = formData.getAll("photos") as File[];
         
         const photos = await Promise.all(files.map(convertToUploadedFile));
-        const updatedSkatepark = await skateparkService.updateSkatepark(params.id, updateData, photos);
+        const updatedSkatepark = await skateparkService.updateSkatepark(id, updateData, photos);
         return NextResponse.json(updatedSkatepark);
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -121,8 +123,9 @@ export async function PUT(
 // DELETE skatepark
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await context.params;
     try {
         // 1. Authenticate user from JWT token
         const currentUser = await getUserFromRequest(request);
@@ -143,7 +146,7 @@ export async function DELETE(
         }
 
         // 4. Delete skatepark
-        const message = await skateparkService.deleteSkatepark(params.id);
+        const message = await skateparkService.deleteSkatepark(id);
         return NextResponse.json({ message });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

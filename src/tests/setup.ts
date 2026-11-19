@@ -1,4 +1,5 @@
 import { config } from 'dotenv';
+import mongoose from 'mongoose';
 
 /**
  * Jest setup for API/Database tests
@@ -17,3 +18,9 @@ if (typeof global.TextEncoder === 'undefined') {
 
 // Set test environment
 process.env.NODE_ENV = 'test';
+
+afterAll(async () => {
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
+  }
+});

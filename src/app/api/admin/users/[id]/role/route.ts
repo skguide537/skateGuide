@@ -5,8 +5,9 @@ import { handleAdminError } from '../../../_utils/error-response';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await context.params;
   try {
     const admin = await requireAdmin(request);
     const body = await request.json();
@@ -20,14 +21,14 @@ export async function PATCH(
     }
 
     const result = await updateUserRole({
-      targetUserId: params.id,
+      targetUserId: id,
       newRole: role,
       actorId: admin._id.toString(),
     });
 
     return NextResponse.json({ success: true, user: result });
   } catch (error) {
-    return handleAdminError(error, `/api/admin/users/${params.id}/role`);
+    return handleAdminError(error, `/api/admin/users/${id}/role`);
   }
 }
 

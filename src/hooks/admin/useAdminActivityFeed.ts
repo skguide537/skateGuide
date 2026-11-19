@@ -23,13 +23,6 @@ export function useAdminActivityFeed(initialOptions: UseAdminActivityOptions = {
 
   const fetchActivities = useCallback(
     async (cursor?: string, append = false) => {
-      setError(null);
-      if (append) {
-        setIsLoadingMore(true);
-      } else {
-        setIsLoading(true);
-      }
-
       try {
         const response = await adminClient.getActivities({
           limit: options.limit,
@@ -137,14 +130,23 @@ export function useAdminActivityFeed(initialOptions: UseAdminActivityOptions = {
   );
 
   useEffect(() => {
-    fetchActivities();
+    void (async () => {
+      await fetchActivities();
+    })();
   }, [fetchActivities]);
 
   const loadMore = useCallback(() => {
     if (nextCursor) {
+      setIsLoadingMore(true);
       fetchActivities(nextCursor, true);
     }
   }, [fetchActivities, nextCursor]);
+
+  const refetch = useCallback(() => {
+    setIsLoading(true);
+    setError(null);
+    return fetchActivities();
+  }, [fetchActivities]);
 
   const hasMore = useMemo(() => Boolean(nextCursor), [nextCursor]);
 
@@ -155,7 +157,7 @@ export function useAdminActivityFeed(initialOptions: UseAdminActivityOptions = {
     error,
     hasMore,
     loadMore,
-    refetch: () => fetchActivities(),
+    refetch,
     setOptions,
   };
 }

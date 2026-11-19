@@ -44,7 +44,12 @@ interface SkateparkModalProps {
   };
 }
 
-export default function SkateparkModal({
+export default function SkateparkModal(props: SkateparkModalProps) {
+  if (!props.open) return null;
+  return <OpenSkateparkModal key={props._id} {...props} />;
+}
+
+function OpenSkateparkModal({
   open,
   onClose,
   _id,
@@ -69,19 +74,11 @@ export default function SkateparkModal({
   const { theme } = useTheme();
 
   const [parkDetails, setParkDetails] = useState<SkateparkDetail | null>(null);
-  const [isFetching, setIsFetching] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open) {
-      setParkDetails(null);
-      setFetchError(null);
-      return;
-    }
-
     let cancelled = false;
-    setIsFetching(true);
-
     skateparkClient.getSkateparkById(_id)
       .then((data) => {
         if (cancelled) return;
@@ -107,7 +104,7 @@ export default function SkateparkModal({
     return () => {
       cancelled = true;
     };
-  }, [open, _id, showToast]);
+  }, [_id, showToast]);
 
   const resolvedData = useMemo(() => {
     const source = parkDetails;

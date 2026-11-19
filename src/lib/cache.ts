@@ -104,8 +104,9 @@ export const cacheKeys = {
   totalCount: () => 'skateparks:count',
 };
 
-// Auto cleanup every 10 minutes
-if (typeof window === 'undefined') { // Only run on server
+// Auto cleanup every 10 minutes in the server runtime. The request path also
+// removes expired entries on read, so the timer is unnecessary in test workers.
+if (typeof window === 'undefined' && process.env.NODE_ENV !== 'test') {
   setInterval(() => {
     cache.cleanup();
   }, 10 * 60 * 1000);

@@ -32,6 +32,7 @@ import { useAdminStatsOverview } from '@/hooks/admin';
 import { userClient } from '@/services/userClient';
 import { GeoapifyService } from '@/services/geoapify.service';
 import type { Theme } from '@mui/material/styles';
+import type { JSX } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -106,7 +107,6 @@ export function StatsDashboardSection() {
 
   useEffect(() => {
     if (topContributors.length === 0) {
-      setContributorProfiles(new Map());
       return;
     }
 
@@ -134,7 +134,6 @@ export function StatsDashboardSection() {
 
   useEffect(() => {
     if (geoRows.length === 0) {
-      setGeoLabels(new Map());
       return;
     }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { HOME_PAGE_CONSTANTS } from '@/constants/homePage';
 import { logger } from '@/lib/logger';
 
@@ -24,26 +24,21 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
         status: 'loading',
         coords: null,
     });
+    const geolocationSupported = useSyncExternalStore(
+        () => () => undefined,
+        () => typeof navigator !== 'undefined' && 'geolocation' in navigator,
+        () => true
+    );
 
     const requestIdRef = useRef(0);
 
     const startRequest = useCallback(() => {
-        if (typeof window === 'undefined' || !navigator?.geolocation) {
+        if (!geolocationSupported) {
             logger.warn('Geolocation unavailable in this environment', 'useGeolocation');
-            setState({
-                status: 'fallback',
-                coords: null,
-                failureReason: 'unavailable',
-            });
             return;
         }
 
         const currentRequestId = ++requestIdRef.current;
-
-        setState({
-            status: 'loading',
-            coords: null,
-        });
 
         const timeoutId = window.setTimeout(() => {
             if (requestIdRef.current !== currentRequestId) return;
@@ -89,24 +84,35 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
                 timeout: timeoutMs,
             }
         );
-    }, [timeoutMs]);
+    }, [timeoutMs, geolocationSupported]);
 
     useEffect(() => {
-        startRequest();
+        if (geolocationSupported) {
+            void (async () => {
+                startRequest();
+            })();
+        }
 
         return () => {
             requestIdRef.current += 1;
         };
-    }, [startRequest]);
+    }, [startRequest, geolocationSupported]);
 
     const retry = useCallback(() => {
+        setState({ status: 'loading', coords: null });
         startRequest();
     }, [startRequest]);
 
+    const resolvedState = geolocationSupported ? state : {
+            status: 'fallback' as const,
+            coords: null,
+            failureReason: 'unavailable' as const,
+        };
+
     return {
-        ...state,
+        ...resolvedState,
         retry,
-        isLoading: state.status === 'loading',
+        isLoading: resolvedState.status === 'loading',
     };
 }
 

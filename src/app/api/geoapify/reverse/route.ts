@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cache } from '@/lib/cache';
+import { getRequestIp } from '@/lib/request-ip';
 import {
   AdminForbiddenError,
   AdminUnauthorizedError,
@@ -150,7 +151,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+  const ip = getRequestIp(request.headers);
   if (!checkRateLimit(String(ip))) {
     return NextResponse.json(
       { error: 'Rate limit exceeded. Please try again shortly.' },

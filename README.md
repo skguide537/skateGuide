@@ -20,7 +20,7 @@ A Next.js application for finding and sharing skate spots.
 
 ## Prerequisites
 
-- Node.js 18+ 
+- Node.js 24 LTS (required for the supported production runtime)
 - MongoDB Atlas account or local MongoDB instance
 - Google Maps API key (for map functionality)
 
@@ -56,6 +56,12 @@ npm install
 ```bash
 npm run dev
 ```
+
+## Framework compatibility
+
+SkateGuide uses Next.js 16 and React 19. Next.js request APIs are asynchronous: route handler `params` are promises, and server code must await `cookies()`. The `next lint` command was removed in Next.js 16, so `npm run lint` invokes ESLint directly.
+
+The application keeps its existing custom Webpack configuration and standalone server output. The development and production build scripts opt into Webpack explicitly because Next.js 16 otherwise defaults to Turbopack. Leaflet maps load through client-only dynamic imports to avoid server-side access to browser globals.
 
 The application will be available at `http://localhost:3000`
 

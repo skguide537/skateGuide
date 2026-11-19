@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type SetStateAction } from 'react';
 import { adminClient } from '@/services/adminClient';
 import { AdminStatsOverviewResponse } from '@/types/admin';
 import { useToast } from '@/context/ToastContext';
@@ -18,8 +18,6 @@ export function useAdminStatsOverview(initialOptions: StatsOptions = { newUsersD
   const { showToast } = useToast();
 
   const fetchStats = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
     try {
       const response = await adminClient.getStatsOverview(options);
       setStats(response);
@@ -32,16 +30,30 @@ export function useAdminStatsOverview(initialOptions: StatsOptions = { newUsersD
     }
   }, [options, showToast]);
 
+  const updateOptions = useCallback((update: SetStateAction<StatsOptions>) => {
+    setIsLoading(true);
+    setError(null);
+    setOptions(update);
+  }, []);
+
+  const refetch = useCallback(() => {
+    setIsLoading(true);
+    setError(null);
+    return fetchStats();
+  }, [fetchStats]);
+
   useEffect(() => {
-    fetchStats();
+    void (async () => {
+      await fetchStats();
+    })();
   }, [fetchStats]);
 
   return {
     stats,
     isLoading,
     error,
-    refetch: fetchStats,
-    setOptions,
+    refetch,
+    setOptions: updateOptions,
   };
 }
 

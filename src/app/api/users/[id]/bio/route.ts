@@ -4,7 +4,8 @@ import { userService } from '@/services/user.service';
 import { BadRequestError, NotFoundError } from '@/types/error-models';
 
 // PATCH /api/users/[id]/bio - Update bio and social links (owner only)
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+    const { id } = await context.params;
     try {
         // 1. Authenticate user
         const currentUser = await getUserFromRequest(request);
@@ -13,7 +14,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         }
 
         // 2. Check if current user is owner
-        if (currentUser._id.toString() !== params.id) {
+        if (currentUser._id.toString() !== id) {
             return NextResponse.json({ error: 'Forbidden - Only owner can update bio' }, { status: 403 });
         }
 
@@ -33,7 +34,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         if (body.website !== undefined) updates.website = body.website;
 
         // 4. Update bio and socials
-        const updatedProfile = await userService.updateBioAndSocials(params.id, updates);
+        const updatedProfile = await userService.updateBioAndSocials(id, updates);
         
         return NextResponse.json(updatedProfile);
     } catch (error: any) {

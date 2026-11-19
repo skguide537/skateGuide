@@ -4,7 +4,8 @@ import { userService } from '@/services/user.service';
 import { BadRequestError, NotFoundError } from '@/types/error-models';
 
 // PATCH /api/users/[id]/password - Change password (owner only)
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+    const { id } = await context.params;
     try {
         // 1. Authenticate user
         const currentUser = await getUserFromRequest(request);
@@ -13,7 +14,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         }
 
         // 2. Check if current user is owner
-        if (currentUser._id.toString() !== params.id) {
+        if (currentUser._id.toString() !== id) {
             return NextResponse.json({ error: 'Forbidden - Only owner can change password' }, { status: 403 });
         }
 
@@ -30,7 +31,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         }
 
         // 4. Update password
-        await userService.updatePassword(params.id, currentPassword, newPassword);
+        await userService.updatePassword(id, currentPassword, newPassword);
         
         return NextResponse.json({ success: true, message: 'Password updated successfully' });
     } catch (error: any) {

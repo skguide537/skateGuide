@@ -3,14 +3,15 @@ import { userService } from '@/services/user.service';
 import { NotFoundError } from '@/types/error-models';
 
 // GET /api/users/[id]/stats - Get user statistics (public)
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+    const { id } = await context.params;
     try {
         // Validate ObjectId format
-        if (!/^[0-9a-fA-F]{24}$/.test(params.id)) {
+        if (!/^[0-9a-fA-F]{24}$/.test(id)) {
             return NextResponse.json({ error: 'Invalid user ID format' }, { status: 400 });
         }
         
-        const stats = await userService.getUserStats(params.id);
+        const stats = await userService.getUserStats(id);
         return NextResponse.json(stats);
     } catch (error: any) {
         if (error instanceof NotFoundError) {

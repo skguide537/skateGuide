@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { 
   Box, 
   Typography, 
@@ -15,6 +15,7 @@ import CommentItem from './CommentItem';
 import { useUser } from '@/context/UserContext';
 import { useToast } from '@/context/ToastContext';
 import { CommentDTO } from '@/services/commentsClient';
+import { useStoredBoolean } from '@/hooks/useStoredBoolean';
 
 interface CollapsibleCommentSectionProps {
   skateparkId: string;
@@ -23,23 +24,10 @@ interface CollapsibleCommentSectionProps {
 const STORAGE_KEY = 'skateGuide-comments-expanded';
 
 export default function CollapsibleCommentSection({ skateparkId }: CollapsibleCommentSectionProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useStoredBoolean(STORAGE_KEY, false);
   const { comments, total, isLoading: commentsLoading, error: commentsError, refresh } = useComments(skateparkId);
   const { user } = useUser();
   const { showToast } = useToast();
-
-  // Load saved state from localStorage
-  useEffect(() => {
-    const savedState = localStorage.getItem(STORAGE_KEY);
-    if (savedState !== null) {
-      setIsExpanded(JSON.parse(savedState));
-    }
-  }, []);
-
-  // Save state to localStorage when it changes
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(isExpanded));
-  }, [isExpanded]);
 
   const handleToggle = () => {
     setIsExpanded(!isExpanded);

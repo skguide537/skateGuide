@@ -3,10 +3,11 @@ import { userService } from '@/services/user.service';
 import { BadRequestError, NotFoundError } from '@/types/error-models';
 
 // GET /api/users/[id]/spots - Get user's spots (paginated, public)
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+    const { id } = await context.params;
     try {
         // Validate ObjectId format
-        if (!/^[0-9a-fA-F]{24}$/.test(params.id)) {
+        if (!/^[0-9a-fA-F]{24}$/.test(id)) {
             return NextResponse.json({ error: 'Invalid user ID format' }, { status: 400 });
         }
         
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
             throw new BadRequestError('Invalid limit (must be between 1 and 50)');
         }
 
-        const result = await userService.getUserSpots(params.id, page, limit);
+        const result = await userService.getUserSpots(id, page, limit);
         return NextResponse.json(result);
     } catch (error: any) {
         if (error instanceof NotFoundError) {

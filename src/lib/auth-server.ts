@@ -13,7 +13,7 @@ export interface ServerAuthUser {
 
 export async function getServerAuthUser(): Promise<ServerAuthUser | null> {
   try {
-    const token = cookies().get('token')?.value;
+    const token = (await cookies()).get('token')?.value;
     if (!token) {
       return null;
     }
