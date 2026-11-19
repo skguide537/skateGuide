@@ -49,16 +49,6 @@ export function MonitoringSection() {
   });
   const [userDetails, setUserDetails] = useState<Map<string, { name: string; photoUrl?: string }>>(new Map());
 
-  useEffect(() => {
-    setOptions(current => ({
-      ...current,
-      category: activeCategory,
-      page,
-      from: from || undefined,
-      to: to || undefined,
-    }));
-  }, [activeCategory, page, from, to, setOptions]);
-
   const totalPages = useMemo(() => {
     if (!pagination) return 1;
     return Math.max(1, Math.ceil(pagination.total / pagination.limit));
@@ -77,7 +67,6 @@ export function MonitoringSection() {
     });
 
     if (ids.size === 0) {
-      setUserDetails(new Map());
       return;
     }
 
@@ -122,6 +111,7 @@ export function MonitoringSection() {
           if (category) {
             setActiveCategory(category.value);
             setPage(1);
+            setOptions(current => ({ ...current, category: category.value, page: 1, from: from || undefined, to: to || undefined }));
           }
         }}
         variant="scrollable"
@@ -142,6 +132,7 @@ export function MonitoringSection() {
             onChange={event => {
               setFrom(event.target.value);
               setPage(1);
+              setOptions(current => ({ ...current, from: event.target.value || undefined, page: 1 }));
             }}
             InputLabelProps={{ shrink: true }}
           />
@@ -153,6 +144,7 @@ export function MonitoringSection() {
             onChange={event => {
               setTo(event.target.value);
               setPage(1);
+              setOptions(current => ({ ...current, to: event.target.value || undefined, page: 1 }));
             }}
             InputLabelProps={{ shrink: true }}
           />
@@ -258,7 +250,10 @@ export function MonitoringSection() {
 
       {totalPages > 1 && (
         <Box sx={{ display: 'flex', justifyContent: 'center', pt: 2 }}>
-          <Pagination count={totalPages} page={page} onChange={(_e, value) => setPage(value)} color="primary" />
+          <Pagination count={totalPages} page={page} onChange={(_e, value) => {
+            setPage(value);
+            setOptions(current => ({ ...current, page: value }));
+          }} color="primary" />
         </Box>
       )}
     </Stack>

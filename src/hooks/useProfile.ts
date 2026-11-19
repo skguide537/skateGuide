@@ -20,22 +20,20 @@ export function useProfile(userId: string | null) {
   const [spots, setSpots] = useState<any[]>([]);
   const [comments, setComments] = useState<any[]>([]);
   const [stats, setStats] = useState<any | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [completedUserId, setCompletedUserId] = useState<string | null>(null);
+  const isLoading = Boolean(userId && completedUserId !== userId);
   const [error, setError] = useState<string | null>(null);
 
   const fetchProfile = useCallback(async () => {
     if (!userId) {
-      setIsLoading(false);
       return;
     }
 
     try {
-      setIsLoading(true);
-      setError(null);
-
       // Fetch profile first
       const profileData = await userClient.getProfile(userId);
       setProfile(profileData);
+      setError(null);
 
       // Fetch other data in parallel, handle missing data gracefully
       const [spotsData, commentsData, statsData] = await Promise.allSettled([
@@ -72,12 +70,20 @@ export function useProfile(userId: string | null) {
       logger.error('Error loading profile', err, 'useProfile');
       setError(errorMessage);
     } finally {
-      setIsLoading(false);
+      setCompletedUserId(userId);
     }
   }, [userId]);
 
+  const refetch = useCallback(() => {
+    setCompletedUserId(null);
+    setError(null);
+    return fetchProfile();
+  }, [fetchProfile]);
+
   useEffect(() => {
-    fetchProfile();
+    void (async () => {
+      await fetchProfile();
+    })();
   }, [fetchProfile]);
 
   return {
@@ -87,7 +93,7 @@ export function useProfile(userId: string | null) {
     stats,
     isLoading,
     error,
-    refetch: fetchProfile,
+    refetch,
   };
 }
 

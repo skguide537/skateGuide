@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type SetStateAction } from 'react';
 import { adminClient } from '@/services/adminClient';
 import { userClient } from '@/services/userClient';
 import { AdminUserSummary, AdminUsersResponse } from '@/types/admin';
@@ -22,9 +22,6 @@ export function useAdminUsers(initialOptions: UseAdminUsersOptions = { page: 1, 
   const { showToast } = useToast();
 
   const fetchUsers = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
     try {
       const response = await adminClient.getUsers({
         query: options.query,
@@ -62,8 +59,22 @@ export function useAdminUsers(initialOptions: UseAdminUsersOptions = { page: 1, 
     }
   }, [options, showToast]);
 
+  const updateOptions = useCallback((update: SetStateAction<UseAdminUsersOptions>) => {
+    setIsLoading(true);
+    setError(null);
+    setOptions(update);
+  }, []);
+
+  const refetch = useCallback(() => {
+    setIsLoading(true);
+    setError(null);
+    return fetchUsers();
+  }, [fetchUsers]);
+
   useEffect(() => {
-    fetchUsers();
+    void (async () => {
+      await fetchUsers();
+    })();
   }, [fetchUsers]);
 
   const promote = useCallback(
@@ -126,8 +137,8 @@ export function useAdminUsers(initialOptions: UseAdminUsersOptions = { page: 1, 
     isLoading,
     error,
     hasMore,
-    refetch: fetchUsers,
-    setOptions,
+    refetch,
+    setOptions: updateOptions,
     promote,
     demote,
     remove,

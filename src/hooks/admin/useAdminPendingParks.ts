@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type SetStateAction } from 'react';
 import { adminClient } from '@/services/adminClient';
 import { userClient } from '@/services/userClient';
 import { AdminPendingPark, AdminPendingParksResponse } from '@/types/admin';
@@ -20,8 +20,6 @@ export function useAdminPendingParks(initialOptions: UseAdminPendingParksOptions
   const { showToast } = useToast();
 
   const fetchPendingParks = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
     try {
       const response = await adminClient.getPendingParks(options);
 
@@ -59,8 +57,22 @@ export function useAdminPendingParks(initialOptions: UseAdminPendingParksOptions
     }
   }, [options, showToast]);
 
+  const updateOptions = useCallback((update: SetStateAction<UseAdminPendingParksOptions>) => {
+    setIsLoading(true);
+    setError(null);
+    setOptions(update);
+  }, []);
+
+  const refetch = useCallback(() => {
+    setIsLoading(true);
+    setError(null);
+    return fetchPendingParks();
+  }, [fetchPendingParks]);
+
   useEffect(() => {
-    fetchPendingParks();
+    void (async () => {
+      await fetchPendingParks();
+    })();
   }, [fetchPendingParks]);
 
   const approve = useCallback(
@@ -90,9 +102,9 @@ export function useAdminPendingParks(initialOptions: UseAdminPendingParksOptions
     isLoading,
     error,
     hasMore,
-    refetch: fetchPendingParks,
+    refetch,
     approve,
-    setOptions,
+    setOptions: updateOptions,
   };
 }
 

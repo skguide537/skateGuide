@@ -40,7 +40,9 @@ export const useEnhancedMap = (userLocation: [number, number] | null) => {
 
   // Initial data fetch
   useEffect(() => {
-    fetchSpots();
+    void (async () => {
+      await fetchSpots();
+    })();
   }, [fetchSpots]);
 
   // Subscribe to cache invalidation events

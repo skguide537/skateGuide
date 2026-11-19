@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Box, Typography, CircularProgress } from '@mui/material';
 import { logger } from '@/lib/logger';
 import dynamic from 'next/dynamic';
@@ -35,12 +35,21 @@ const EnhancedMap = dynamic(() => import('@/components/map/EnhancedMap'), {
   loading: MapLoading,
 });
 
+const subscribeToGeolocation = () => () => undefined;
+const getGeolocationSupport = () => typeof navigator !== 'undefined' && 'geolocation' in navigator;
+const getServerGeolocationSupport = () => true;
+
 export default function MapPage() {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const geolocationSupported = useSyncExternalStore(
+    subscribeToGeolocation,
+    getGeolocationSupport,
+    getServerGeolocationSupport
+  );
 
   useEffect(() => {
-    if (navigator.geolocation) {
+    if (geolocationSupported) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setUserLocation([position.coords.latitude, position.coords.longitude]);
@@ -50,12 +59,12 @@ export default function MapPage() {
           logger.error('Error getting location', error, 'MapPage');
         }
       );
-    } else {
-      setError('Geolocation is not supported by your browser');
     }
-  }, []);
+  }, [geolocationSupported]);
 
-  if (error) {
+  const visibleError = error ?? (geolocationSupported ? null : 'Geolocation is not supported by your browser');
+
+  if (visibleError) {
     return (
       <Box sx={{ 
         display: 'flex', 
@@ -71,7 +80,7 @@ export default function MapPage() {
         margin: 0,
         overflow: 'hidden'
       }} id="map-error-container">
-        <Typography variant="h6" sx={{ color: 'var(--color-error)', fontWeight: 600 }} id="map-error-text">{error}</Typography>
+        <Typography variant="h6" sx={{ color: 'var(--color-error)', fontWeight: 600 }} id="map-error-text">{visibleError}</Typography>
       </Box>
     );
   }

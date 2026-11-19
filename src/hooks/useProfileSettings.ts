@@ -3,6 +3,7 @@ import { useToast } from '@/context/ToastContext';
 import { useUser } from '@/context/UserContext';
 import { userClient } from '@/services/userClient';
 import { logger } from '@/lib/logger';
+import { useRouter } from 'next/navigation';
 
 export interface BioSocialsData {
   bio?: string;
@@ -23,6 +24,7 @@ export interface PasswordChangeData {
 export function useProfileSettings(userId: string) {
   const { showToast } = useToast();
   const { user } = useUser();
+  const router = useRouter();
   const [isUpdating, setIsUpdating] = useState(false);
 
   // Check if current user is the owner or admin
@@ -135,8 +137,8 @@ export function useProfileSettings(userId: string) {
       const message = isAdminDeletingUser ? 'User account deleted successfully' : 'Account deleted successfully';
       showToast(message, 'success');
       // Redirect to home only if deleting own account
-      if (isDeletingOwnAccount && typeof window !== 'undefined') {
-        window.location.href = '/';
+      if (isDeletingOwnAccount) {
+        router.push('/');
       }
       return true;
     } catch (error: unknown) {
@@ -147,7 +149,7 @@ export function useProfileSettings(userId: string) {
     } finally {
       setIsUpdating(false);
     }
-  }, [userId, isOwner, isAdmin, showToast]);
+  }, [userId, isOwner, isAdmin, showToast, router]);
 
   return {
     isOwner,

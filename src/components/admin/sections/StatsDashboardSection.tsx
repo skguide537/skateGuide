@@ -107,7 +107,6 @@ export function StatsDashboardSection() {
 
   useEffect(() => {
     if (topContributors.length === 0) {
-      setContributorProfiles(new Map());
       return;
     }
 
@@ -135,7 +134,6 @@ export function StatsDashboardSection() {
 
   useEffect(() => {
     if (geoRows.length === 0) {
-      setGeoLabels(new Map());
       return;
     }
 

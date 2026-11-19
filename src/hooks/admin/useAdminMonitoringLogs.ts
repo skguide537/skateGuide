@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type SetStateAction } from 'react';
 import { adminClient } from '@/services/adminClient';
 import { AdminLogEntry, AdminLogResponse, AdminMonitoringCategory } from '@/types/admin';
 import { useToast } from '@/context/ToastContext';
@@ -22,8 +22,6 @@ export function useAdminMonitoringLogs(initialOptions: MonitoringOptions) {
   const { showToast } = useToast();
 
   const fetchLogs = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
     try {
       const response = await adminClient.getMonitoringLogs(options.category, {
         from: options.from,
@@ -42,8 +40,22 @@ export function useAdminMonitoringLogs(initialOptions: MonitoringOptions) {
     }
   }, [options, showToast]);
 
+  const updateOptions = useCallback((update: SetStateAction<MonitoringOptions>) => {
+    setIsLoading(true);
+    setError(null);
+    setOptions(update);
+  }, []);
+
+  const refetch = useCallback(() => {
+    setIsLoading(true);
+    setError(null);
+    return fetchLogs();
+  }, [fetchLogs]);
+
   useEffect(() => {
-    fetchLogs();
+    void (async () => {
+      await fetchLogs();
+    })();
   }, [fetchLogs]);
 
   const hasMore = useMemo(() => {
@@ -57,8 +69,8 @@ export function useAdminMonitoringLogs(initialOptions: MonitoringOptions) {
     isLoading,
     error,
     hasMore,
-    refetch: fetchLogs,
-    setOptions,
+    refetch,
+    setOptions: updateOptions,
   };
 }
 

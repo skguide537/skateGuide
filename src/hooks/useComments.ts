@@ -19,7 +19,8 @@ export function useComments(skateparkId: string): UseCommentsReturn {
     const [total, setTotal] = useState(0);
     const [page, setPage] = useState(1);
     const [limit] = useState(20);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(Boolean(skateparkId));
+    const [completedParkId, setCompletedParkId] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const hasMore = comments.length < total;
@@ -28,9 +29,6 @@ export function useComments(skateparkId: string): UseCommentsReturn {
         if (!skateparkId) return;
 
         try {
-            setIsLoading(true);
-            setError(null);
-
             const response: ListCommentsResponse = await commentsClient.listComments(
                 skateparkId, 
                 pageNum, 
@@ -51,21 +49,28 @@ export function useComments(skateparkId: string): UseCommentsReturn {
             logger.error('Failed to fetch comments', err, 'useComments');
         } finally {
             setIsLoading(false);
+            setCompletedParkId(skateparkId);
         }
     }, [skateparkId, limit]);
 
     const loadMore = useCallback(async () => {
         if (!hasMore || isLoading) return;
+        setIsLoading(true);
+        setError(null);
         await fetchComments(page + 1, true);
     }, [fetchComments, page, hasMore, isLoading]);
 
     const refresh = useCallback(async () => {
+        setIsLoading(true);
+        setError(null);
         await fetchComments(1, false);
     }, [fetchComments]);
 
     // Initial load
     useEffect(() => {
-        fetchComments(1, false);
+        void (async () => {
+            await fetchComments(1, false);
+        })();
     }, [fetchComments]);
 
     return {
@@ -73,7 +78,7 @@ export function useComments(skateparkId: string): UseCommentsReturn {
         total,
         page,
         limit,
-        isLoading,
+        isLoading: Boolean(skateparkId && (isLoading || completedParkId !== skateparkId)),
         error,
         loadMore,
         refresh,

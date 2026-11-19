@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import Container from '@mui/material/Container';
 import SearchFilterBar from '@/components/search/SearchFilterBar';
 import HeroSection from '@/components/home/HeroSection';
@@ -12,31 +12,15 @@ import { useResponsiveGrid, useVirtualGrid } from '@/hooks/useVirtualGrid';
 import { HOME_PAGE_CONSTANTS } from '@/constants/homePage';
 import { useGeolocationContext } from '@/context/GeolocationContext';
 import { useToast } from '@/context/ToastContext';
+import { useStoredBoolean } from '@/hooks/useStoredBoolean';
 
 export default function HomePage() {
     // Hero visibility state
-    const [showHero, setShowHero] = useState(true);
+    const [showHero, setShowHero] = useStoredBoolean(HOME_PAGE_CONSTANTS.LOCAL_STORAGE_KEYS.SHOW_HERO, true);
     const { showToast } = useToast();
 
-         // Load hero visibility preference from localStorage after component mounts
-         useEffect(() => {
-        const saved = localStorage.getItem(HOME_PAGE_CONSTANTS.LOCAL_STORAGE_KEYS.SHOW_HERO);
-             if (saved !== null) {
-                 setShowHero(JSON.parse(saved));
-             }
-         }, []);
-
-         // Function to hide hero and save preference
-         const handleHideHero = () => {
-             setShowHero(false);
-        localStorage.setItem(HOME_PAGE_CONSTANTS.LOCAL_STORAGE_KEYS.SHOW_HERO, 'false');
-         };
-
-         // Function to show hero and save preference
-         const handleShowHero = () => {
-             setShowHero(true);
-        localStorage.setItem(HOME_PAGE_CONSTANTS.LOCAL_STORAGE_KEYS.SHOW_HERO, 'true');
-    };
+    const handleHideHero = () => setShowHero(false);
+    const handleShowHero = () => setShowHero(true);
 
     const { status: geoStatus, coords: userCoords, isLoading: isGeoLoading } = useGeolocationContext();
     const prevGeoStatusRef = useRef<typeof geoStatus>('loading');

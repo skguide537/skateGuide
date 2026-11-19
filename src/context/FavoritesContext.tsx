@@ -28,28 +28,27 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 
   const [favorites, setFavorites] = useState<string[]>([]);
   const [counts, setCounts] = useState<FavoritesCounts>({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [favoritesLoaded, setFavoritesLoaded] = useState(false);
+  const [loadedUserId, setLoadedUserId] = useState<string | null>(null);
+  const [completedUserId, setCompletedUserId] = useState<string | null>(null);
+  const favoritesLoaded = Boolean(user?._id && loadedUserId === user._id);
+  const isLoading = Boolean(user?._id && completedUserId !== user._id);
   const inProgressRef = useRef<Set<string>>(new Set());
 
   const fetchFavorites = useCallback(async () => {
     if (!user?._id) {
-      // No user yet (e.g., hydration/navigation). Do not clear favorites to avoid UI flicker.
-      // We'll mark as not loaded so UI can render a neutral state.
-      setFavoritesLoaded(false);
+      // No user yet (e.g., hydration/navigation). Keep existing favorites in memory.
       return;
     }
-    setIsLoading(true);
     try {
       const data = await favoritesClient.getFavorites(user._id);
       setFavorites(Array.isArray(data) ? data : []);
-      setFavoritesLoaded(true);
+      setLoadedUserId(user._id);
     } catch (err) {
       logger.error('Favorites fetch failed', err, 'FavoritesContext');
     } finally {
-      setIsLoading(false);
+      setCompletedUserId(user._id);
     }
-  }, [user?._id]);
+  }, [user]);
 
   const ensureCounts = useCallback(async (spotIds: string[]) => {
     const idsToFetch = spotIds.filter((id) => counts[id] === undefined);
@@ -112,16 +111,12 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       await fetchFavorites();
       return null;
     }
-  }, [user?._id, showToast, fetchFavorites]);
+  }, [user, showToast, fetchFavorites]);
 
   useEffect(() => {
-    if (user?._id) {
-      setFavoritesLoaded(false);
-      fetchFavorites();
-    } else {
-      // Keep existing favorites; show not-loaded state to avoid flicker
-      setFavoritesLoaded(false);
-    }
+    void (async () => {
+      await fetchFavorites();
+    })();
   }, [fetchFavorites, user?._id]); 
 
   const value = useMemo(() => ({

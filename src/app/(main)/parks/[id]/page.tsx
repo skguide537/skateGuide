@@ -120,26 +120,20 @@ export default function ParkDetailsPage() {
     return isOwner || isAdmin;
   }, [user, park]);
 
-  // Populate edit form when park loads or edit opens
-  useEffect(() => {
-    if (park && editOpen) {
-      const parkAny = park as any;
-      setEditTitle(parkAny.title || '');
-      setEditDescription(parkAny.description || '');
-      setEditSize(parkAny.size || '');
-      setEditLevels(Array.isArray(parkAny.levels) ? parkAny.levels : []);
-      setEditIsPark(parkAny.isPark || false);
-      setEditTags(Array.isArray(parkAny.tags) ? parkAny.tags : []);
-      setEditExternalLinks(
-        Array.isArray(parkAny.externalLinks) 
-          ? parkAny.externalLinks.map((link: any) => link.url || link).filter(Boolean)
-          : []
-      );
-      setEditKeepPhotos(Array.isArray(parkAny.photoNames) ? parkAny.photoNames : []);
-      setEditNewPhotos(null);
-      setHasAttemptedSubmit(false);
-    }
-  }, [park, editOpen]);
+  const handleOpenEdit = () => {
+    if (!park) return;
+    setEditTitle(park.title);
+    setEditDescription(park.description || '');
+    setEditSize(park.size);
+    setEditLevels(park.levels);
+    setEditIsPark(park.isPark);
+    setEditTags(park.tags);
+    setEditExternalLinks(park.externalLinks?.map(link => link.url) ?? []);
+    setEditKeepPhotos(park.photoNames);
+    setEditNewPhotos(null);
+    setHasAttemptedSubmit(false);
+    setEditOpen(true);
+  };
 
   // Handle photo deletion
   const handleDeletePhoto = (photoUrl: string) => {
@@ -313,7 +307,7 @@ export default function ParkDetailsPage() {
             <Button
               variant="outlined"
               startIcon={<EditIcon />}
-              onClick={() => setEditOpen(true)}
+              onClick={handleOpenEdit}
               sx={{ textTransform: 'none' }}
             >
               Edit
