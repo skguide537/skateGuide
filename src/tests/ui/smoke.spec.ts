@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { expect, test } from '@playwright/test';
 import { loginFixture } from './test-database';
 
-const parkTitle = 'SkateGuide E2E Tel Aviv Plaza';
+const parkTitle = 'E2E Tel Aviv Plaza';
 const spotDescription = 'Deterministic browser-test plaza with ledges and rails.';
 
 test.beforeEach(async ({ page }) => {
@@ -27,8 +27,8 @@ test('spot listing filters by text and opens full spot details', async ({ page }
   const search = page.getByPlaceholder('Search spots, tags, locations...');
   await expect(page.getByRole('heading', { name: parkTitle })).toBeVisible();
 
-  await search.fill('Tel Aviv Street Ledge');
-  await expect(page.getByRole('heading', { name: 'SkateGuide E2E Tel Aviv Street Ledge' })).toBeVisible();
+  await search.fill('Tel Aviv Ledge');
+  await expect(page.getByRole('heading', { name: 'E2E Tel Aviv Ledge' })).toBeVisible();
   await expect(page.getByRole('heading', { name: parkTitle })).toHaveCount(0);
 
   await search.fill(parkTitle);

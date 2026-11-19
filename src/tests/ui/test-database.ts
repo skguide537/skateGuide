@@ -12,7 +12,7 @@ const testUserId = new Types.ObjectId('66a000000000000000000001');
 const seededSpots = [
   {
     _id: new Types.ObjectId('66a000000000000000000010'),
-    title: 'SkateGuide E2E Tel Aviv Plaza',
+    title: 'E2E Tel Aviv Plaza',
     description: 'Deterministic browser-test plaza with ledges and rails.',
     tags: [Tag.Ledge, Tag.Rail],
     location: { type: 'Point', coordinates: [34.789, 32.073] },
@@ -22,7 +22,7 @@ const seededSpots = [
   },
   {
     _id: new Types.ObjectId('66a000000000000000000011'),
-    title: 'SkateGuide E2E Tel Aviv Street Ledge',
+    title: 'E2E Tel Aviv Ledge',
     description: 'Deterministic street spot for search and map checks.',
     tags: [Tag.Ledge],
     location: { type: 'Point', coordinates: [34.799, 32.078] },
