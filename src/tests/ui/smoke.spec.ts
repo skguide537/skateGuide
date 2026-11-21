@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import { loginFixture } from './test-database';
 
@@ -20,6 +21,38 @@ test('homepage loads spots and navigation opens the map', async ({ page }) => {
   await page.locator('a[href="/map"]:visible').first().click();
   await expect(page).toHaveURL(/\/map$/);
   await expect(page.locator('#map-container .leaflet-container')).toBeVisible();
+});
+
+test('homepage shows an accessible 3D loading indicator without renderer errors', async ({ page }) => {
+  let requestStarted!: () => void;
+  let allowModelResponse!: () => void;
+  const modelRequestStarted = new Promise<void>((resolve) => {
+    requestStarted = resolve;
+  });
+  const modelResponseAllowed = new Promise<void>((resolve) => {
+    allowModelResponse = resolve;
+  });
+  const pageErrors: string[] = [];
+
+  await page.route('**/models/Skateboard.glb', async (route) => {
+    requestStarted();
+    await modelResponseAllowed;
+    await route.fulfill({ path: path.resolve('public/models/Skateboard.glb') });
+  });
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+
+  try {
+    await page.goto('/');
+    await modelRequestStarted;
+    await expect(page.getByRole('status', { name: 'Loading skateboard animation' })).toBeVisible();
+
+    allowModelResponse();
+    await expect(page.getByRole('status', { name: 'Loading skateboard animation' })).toHaveCount(0);
+    await expect(page.getByTestId('search-filter-bar')).toBeVisible();
+    expect(pageErrors).toEqual([]);
+  } finally {
+    allowModelResponse();
+  }
 });
 
 test('spot listing filters by text and opens full spot details', async ({ page }) => {

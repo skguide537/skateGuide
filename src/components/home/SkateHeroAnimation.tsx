@@ -3,7 +3,7 @@
 import { Box, CircularProgress } from '@mui/material';
 import { Suspense, useState, useRef, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useGLTF } from '@react-three/drei';
+import { Html, useGLTF } from '@react-three/drei';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import * as THREE from 'three';
 
@@ -105,17 +105,21 @@ function Scene({ isHovered, isDragging, setIsDragging }: { isHovered: boolean; i
 
 function LoadingFallback() {
     return (
-        <Box
-            sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '100%',
-                height: '100%',
-            }}
-        >
-            <CircularProgress size={40} sx={{ color: 'var(--color-accent-rust)' }} />
-        </Box>
+        <Html center>
+            <Box
+                role="status"
+                aria-label="Loading skateboard animation"
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%',
+                    height: '100%',
+                }}
+            >
+                <CircularProgress size={40} sx={{ color: 'var(--color-accent-rust)' }} />
+            </Box>
+        </Html>
     );
 }
 
