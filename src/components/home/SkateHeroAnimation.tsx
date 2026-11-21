@@ -3,7 +3,7 @@
 import { Box, CircularProgress } from '@mui/material';
 import { Suspense, useState, useRef, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Html, useGLTF } from '@react-three/drei';
+import { useGLTF, useProgress } from '@react-three/drei';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import * as THREE from 'three';
 
@@ -103,29 +103,30 @@ function Scene({ isHovered, isDragging, setIsDragging }: { isHovered: boolean; i
     );
 }
 
-function LoadingFallback() {
+function LoadingIndicator() {
     return (
-        <Html center>
-            <Box
-                role="status"
-                aria-label="Loading skateboard animation"
-                sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '100%',
-                    height: '100%',
-                }}
-            >
-                <CircularProgress size={40} sx={{ color: 'var(--color-accent-rust)' }} />
-            </Box>
-        </Html>
+        <Box
+            role="status"
+            aria-label="Loading skateboard animation"
+            aria-live="polite"
+            sx={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                pointerEvents: 'none',
+            }}
+        >
+            <CircularProgress size={40} sx={{ color: 'var(--color-accent-rust)' }} />
+        </Box>
     );
 }
 
 export default function SkateHeroAnimation() {
     const [isHovered, setIsHovered] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
+    const isModelLoading = useProgress((state) => state.active);
 
     return (
         <Box
@@ -139,6 +140,7 @@ export default function SkateHeroAnimation() {
                 maxHeight: { xs: '250px', md: '300px' },
                 cursor: isDragging ? 'grabbing' : 'grab',
                 backgroundColor: 'transparent',
+                position: 'relative',
             }}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
@@ -154,10 +156,11 @@ export default function SkateHeroAnimation() {
                 }}
                 gl={{ antialias: true, alpha: true }}
             >
-                <Suspense fallback={<LoadingFallback />}>
+                <Suspense fallback={null}>
                     <Scene isHovered={isHovered} isDragging={isDragging} setIsDragging={setIsDragging} />
                 </Suspense>
             </Canvas>
+            {isModelLoading && <LoadingIndicator />}
         </Box>
     );
 }
